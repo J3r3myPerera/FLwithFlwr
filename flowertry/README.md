@@ -16,9 +16,17 @@ This project is a Federated Learning implementation using the Flower framework. 
 - Main entry point for the federated learning application
 - Uses Hydra for configuration management
 - Currently displays the configuration using `OmegaConf.to_yaml(cfg)`
+- **Updated**: Added dataset preparation call to `prepare_dataset()` function
 - Ready for federated learning implementation
 
-#### 2. `conf/base.yaml`
+#### 2. `dataset.py` (NEW)
+- Dataset handling module for MNIST data
+- Implements `get_minst()` function for downloading and preparing MNIST dataset
+- Includes data preprocessing with normalization transforms
+- Implements `prepare_dataset()` function for data partitioning (incomplete)
+- Uses PyTorch and Torchvision for data handling
+
+#### 3. `conf/base.yaml`
 - Configuration file defining federated learning parameters:
   - `num_rounds: 10` - Number of federated learning rounds
   - `num_clients: 100` - Number of client participants
@@ -45,6 +53,7 @@ flowertry/
 ├── conf/
 │   └── base.yaml          # Main configuration file
 ├── main.py                # Application entry point
+├── dataset.py             # Dataset handling module (NEW)
 ├── outputs/               # Experiment outputs
 │   └── 2025-10-24/       # Date-based organization
 │       └── 00-40-15/     # Time-based experiment folder
@@ -55,19 +64,35 @@ flowertry/
 └── README.md              # This file
 ```
 
+## Recent Updates
+
+### Dataset Implementation (Latest)
+- **Added `dataset.py`**: New module for handling MNIST dataset
+- **MNIST Integration**: Implemented data loading with proper preprocessing
+- **Data Preprocessing**: Added normalization transforms (mean: 0.1307, std: 0.3081)
+- **Data Partitioning**: Started implementation of `prepare_dataset()` for federated learning
+- **Integration**: Connected dataset preparation to main application flow
+
+### Current Status
+- Dataset module is partially implemented (function signature exists but implementation incomplete)
+- Main application now calls dataset preparation function
+- Ready for completing the data partitioning logic for federated learning
+
 ## Environment Setup
 - **Python Environment**: `flower_tutorial` conda environment
 - **Framework**: Flower (Federated Learning)
 - **Configuration**: Hydra
+- **Data Processing**: PyTorch, Torchvision
 - **IDE**: VS Code with Python extension
 
 ## Next Steps
-The project is now ready for implementing federated learning functionality. Future development may include:
-- Implementing client and server logic
-- Adding model definitions
-- Setting up data loading mechanisms
-- Implementing federated learning algorithms
-- Adding evaluation and monitoring capabilities
+The project is progressing well with dataset handling now implemented. Immediate next steps include:
+- **Complete `prepare_dataset()` function**: Finish the data partitioning logic for federated learning
+- **Fix import issues**: Add missing imports in `dataset.py` (Compose, Normalize)
+- **Implement client and server logic**: Create Flower client and server components
+- **Add model definitions**: Define the neural network architecture
+- **Implement federated learning algorithms**: Set up the federated training loop
+- **Add evaluation and monitoring capabilities**: Implement metrics and logging
 
 ## Running the Project
 To run the current setup:
