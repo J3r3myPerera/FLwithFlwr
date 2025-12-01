@@ -8,6 +8,7 @@ def get_minst(data_path: str= './data'):
     tr = Compose([ToTensor(), Normalize((0.1307,), (0.3081,)) ])
 
     trainset = MNIST(data_path, train=True, download=True, transform=tr)
+    #the transformations for the test set are the same as the train set. This should be different in the future.
     testset = MNIST(data_path, train=False, download=True, transform=tr)
 
     return trainset, testset
@@ -21,11 +22,12 @@ def prepare_dataset(num_partitions: int, batch_size: int ,val_ratio: float=0.1):
 
     partition_len = [num_images] * num_partitions
 
-    trainsets = random_split(trainset, partition_len, torch.Generator().manual_seed(2023)) ##This is the IID partitioning.
+    trainsets = random_split(trainset, partition_len, torch.Generator().manual_seed(2023)) ##This is the IID partitioning. Dataset prep video;
 
     #create dataloaders with train + validation support
     trainloaders = []
     valloaders = []
+    #for each trainset, create a dataloader for the training and validation sets.
     for trainset_ in trainsets:
         num_total = len(trainset_)
         num_val = int(val_ratio * num_total)

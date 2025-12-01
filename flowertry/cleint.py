@@ -1,6 +1,8 @@
 from collections import OrderedDict
+from typing import Dict
 import torch
 import flwr as fl
+from flwr.common.typing import Scalar, NDArrays
 
 from model import Net, train, test
 
@@ -11,7 +13,7 @@ class FlowerClient(fl.client.NumPyClient):
         self.trainloader = trainloader
         self.valloader = valloader
         
-        self.model == Net(num_classes)
+        self.model = Net(num_classes)
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
@@ -22,13 +24,13 @@ class FlowerClient(fl.client.NumPyClient):
         state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
         self.model.load_state_dict(state_dict, strict=True)
 
-    def get_parameters(self, config: Dict[str, Scalar]):
+    def get_parameters(self, config=None):
         return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
 
     def fit(self, parameters, config):
 
         #copy the parameters sent by the server to the local model
-        self.get_parameters(parameters)
+        self.set_parameters(parameters)
 
         lr = config['lr']
         momentum = config['momentum']
@@ -42,9 +44,9 @@ class FlowerClient(fl.client.NumPyClient):
         ##Used for FedAvg algorithm
         return self.get_parameters(), len(self.trainloader), {}
 
-    def evaluate(self, parameters,: NDArrays, int, Dict[str, Scalar]):
+    def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]):
         #copy the parameters sent by the server to the local model
-        self.get_parameters(parameters)
+        self.set_parameters(parameters)
 
         loss, accuracy = test(self.model, self.valloader, self.device)
         return float(loss), len(self.valloader), {'accuracy': accuracy}
