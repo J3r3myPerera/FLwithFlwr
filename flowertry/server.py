@@ -1,5 +1,5 @@
 from omegaconf import DictConfig
-from model import Net
+from model import Net, test
 import torch
 from collections import OrderedDict
 

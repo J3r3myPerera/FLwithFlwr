@@ -24,7 +24,7 @@ class FlowerClient(fl.client.NumPyClient):
         state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
         self.model.load_state_dict(state_dict, strict=True)
 
-    def get_parameters(self, config=None):
+    def get_parameters(self, config: Dict[str, Scalar]):
         return [val.cpu().numpy() for _, val in self.model.state_dict().items()]
 
     def fit(self, parameters, config):
@@ -42,7 +42,7 @@ class FlowerClient(fl.client.NumPyClient):
         train(self.model, self.trainloader, optim, epochs, self.device)
 
         ##Used for FedAvg algorithm
-        return self.get_parameters(), len(self.trainloader), {}
+        return self.get_parameters({}), len(self.trainloader), {}
 
     def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]):
         #copy the parameters sent by the server to the local model
