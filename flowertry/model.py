@@ -21,7 +21,7 @@ class Net(nn.Module):
         x = self.fc3(x)
         return x
 
-def train(net, trainloader, optimizer, epochs, device: str):
+def train(net, trainloader, optimizer, epochs, device):
     """Train the network on the training set."""
     criterion = nn.CrossEntropyLoss()
     net.train()
@@ -34,10 +34,11 @@ def train(net, trainloader, optimizer, epochs, device: str):
             loss.backward()
             optimizer.step()
 
-def test(net, testloader, device: str):
+def test(net, testloader, device):
     """Validate the network on the entire test set."""
     criterion = nn.CrossEntropyLoss()
     correct, loss = 0, 0.0
+    net.to(device)  # Move model to device before evaluation
     net.eval()
     with torch.no_grad():
         for data in testloader:

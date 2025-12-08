@@ -1,12 +1,47 @@
 ---
+# =============================================================================
+# FEDERATED LEARNING CONFIGURATION - NON-IID SCENARIO
+# Optimized for Apple M1 Pro MacBook
+# =============================================================================
 
-num_rounds: 10
-num_clients: 100
-batch_size: 20
+# --- Server Configuration ---
+num_rounds: 15                        # More rounds to see convergence differences
+num_clients: 10
+num_clients_per_round_fit: 5
+num_clients_per_round_eval: 5
+
+# --- Model Configuration ---
 num_classes: 10
-num_clients_per_round_fit: 10
-num_clients_per_round_eval: 25
+batch_size: 32
+
+# --- Data Partitioning (Non-IID Settings) ---
+# partition_type options:
+#   - "iid"           : Uniform random split (baseline)
+#   - "dirichlet"     : Dirichlet distribution (recommended)
+#   - "label_skew"    : Each client has limited classes
+#   - "quantity_skew" : Unbalanced data sizes per client
+partition_type: "dirichlet"
+
+# Dirichlet alpha: LOWER = MORE non-IID
+# Use 0.1 for extreme non-IID where FedProx helps most
+dirichlet_alpha: 0.1
+
+# For label_skew partition
+labels_per_client: 2
+
+# --- Strategy Configuration ---
+strategy: "fedprox"
+
+# FedProx mu: Start small! 0.001-0.01 works better than 0.1
+# Too high = over-regularization = worse performance
+fedprox_mu: 0.001
+
+# --- Training Configuration ---
 config_fit:
   lr: 0.01
   momentum: 0.9
-  local_epochs: 1
+  # MORE local epochs = MORE client drift = FedProx helps MORE
+  local_epochs: 5
+
+# --- Random Seed ---
+seed: 2023

@@ -1,0 +1,16 @@
+num_rounds: 15
+num_clients: 10
+num_clients_per_round_fit: 5
+num_clients_per_round_eval: 5
+num_classes: 10
+batch_size: 32
+partition_type: dirichlet
+dirichlet_alpha: 0.1
+labels_per_client: 2
+strategy: fedavg
+fedprox_mu: 0.0
+config_fit:
+  lr: 0.01
+  momentum: 0.9
+  local_epochs: 5
+seed: 2023

@@ -1,0 +1,31 @@
+---
+# =============================================================================
+# FedProx TUNED - Optimized for non-IID data
+# =============================================================================
+
+num_rounds: 20
+num_clients: 10
+num_clients_per_round_fit: 5
+num_clients_per_round_eval: 5
+
+num_classes: 10
+batch_size: 32
+
+# Extreme non-IID to show FedProx benefits
+partition_type: "dirichlet"
+dirichlet_alpha: 0.1
+labels_per_client: 2
+
+# FedProx with tuned mu
+strategy: "fedprox"
+# Key insight: mu should be SMALL (0.001-0.01)
+# Too large mu prevents learning, too small = same as FedAvg
+fedprox_mu: 0.001
+
+config_fit:
+  lr: 0.01
+  momentum: 0.9
+  local_epochs: 5  # More epochs = more drift = FedProx helps more
+
+seed: 2023
+

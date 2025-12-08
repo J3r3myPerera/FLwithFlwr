@@ -1,0 +1,29 @@
+---
+# =============================================================================
+# FedAvg BASELINE - For comparison with FedProx
+# =============================================================================
+
+num_rounds: 20
+num_clients: 10
+num_clients_per_round_fit: 5
+num_clients_per_round_eval: 5
+
+num_classes: 10
+batch_size: 32
+
+# Extreme non-IID to show FedProx benefits
+partition_type: "dirichlet"
+dirichlet_alpha: 0.1
+labels_per_client: 2
+
+# FedAvg strategy
+strategy: "fedavg"
+fedprox_mu: 0.0  # Not used for FedAvg
+
+config_fit:
+  lr: 0.01
+  momentum: 0.9
+  local_epochs: 5  # Same as FedProx for fair comparison
+
+seed: 2023
+
