@@ -1,0 +1,27 @@
+---
+# IID + FedAvg: Baseline scenario
+# This represents the ideal case where data is independently and identically
+# distributed across all clients. Expected best performance.
+
+defaults:
+  - base
+
+# Experiment identification
+experiment_name: "iid_fedavg"
+
+# Data partitioning: IID (random split)
+partition_type: "iid"
+
+# Strategy: Standard FedAvg
+strategy: "fedavg"
+
+# Training settings (can be adjusted for fair comparison)
+num_rounds: 10
+num_clients: 100
+num_clients_per_round_fit: 10
+num_clients_per_round_eval: 25
+
+config_fit:
+  lr: 0.01
+  momentum: 0.9
+  local_epochs: 3  # Increased for fair comparison with extreme non-IID experiments

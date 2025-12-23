@@ -1,0 +1,31 @@
+---
+# Extreme Non-IID + FedAvg: Demonstrates the challenge of severe non-IID data
+# Uses very low Dirichlet alpha to create extreme label skew where each client
+# primarily sees only 1-2 classes. This shows the problem FedAvg faces.
+#
+# Expected: Significantly lower accuracy (~70-85%) and unstable convergence
+# compared to IID baseline.
+
+defaults:
+  - base
+
+# Experiment identification
+experiment_name: "extreme_noniid_fedavg"
+
+# Data partitioning: Extreme Dirichlet non-IID
+partition_type: "dirichlet"
+dirichlet_alpha: 0.1  # Very low = each client gets mostly 1-2 classes
+
+# Strategy: Standard FedAvg (no mitigation - shows the problem)
+strategy: "fedavg"
+
+# Training settings
+num_rounds: 10
+num_clients: 100
+num_clients_per_round_fit: 10
+num_clients_per_round_eval: 25
+
+config_fit:
+  lr: 0.01
+  momentum: 0.9
+  local_epochs: 3  # More epochs = more client drift = bigger problem for FedAvg

@@ -1,0 +1,30 @@
+---
+# Non-IID + FedProx: Mitigation strategy for non-IID data
+# Uses the same heterogeneous data as noniid_fedavg but applies
+# FedProx proximal term to prevent client drift.
+# Expected improved convergence and accuracy over noniid_fedavg.
+
+defaults:
+  - base
+
+# Experiment identification
+experiment_name: "noniid_fedprox"
+
+# Data partitioning: Dirichlet non-IID (same as noniid_fedavg for fair comparison)
+partition_type: "dirichlet"
+dirichlet_alpha: 0.5  # Should match noniid_fedavg for fair comparison
+
+# Strategy: FedProx with proximal term
+strategy: "fedprox"
+fedprox_mu: 0.1  # Proximal coefficient (try 0.01, 0.1, 0.5, 1.0)
+
+# Training settings
+num_rounds: 10
+num_clients: 100
+num_clients_per_round_fit: 10
+num_clients_per_round_eval: 25
+
+config_fit:
+  lr: 0.01
+  momentum: 0.9
+  local_epochs: 1

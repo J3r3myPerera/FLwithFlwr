@@ -1,4 +1,5 @@
 ---
+# Base configuration - can be overridden by specific experiment configs
 
 num_rounds: 10
 num_clients: 100
@@ -6,6 +7,15 @@ batch_size: 20
 num_classes: 10
 num_clients_per_round_fit: 10
 num_clients_per_round_eval: 25
+
+# Data partitioning settings
+partition_type: "iid"  # "iid" or "dirichlet"
+dirichlet_alpha: 0.5   # Only used if partition_type="dirichlet"
+
+# Strategy settings
+strategy: "fedavg"     # "fedavg" or "fedprox"
+fedprox_mu: 0.1        # Only used if strategy="fedprox"
+
 config_fit:
   lr: 0.01
   momentum: 0.9

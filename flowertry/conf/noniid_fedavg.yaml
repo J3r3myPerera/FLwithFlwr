@@ -1,0 +1,28 @@
+---
+# Non-IID + FedAvg: Demonstrates the challenge of non-IID data
+# Uses Dirichlet distribution to create heterogeneous data partitions.
+# Expected slower convergence and lower accuracy compared to IID baseline.
+
+defaults:
+  - base
+
+# Experiment identification
+experiment_name: "noniid_fedavg"
+
+# Data partitioning: Dirichlet non-IID
+partition_type: "dirichlet"
+dirichlet_alpha: 0.5  # Lower = more heterogeneous (try 0.1, 0.3, 0.5, 1.0)
+
+# Strategy: Standard FedAvg (no mitigation)
+strategy: "fedavg"
+
+# Training settings
+num_rounds: 10
+num_clients: 100
+num_clients_per_round_fit: 10
+num_clients_per_round_eval: 25
+
+config_fit:
+  lr: 0.01
+  momentum: 0.9
+  local_epochs: 1

@@ -1,0 +1,32 @@
+---
+# Extreme Non-IID + Tuned FedProx: Demonstrates mitigation of severe non-IID
+# Uses the same extreme settings as extreme_noniid_fedavg but applies FedProx
+# with a stronger proximal term (mu=0.5) to prevent client drift.
+#
+# Expected: Significant accuracy recovery (~88-93%) compared to FedAvg (~70-85%)
+# showing the effectiveness of FedProx on highly heterogeneous data.
+
+defaults:
+  - base
+
+# Experiment identification
+experiment_name: "extreme_noniid_fedprox"
+
+# Data partitioning: Extreme Dirichlet non-IID (same as extreme_noniid_fedavg)
+partition_type: "dirichlet"
+dirichlet_alpha: 0.1  # Very low = each client gets mostly 1-2 classes
+
+# Strategy: FedProx with strong proximal term
+strategy: "fedprox"
+fedprox_mu: 0.5  # Strong regularization to prevent drift from global model
+
+# Training settings (same as extreme_noniid_fedavg for fair comparison)
+num_rounds: 10
+num_clients: 100
+num_clients_per_round_fit: 10
+num_clients_per_round_eval: 25
+
+config_fit:
+  lr: 0.01
+  momentum: 0.9
+  local_epochs: 3  # Same as extreme_noniid_fedavg for fair comparison

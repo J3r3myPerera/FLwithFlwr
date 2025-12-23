@@ -38,6 +38,7 @@ def test(net, testloader, device: str):
     """Validate the network on the entire test set."""
     criterion = nn.CrossEntropyLoss()
     correct, loss = 0, 0.0
+    net.to(device)  # Move model to device before evaluation
     net.eval()
     with torch.no_grad():
         for data in testloader:
