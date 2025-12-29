@@ -84,23 +84,24 @@ This project is a complete Federated Learning implementation using the Flower fr
 
 ## Project Structure
 ```
-flowertry/
-├── conf/
-│   └── base.yaml          # Configuration file
-├── main.py                # Main application entry point
-├── dataset.py             # Dataset handling and partitioning
-├── model.py               # Neural network architecture
-├── cleint.py              # Flower client implementation
-├── server.py              # Server configuration functions (NEW)
-├── outputs/               # Experiment outputs
-│   └── 2025-12-04/       # Date-based organization
-│       └── 01-13-59/     # Time-based experiment folder
-│           ├── .hydra/    # Hydra configuration files
-│           ├── main.log   # Application logs
-│           └── results.pkl # Saved training history
-├── .vscode/
-│   └── settings.json      # VS Code workspace settings
-└── README.md              # This file
+FLwithFlwr/
+├── README.md              # This file
+└── flowertry/             # Main project directory
+    ├── conf/
+    │   └── base.yaml      # Configuration file
+    ├── main.py            # Main application entry point
+    ├── dataset.py         # Dataset handling and partitioning
+    ├── model.py           # Neural network architecture
+    ├── cleint.py          # Flower client implementation
+    ├── server.py          # Server configuration functions
+    ├── outputs/           # Experiment outputs
+    │   └── YYYY-MM-DD/    # Date-based organization
+    │       └── HH-MM-SS/  # Time-based experiment folder
+    │           ├── .hydra/    # Hydra configuration files
+    │           ├── main.log   # Application logs
+    │           └── results.pkl # Saved training history
+    └── .vscode/
+        └── settings.json  # VS Code workspace settings
 ```
 
 ## Current Implementation Status
@@ -138,6 +139,7 @@ flowertry/
 ## Running the Project
 To run the current setup:
 ```bash
+cd flowertry
 python main.py
 ```
 
