@@ -1,0 +1,25 @@
+---
+# Extreme Non-IID + FedProx (Tuned)
+# Highly heterogeneous data - demonstrates FedProx advantage
+
+num_rounds: 15
+num_clients: 10
+batch_size: 32
+
+num_clients_per_round_fit: 5
+num_clients_per_round_eval: 10
+
+# Extreme Non-IID Partitioning
+# alpha=0.1 creates very high heterogeneity (each client dominated by 1-2 classes)
+partition_type: "dirichlet"
+dirichlet_alpha: 0.1
+
+# FedProx Strategy with stronger regularization
+# mu=0.5 provides strong regularization for extreme heterogeneity
+strategy: "fedprox"
+fedprox_mu: 0.5
+
+config_fit:
+  lr: 0.01
+  momentum: 0.9
+  local_epochs: 5

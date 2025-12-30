@@ -1,115 +1,145 @@
-# Flower Federated Learning Project
+# Federated Learning for Personal Finance Modeling
 
 ## Project Overview
-This project is a Federated Learning implementation using the Flower framework. It was initialized on October 24, 2025, as part of learning and experimenting with federated learning concepts.
+This project implements **Federated Learning** using the Flower framework for **Savings Potential Classification** based on the Indian Personal Finance and Spending Habits dataset.
 
-## Changes Made Today (October 24, 2025)
+## Task: Savings Potential Classification
 
-### Initial Project Setup
-- **Created project structure**: Established the basic directory structure for a Flower federated learning project
-- **Set up Hydra configuration**: Implemented configuration management using Hydra framework
-- **Configured VS Code environment**: Set up Python interpreter path for the `flower_tutorial` conda environment
+**Objective:** Classify users into savings potential categories based on their financial profile.
 
-### Files Created
+### Target Variable
+`Desired_Savings_Percentage` discretized into 3 classes:
+- **Low (Class 0):** < 7% savings rate
+- **Medium (Class 1):** 7-12% savings rate  
+- **High (Class 2):** > 12% savings rate
 
-#### 1. `main.py`
-- Main entry point for the federated learning application
-- Uses Hydra for configuration management
-- Currently displays the configuration using `OmegaConf.to_yaml(cfg)`
-- **Updated**: Added dataset preparation call to `prepare_dataset()` function
-- Ready for federated learning implementation
+### Input Features (16 total)
+- **Demographics:** Income, Age, Dependents
+- **Location:** City_Tier (encoded)
+- **Occupation:** Occupation type (encoded)
+- **Spending Categories:** Rent, Loan_Repayment, Insurance, Groceries, Transport, Eating_Out, Entertainment, Utilities, Healthcare, Education, Miscellaneous
 
-#### 2. `dataset.py` (NEW)
-- Dataset handling module for MNIST data
-- Implements `get_minst()` function for downloading and preparing MNIST dataset
-- Includes data preprocessing with normalization transforms
-- Implements `prepare_dataset()` function for data partitioning (incomplete)
-- Uses PyTorch and Torchvision for data handling
+### Model Architecture
+**Multi-layer Neural Network (MLP):**
+- Input Layer: 16 features
+- Hidden Layer 1: 64 neurons (ReLU, BatchNorm, Dropout)
+- Hidden Layer 2: 32 neurons (ReLU, BatchNorm, Dropout)
+- Hidden Layer 3: 16 neurons (ReLU, BatchNorm)
+- Output Layer: 3 classes (softmax via CrossEntropyLoss)
 
-#### 3. `conf/base.yaml`
-- Configuration file defining federated learning parameters:
-  - `num_rounds: 10` - Number of federated learning rounds
-  - `num_clients: 100` - Number of client participants
-  - `config_fit` - Training configuration:
-    - `lr: 0.01` - Learning rate
-    - `momentum: 0.9` - Momentum for optimizer
+### Evaluation Metric
+- **Accuracy** (primary metric for classification)
 
-#### 3. `.vscode/settings.json`
-- VS Code workspace configuration
-- Points to the `flower_tutorial` conda environment
-- Enables automatic environment activation in terminal
+## Quick Start
 
-#### 4. Output Directory Structure
-- Created `outputs/2025-10-24/00-40-15/` directory for experiment results
-- Includes Hydra-generated configuration files:
-  - `.hydra/config.yaml` - Runtime configuration
-  - `.hydra/hydra.yaml` - Hydra framework settings
-  - `.hydra/overrides.yaml` - Configuration overrides
-- `main.log` - Application log file (currently empty)
-
-## Project Structure
-```
-flowertry/
-├── conf/
-│   └── base.yaml          # Main configuration file
-├── main.py                # Application entry point
-├── dataset.py             # Dataset handling module (NEW)
-├── outputs/               # Experiment outputs
-│   └── 2025-10-24/       # Date-based organization
-│       └── 00-40-15/     # Time-based experiment folder
-│           ├── .hydra/    # Hydra configuration files
-│           └── main.log   # Application logs
-├── .vscode/
-│   └── settings.json      # VS Code workspace settings
-└── README.md              # This file
-```
-
-## Recent Updates
-
-### Dataset Implementation (Latest)
-- **Added `dataset.py`**: New module for handling MNIST dataset
-- **MNIST Integration**: Implemented data loading with proper preprocessing
-- **Data Preprocessing**: Added normalization transforms (mean: 0.1307, std: 0.3081)
-- **Data Partitioning**: Started implementation of `prepare_dataset()` for federated learning
-- **Integration**: Connected dataset preparation to main application flow
-
-### Current Status
-- Dataset module is partially implemented (function signature exists but implementation incomplete)
-- Main application now calls dataset preparation function
-- Ready for completing the data partitioning logic for federated learning
-
-## Environment Setup
-- **Python Environment**: `flower_tutorial` conda environment
-- **Framework**: Flower (Federated Learning)
-- **Configuration**: Hydra
-- **Data Processing**: PyTorch, Torchvision
-- **IDE**: VS Code with Python extension
-
-## Next Steps
-The project is progressing well with dataset handling now implemented. Immediate next steps include:
-- **Complete `prepare_dataset()` function**: Finish the data partitioning logic for federated learning
-- **Fix import issues**: Add missing imports in `dataset.py` (Compose, Normalize)
-- **Implement client and server logic**: Create Flower client and server components
-- **Add model definitions**: Define the neural network architecture
-- **Implement federated learning algorithms**: Set up the federated training loop
-- **Add evaluation and monitoring capabilities**: Implement metrics and logging
-
-## Running the Project
-To run the current setup:
 ```bash
+cd flowertry
 python main.py
 ```
 
-This will execute the main function with the default configuration from `conf/base.yaml` and display the configuration parameters.
-
-## Configuration
-The project uses Hydra for configuration management, allowing for:
-- Easy parameter modification
-- Experiment tracking
-- Configuration versioning
-- Command-line overrides
-
-Example of running with custom parameters:
-```bash
-python main.py num_rounds=20 num_clients=50
+## Project Structure
 ```
+FLwithFlwr/
+├── README.md                    # This file
+└── flowertry/
+    ├── conf/
+    │   └── base.yaml            # Configuration file
+    ├── data/
+    │   └── indianPersonalFinanceAndSpendingHabits/
+    │       └── indianPersonalFinanceAndSpendingHabits.csv
+    ├── main.py                  # Main entry point
+    ├── dataset.py               # Data loading and preprocessing
+    ├── model.py                 # MLP neural network
+    ├── cleint.py                # Flower client implementation
+    ├── server.py                # Server-side evaluation
+    └── outputs/                 # Experiment results
+```
+
+## Configuration Parameters
+
+```yaml
+# Federated Learning Settings
+num_rounds: 10           # Number of FL rounds
+num_clients: 10          # Total number of clients
+batch_size: 32           # Batch size for training
+
+# Client Selection
+num_clients_per_round_fit: 5    # Clients for training per round
+num_clients_per_round_eval: 10  # Clients for evaluation per round
+
+# Local Training
+config_fit:
+  lr: 0.01              # Learning rate
+  momentum: 0.9         # SGD momentum
+  local_epochs: 3       # Local training epochs
+```
+
+## Dataset
+
+**Indian Personal Finance and Spending Habits Dataset**
+- **Samples:** 20,000 records
+- **Features:** 16 preprocessed features (14 numerical + 2 categorical encoded)
+- **Target:** 3-class classification (Low/Medium/High savings potential)
+
+### Data Preprocessing
+1. Numerical features: StandardScaler normalization
+2. Categorical features: LabelEncoder (Occupation, City_Tier)
+3. Target discretization: <7% → Low, 7-12% → Medium, >12% → High
+4. Train/Val/Test split: 80%/10%/10%
+5. IID partitioning across federated clients
+
+## Federated Learning Setup
+
+### Strategy: FedAvg (Federated Averaging)
+- Aggregates model parameters from selected clients each round
+- Server-side evaluation on global test set
+- Tracks accuracy progression across rounds
+
+### Client Training
+- Each client trains locally for `local_epochs` epochs
+- Uses SGD optimizer with momentum
+- Sends updated parameters to server
+
+## Expected Output
+
+```
+============================================================
+FEDERATED LEARNING - SAVINGS POTENTIAL CLASSIFICATION
+============================================================
+
+Class Distribution:
+  Class 0 (Low <7%): ~6,500 samples (32.5%)
+  Class 1 (Medium 7-12%): ~7,000 samples (35.0%)
+  Class 2 (High >12%): ~6,500 samples (32.5%)
+
+Accuracy progression:
+  Round 0: ~35% (random)
+  Round 5: ~55-60%
+  Round 10: ~65-70%
+```
+
+## Environment Setup
+
+```bash
+# Create conda environment
+conda create -n flower_tutorial python=3.10
+conda activate flower_tutorial
+
+# Install dependencies
+pip install flwr torch pandas scikit-learn hydra-core omegaconf
+```
+
+## Technical Notes
+
+- **Framework:** Flower (Federated Learning)
+- **Deep Learning:** PyTorch
+- **Configuration:** Hydra
+- **Data Processing:** pandas, scikit-learn
+- **Hardware:** Optimized for CPU (MPS/CUDA disabled for Ray compatibility)
+
+## Future Enhancements
+
+1. **Non-IID Data Simulation:** Implement Dirichlet-based partitioning
+2. **FedProx:** Add proximal term for heterogeneous data
+3. **Additional Metrics:** F1-Score, per-class precision/recall
+4. **Hyperparameter Tuning:** Grid search for optimal MLP architecture

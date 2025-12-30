@@ -1,12 +1,31 @@
 ---
+# Federated Learning Configuration for Savings Potential Classification
+# Task: Classify savings potential into Low (<7%), Medium (7-12%), High (>12%)
 
+# Federated Learning Settings
 num_rounds: 10
-num_clients: 100
-batch_size: 20
-num_classes: 10
-num_clients_per_round_fit: 10
-num_clients_per_round_eval: 25
+num_clients: 10
+batch_size: 32
+
+# Client Selection
+num_clients_per_round_fit: 5
+num_clients_per_round_eval: 10
+
+# Data Partitioning (for client heterogeneity)
+# partition_type: "iid" or "dirichlet"
+# dirichlet_alpha: Lower = more non-IID (heterogeneous), Higher = more IID
+partition_type: "dirichlet"
+dirichlet_alpha: 0.5
+
+# Aggregation Strategy: "fedavg" or "fedprox"
+strategy: "fedavg"
+
+# FedProx Parameters (only used when strategy=fedprox)
+# mu: Proximal term weight - higher = stronger regularization against client drift
+fedprox_mu: 0.1
+
+# Local Training Configuration
 config_fit:
   lr: 0.01
   momentum: 0.9
-  local_epochs: 1
+  local_epochs: 3

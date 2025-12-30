@@ -1,0 +1,25 @@
+---
+# Non-IID + FedProx
+# Heterogeneous data with label skew - FedProx handles drift
+
+num_rounds: 10
+num_clients: 10
+batch_size: 32
+
+num_clients_per_round_fit: 5
+num_clients_per_round_eval: 10
+
+# Non-IID Partitioning (Dirichlet)
+# alpha=0.3 creates significant heterogeneity
+partition_type: "dirichlet"
+dirichlet_alpha: 0.3
+
+# FedProx Strategy
+# mu=0.1 provides moderate regularization against client drift
+strategy: "fedprox"
+fedprox_mu: 0.1
+
+config_fit:
+  lr: 0.01
+  momentum: 0.9
+  local_epochs: 3
