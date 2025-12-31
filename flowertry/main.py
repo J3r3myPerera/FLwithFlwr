@@ -15,9 +15,10 @@ def main(cfg: DictConfig):
     """
     Federated Learning for Savings Potential Classification
     
-    Supports:
+    Supports three aggregation strategies:
     - FedAvg (Federated Averaging) - baseline
-    - FedProx (Federated Proximal) - handles client heterogeneity
+    - FedProx (Federated Proximal) - handles client heterogeneity with proximal term
+    - SCAFFOLD - handles client heterogeneity with control variates
     
     Data Partitioning:
     - IID: Uniform data distribution across clients
@@ -28,15 +29,21 @@ def main(cfg: DictConfig):
     print("=" * 70)
     print("FEDERATED LEARNING - SAVINGS POTENTIAL CLASSIFICATION")
     print("=" * 70)
-    print(f"\nStrategy: {cfg.strategy.upper()}")
-    print(f"Data Partitioning: {cfg.partition_type.upper()}", end="")
+    
+    strategy_name = cfg.strategy.upper()
+    print(f"\nStrategy: {strategy_name}")
+    
+    # Strategy-specific info
+    if cfg.strategy == "fedprox":
+        print(f"  └─ Proximal term (μ): {cfg.fedprox_mu}")
+    elif cfg.strategy == "scaffold":
+        print(f"  └─ Using control variates for variance reduction")
+    
+    print(f"\nData Partitioning: {cfg.partition_type.upper()}", end="")
     if cfg.partition_type == "dirichlet":
-        print(f" (alpha={cfg.dirichlet_alpha})")
+        print(f" (α={cfg.dirichlet_alpha})")
     else:
         print()
-    
-    if cfg.strategy == "fedprox":
-        print(f"FedProx mu: {cfg.fedprox_mu}")
     
     print("\nFull Configuration:")
     print(OmegaConf.to_yaml(cfg))
@@ -56,7 +63,7 @@ def main(cfg: DictConfig):
     print(f"\nClients ready: {len(trainloaders)}")
     print(f"Features: {num_features}, Classes: {num_classes}")
 
-    ## 3. Define the client function (FedAvg or FedProx)
+    ## 3. Define the client function (FedAvg, FedProx, or SCAFFOLD)
     client_fn = generate_client_fn(
         trainloaders=trainloaders,
         valloaders=validationloaders,
@@ -67,7 +74,9 @@ def main(cfg: DictConfig):
     )
 
     ## 4. Define the server strategy (FedAvg aggregation)
-    strategy = fl.server.strategy.FedAvg(
+    # Note: All three methods use FedAvg aggregation on the server
+    # The difference is in the client-side training
+    server_strategy = fl.server.strategy.FedAvg(
         fraction_fit=0.00001,  # Use min_fit_clients instead
         min_fit_clients=cfg.num_clients_per_round_fit,
         min_evaluate_clients=cfg.num_clients_per_round_eval,
@@ -80,16 +89,17 @@ def main(cfg: DictConfig):
     print("\n" + "=" * 70)
     print("STARTING FEDERATED LEARNING SIMULATION")
     print("=" * 70)
-    print(f"Strategy: {cfg.strategy.upper()}")
+    print(f"Strategy: {strategy_name}")
     print(f"Rounds: {cfg.num_rounds}")
     print(f"Clients per round: {cfg.num_clients_per_round_fit}")
+    print(f"Local epochs: {cfg.config_fit.local_epochs}")
     print()
     
     history = fl.simulation.start_simulation(
         client_fn=client_fn,
         num_clients=cfg.num_clients,
         config=fl.server.ServerConfig(num_rounds=cfg.num_rounds),
-        strategy=strategy,
+        strategy=server_strategy,
         client_resources={'num_cpus': 1.0, 'num_gpus': 0}
     )
 
@@ -106,6 +116,7 @@ def main(cfg: DictConfig):
         'strategy': cfg.strategy,
         'fedprox_mu': cfg.fedprox_mu if cfg.strategy == "fedprox" else None,
         'local_epochs': cfg.config_fit.local_epochs,
+        'lr': cfg.config_fit.lr,
         'num_features': num_features,
         'num_classes': num_classes,
         'task': 'Savings Potential Classification'
@@ -123,10 +134,10 @@ def main(cfg: DictConfig):
     print("\n" + "=" * 70)
     print("EXPERIMENT COMPLETED")
     print("=" * 70)
-    print(f"\nStrategy: {cfg.strategy.upper()}")
+    print(f"\nStrategy: {strategy_name}")
     print(f"Data: {cfg.partition_type.upper()}", end="")
     if cfg.partition_type == "dirichlet":
-        print(f" (alpha={cfg.dirichlet_alpha})")
+        print(f" (α={cfg.dirichlet_alpha})")
     else:
         print()
     

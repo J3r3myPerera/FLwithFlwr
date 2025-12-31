@@ -1,0 +1,23 @@
+---
+# Non-IID + SCAFFOLD
+# Heterogeneous data - SCAFFOLD with variance reduction
+
+num_rounds: 15
+num_clients: 10
+batch_size: 32
+
+num_clients_per_round_fit: 5
+num_clients_per_round_eval: 10
+
+# High Non-IID Partitioning (same as others for fair comparison)
+partition_type: "dirichlet"
+dirichlet_alpha: 0.1
+
+# SCAFFOLD Strategy
+strategy: "scaffold"
+fedprox_mu: 0.0
+
+config_fit:
+  lr: 0.01
+  momentum: 0.9
+  local_epochs: 5

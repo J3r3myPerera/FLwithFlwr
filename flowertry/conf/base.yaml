@@ -17,7 +17,10 @@ num_clients_per_round_eval: 10
 partition_type: "dirichlet"
 dirichlet_alpha: 0.5
 
-# Aggregation Strategy: "fedavg" or "fedprox"
+# Aggregation Strategy: "fedavg", "fedprox", or "scaffold"
+# - fedavg: Standard Federated Averaging (baseline)
+# - fedprox: Adds proximal term to prevent client drift
+# - scaffold: Uses control variates for variance reduction
 strategy: "fedavg"
 
 # FedProx Parameters (only used when strategy=fedprox)
