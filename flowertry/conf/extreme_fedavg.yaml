@@ -1,0 +1,25 @@
+---
+# EXTREME Non-IID + FedAvg
+# Very high heterogeneity - FedAvg will struggle significantly
+
+num_rounds: 25
+num_clients: 10
+batch_size: 16
+
+num_clients_per_round_fit: 5
+num_clients_per_round_eval: 10
+
+# EXTREME Non-IID Partitioning
+# alpha=0.05 means each client has almost only 1 class
+partition_type: "dirichlet"
+dirichlet_alpha: 0.05
+
+# FedAvg Strategy (baseline - will struggle)
+strategy: "fedavg"
+fedprox_mu: 0.0
+
+config_fit:
+  lr: 0.01
+  momentum: 0.9
+  local_epochs: 10   # Many local epochs = severe client drift
+  weight_decay: 0.0001

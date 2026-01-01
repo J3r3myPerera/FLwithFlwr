@@ -1,0 +1,24 @@
+---
+# TUNED Non-IID + SCAFFOLD
+# Optimized hyperparameters for heterogeneous data
+
+num_rounds: 20
+num_clients: 10
+batch_size: 16  # Smaller batch for better generalization
+
+num_clients_per_round_fit: 8  # More clients per round
+num_clients_per_round_eval: 10
+
+# Extreme Non-IID Partitioning
+partition_type: "dirichlet"
+dirichlet_alpha: 0.1
+
+# SCAFFOLD Strategy
+strategy: "scaffold"
+fedprox_mu: 0.0
+
+config_fit:
+  lr: 0.005         # Lower learning rate works well with SCAFFOLD
+  momentum: 0.9
+  local_epochs: 3   # Fewer epochs since SCAFFOLD handles drift well
+  weight_decay: 0.0001

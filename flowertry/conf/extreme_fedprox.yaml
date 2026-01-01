@@ -1,0 +1,25 @@
+---
+# EXTREME Non-IID + FedProx
+# Very high heterogeneity - FedProx should handle drift better
+
+num_rounds: 25
+num_clients: 10
+batch_size: 16
+
+num_clients_per_round_fit: 5
+num_clients_per_round_eval: 10
+
+# EXTREME Non-IID Partitioning (same as FedAvg for fair comparison)
+partition_type: "dirichlet"
+dirichlet_alpha: 0.05
+
+# FedProx Strategy
+# mu=0.1 - stronger regularization for extreme heterogeneity
+strategy: "fedprox"
+fedprox_mu: 0.1
+
+config_fit:
+  lr: 0.01
+  momentum: 0.9
+  local_epochs: 10   # Same as FedAvg for fair comparison
+  weight_decay: 0.0001

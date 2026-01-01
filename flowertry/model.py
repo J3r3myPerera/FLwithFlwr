@@ -5,61 +5,81 @@ import torch.nn.functional as F
 
 class MLP(nn.Module):
     """
-    Multi-layer Neural Network for Savings Potential Classification.
+    Improved Multi-layer Neural Network for Savings Potential Classification.
     
-    Architecture:
-    - Input layer: num_features (16 features from Personal Finance dataset)
-    - Hidden layer 1: 64 neurons with ReLU and Dropout
-    - Hidden layer 2: 32 neurons with ReLU and Dropout
-    - Hidden layer 3: 16 neurons with ReLU
-    - Output layer: num_classes (3 classes: Low, Medium, High)
-    
-    Suitable for classification with heterogeneous tabular data.
+    Improvements:
+    - Added weight initialization (Xavier/He)
+    - Added optional weight decay support
+    - Configurable dropout
+    - LeakyReLU for better gradient flow
     """
     
     def __init__(self, num_features: int, num_classes: int = 3, dropout: float = 0.3):
         super(MLP, self).__init__()
         
-        self.fc1 = nn.Linear(num_features, 64)
-        self.bn1 = nn.BatchNorm1d(64)
+        self.fc1 = nn.Linear(num_features, 128)  # Increased from 64
+        self.bn1 = nn.BatchNorm1d(128)
         self.dropout1 = nn.Dropout(dropout)
         
-        self.fc2 = nn.Linear(64, 32)
-        self.bn2 = nn.BatchNorm1d(32)
+        self.fc2 = nn.Linear(128, 64)  # Increased from 32
+        self.bn2 = nn.BatchNorm1d(64)
         self.dropout2 = nn.Dropout(dropout)
         
-        self.fc3 = nn.Linear(32, 16)
-        self.bn3 = nn.BatchNorm1d(16)
+        self.fc3 = nn.Linear(64, 32)  # Increased from 16
+        self.bn3 = nn.BatchNorm1d(32)
+        self.dropout3 = nn.Dropout(dropout * 0.5)  # Less dropout in later layers
         
-        self.fc4 = nn.Linear(16, num_classes)
+        self.fc4 = nn.Linear(32, num_classes)
+        
+        # Initialize weights
+        self._init_weights()
+    
+    def _init_weights(self):
+        """Xavier initialization for better convergence."""
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.BatchNorm1d):
+                nn.init.ones_(m.weight)
+                nn.init.zeros_(m.bias)
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Layer 1
         x = self.fc1(x)
         x = self.bn1(x)
-        x = F.relu(x)
+        x = F.leaky_relu(x, negative_slope=0.1)  # LeakyReLU for better gradients
         x = self.dropout1(x)
         
         # Layer 2
         x = self.fc2(x)
         x = self.bn2(x)
-        x = F.relu(x)
+        x = F.leaky_relu(x, negative_slope=0.1)
         x = self.dropout2(x)
         
         # Layer 3
         x = self.fc3(x)
         x = self.bn3(x)
-        x = F.relu(x)
+        x = F.leaky_relu(x, negative_slope=0.1)
+        x = self.dropout3(x)
         
-        # Output layer (no activation - CrossEntropyLoss expects raw logits)
+        # Output layer
         x = self.fc4(x)
         
         return x
 
 
-def train(model: nn.Module, trainloader, optimizer, epochs: int, device):
-    """Train the MLP model on the training set."""
-    criterion = nn.CrossEntropyLoss()
+def train(model: nn.Module, trainloader, optimizer, epochs: int, device, 
+          weight_decay: float = 0.0001):
+    """
+    Train the MLP model with optional gradient clipping.
+    
+    Improvements:
+    - Gradient clipping to prevent exploding gradients
+    - Label smoothing for better generalization
+    """
+    criterion = nn.CrossEntropyLoss(label_smoothing=0.1)  # Label smoothing
     model.train()
     model.to(device)
     
@@ -75,26 +95,20 @@ def train(model: nn.Module, trainloader, optimizer, epochs: int, device):
             outputs = model(features)
             loss = criterion(outputs, labels)
             loss.backward()
+            
+            # Gradient clipping
+            torch.nn.utils.clip_grad_norm_(model.parameters(), max_norm=1.0)
+            
             optimizer.step()
             
             total_loss += loss.item()
             _, predicted = torch.max(outputs.data, 1)
             total += labels.size(0)
             correct += (predicted == labels).sum().item()
-        
-        # Optional: print epoch stats (uncomment for debugging)
-        # accuracy = 100 * correct / total
-        # print(f"Epoch {epoch+1}/{epochs}, Loss: {total_loss:.4f}, Accuracy: {accuracy:.2f}%")
 
 
 def test(model: nn.Module, testloader, device) -> tuple:
-    """
-    Evaluate the model on the test/validation set.
-    
-    Returns:
-        loss: Total cross-entropy loss
-        accuracy: Classification accuracy (0-1)
-    """
+    """Evaluate the model on the test/validation set."""
     criterion = nn.CrossEntropyLoss()
     model.eval()
     model.to(device)

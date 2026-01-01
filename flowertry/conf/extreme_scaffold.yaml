@@ -1,0 +1,24 @@
+---
+# EXTREME Non-IID + SCAFFOLD
+# Very high heterogeneity - SCAFFOLD should show best convergence
+
+num_rounds: 25
+num_clients: 10
+batch_size: 16
+
+num_clients_per_round_fit: 5
+num_clients_per_round_eval: 10
+
+# EXTREME Non-IID Partitioning (same as others for fair comparison)
+partition_type: "dirichlet"
+dirichlet_alpha: 0.05
+
+# SCAFFOLD Strategy
+strategy: "scaffold"
+fedprox_mu: 0.0
+
+config_fit:
+  lr: 0.01
+  momentum: 0.9
+  local_epochs: 10   # Same as others for fair comparison
+  weight_decay: 0.0001

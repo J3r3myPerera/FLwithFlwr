@@ -1,0 +1,908 @@
+[2026-01-01 23:50:35,535][flwr][INFO] - Starting Flower simulation, config: ServerConfig(num_rounds=20, round_timeout=None)
+[2026-01-01 23:50:40,870][flwr][INFO] - Flower VCE: Ray initialized with resources: {'CPU': 10.0, 'memory': 11967019418.0, 'node:127.0.0.1': 1.0, 'object_store_memory': 2147483648.0}
+[2026-01-01 23:50:40,870][flwr][INFO] - Initializing global parameters
+[2026-01-01 23:50:40,871][flwr][INFO] - Requesting initial parameters from one random client
+[2026-01-01 23:50:44,099][flwr][INFO] - Received initial parameters from one random client
+[2026-01-01 23:50:44,099][flwr][INFO] - Evaluating initial parameters
+[2026-01-01 23:50:44,202][flwr][INFO] - initial parameters (loss, other metrics): 139.5040682554245, {'accuracy': 0.2615}
+[2026-01-01 23:50:44,202][flwr][INFO] - FL starting
+[2026-01-01 23:50:44,202][flwr][DEBUG] - fit_round 1: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:50:48,193][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5409, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:50:48,259][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5412, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:50:48,500][flwr][DEBUG] - fit_round 1 received 6 results and 2 failures
+[2026-01-01 23:50:48,506][flwr][WARNING] - No fit_metrics_aggregation_fn provided
+[2026-01-01 23:50:48,565][flwr][INFO] - fit progress: (1, 130.11684840917587, {'accuracy': 0.559}, 4.362674250034615)
+[2026-01-01 23:50:48,565][flwr][DEBUG] - evaluate_round 1: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:50:49,045][flwr][DEBUG] - evaluate_round 1 received 10 results and 0 failures
+[2026-01-01 23:50:49,045][flwr][WARNING] - No evaluate_metrics_aggregation_fn provided
+[2026-01-01 23:50:49,045][flwr][DEBUG] - fit_round 2: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:50:49,712][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5411, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:50:49,766][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5412, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:50:50,120][flwr][DEBUG] - fit_round 2 received 6 results and 2 failures
+[2026-01-01 23:50:50,181][flwr][INFO] - fit progress: (2, 135.06600457429886, {'accuracy': 0.603}, 5.979155458975583)
+[2026-01-01 23:50:50,181][flwr][DEBUG] - evaluate_round 2: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:50:50,642][flwr][DEBUG] - evaluate_round 2 received 10 results and 0 failures
+[2026-01-01 23:50:50,642][flwr][DEBUG] - fit_round 3: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:50:51,337][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5415, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:50:51,797][flwr][DEBUG] - fit_round 3 received 7 results and 1 failures
+[2026-01-01 23:50:51,868][flwr][INFO] - fit progress: (3, 135.1645523607731, {'accuracy': 0.565}, 7.666437458945438)
+[2026-01-01 23:50:51,869][flwr][DEBUG] - evaluate_round 3: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:50:52,337][flwr][DEBUG] - evaluate_round 3 received 10 results and 0 failures
+[2026-01-01 23:50:52,337][flwr][DEBUG] - fit_round 4: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:50:53,448][flwr][DEBUG] - fit_round 4 received 8 results and 0 failures
+[2026-01-01 23:50:53,529][flwr][INFO] - fit progress: (4, 137.14087080955505, {'accuracy': 0.597}, 9.3269237090135)
+[2026-01-01 23:50:53,529][flwr][DEBUG] - evaluate_round 4: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:50:54,009][flwr][DEBUG] - evaluate_round 4 received 10 results and 0 failures
+[2026-01-01 23:50:54,009][flwr][DEBUG] - fit_round 5: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:50:54,670][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5412, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:50:54,762][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5411, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:50:54,981][flwr][DEBUG] - fit_round 5 received 6 results and 2 failures
+[2026-01-01 23:50:55,051][flwr][INFO] - fit progress: (5, 196.47121649980545, {'accuracy': 0.2465}, 10.848694666987285)
+[2026-01-01 23:50:55,051][flwr][DEBUG] - evaluate_round 5: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:50:55,513][flwr][DEBUG] - evaluate_round 5 received 10 results and 0 failures
+[2026-01-01 23:50:55,513][flwr][DEBUG] - fit_round 6: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:50:56,344][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5414, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:50:56,608][flwr][DEBUG] - fit_round 6 received 7 results and 1 failures
+[2026-01-01 23:50:56,679][flwr][INFO] - fit progress: (6, 138.02624666690826, {'accuracy': 0.568}, 12.477271292009391)
+[2026-01-01 23:50:56,679][flwr][DEBUG] - evaluate_round 6: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:50:57,148][flwr][DEBUG] - evaluate_round 6 received 10 results and 0 failures
+[2026-01-01 23:50:57,148][flwr][DEBUG] - fit_round 7: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:50:57,827][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5412, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:50:57,850][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5411, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:50:57,851][flwr][DEBUG] - fit_round 7 received 6 results and 2 failures
+[2026-01-01 23:50:57,912][flwr][INFO] - fit progress: (7, 155.82521724700928, {'accuracy': 0.3185}, 13.709663250017911)
+[2026-01-01 23:50:57,912][flwr][DEBUG] - evaluate_round 7: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:50:58,374][flwr][DEBUG] - evaluate_round 7 received 10 results and 0 failures
+[2026-01-01 23:50:58,374][flwr][DEBUG] - fit_round 8: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:50:59,015][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5409, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:50:59,259][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5413, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:50:59,545][flwr][DEBUG] - fit_round 8 received 6 results and 2 failures
+[2026-01-01 23:50:59,608][flwr][INFO] - fit progress: (8, 138.13738590478897, {'accuracy': 0.605}, 15.405866250046529)
+[2026-01-01 23:50:59,608][flwr][DEBUG] - evaluate_round 8: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:51:00,068][flwr][DEBUG] - evaluate_round 8 received 10 results and 0 failures
+[2026-01-01 23:51:00,069][flwr][DEBUG] - fit_round 9: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:51:00,749][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5414, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:00,793][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5413, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:01,057][flwr][DEBUG] - fit_round 9 received 6 results and 2 failures
+[2026-01-01 23:51:01,120][flwr][INFO] - fit progress: (9, 163.08153188228607, {'accuracy': 0.383}, 16.918290583998896)
+[2026-01-01 23:51:01,120][flwr][DEBUG] - evaluate_round 9: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:51:01,583][flwr][DEBUG] - evaluate_round 9 received 10 results and 0 failures
+[2026-01-01 23:51:01,584][flwr][DEBUG] - fit_round 10: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:51:02,321][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5415, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:02,480][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5414, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:02,640][flwr][DEBUG] - fit_round 10 received 6 results and 2 failures
+[2026-01-01 23:51:02,701][flwr][INFO] - fit progress: (10, 178.03993141651154, {'accuracy': 0.285}, 18.499251333996654)
+[2026-01-01 23:51:02,701][flwr][DEBUG] - evaluate_round 10: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:51:03,160][flwr][DEBUG] - evaluate_round 10 received 10 results and 0 failures
+[2026-01-01 23:51:03,161][flwr][DEBUG] - fit_round 11: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:51:03,844][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5412, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:03,975][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5408, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:04,098][flwr][DEBUG] - fit_round 11 received 6 results and 2 failures
+[2026-01-01 23:51:04,157][flwr][INFO] - fit progress: (11, 139.40636509656906, {'accuracy': 0.6035}, 19.95544870896265)
+[2026-01-01 23:51:04,158][flwr][DEBUG] - evaluate_round 11: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:51:04,610][flwr][DEBUG] - evaluate_round 11 received 10 results and 0 failures
+[2026-01-01 23:51:04,611][flwr][DEBUG] - fit_round 12: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:51:05,368][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5413, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:05,650][flwr][DEBUG] - fit_round 12 received 7 results and 1 failures
+[2026-01-01 23:51:05,714][flwr][INFO] - fit progress: (12, 142.65013337135315, {'accuracy': 0.552}, 21.51176237501204)
+[2026-01-01 23:51:05,714][flwr][DEBUG] - evaluate_round 12: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:51:06,178][flwr][DEBUG] - evaluate_round 12 received 10 results and 0 failures
+[2026-01-01 23:51:06,179][flwr][DEBUG] - fit_round 13: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:51:06,981][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5409, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:07,228][flwr][DEBUG] - fit_round 13 received 7 results and 1 failures
+[2026-01-01 23:51:07,288][flwr][INFO] - fit progress: (13, 137.98212069272995, {'accuracy': 0.6065}, 23.086314958985895)
+[2026-01-01 23:51:07,288][flwr][DEBUG] - evaluate_round 13: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:51:07,748][flwr][DEBUG] - evaluate_round 13 received 10 results and 0 failures
+[2026-01-01 23:51:07,748][flwr][DEBUG] - fit_round 14: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:51:08,409][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5415, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:08,558][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5412, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:08,732][flwr][DEBUG] - fit_round 14 received 6 results and 2 failures
+[2026-01-01 23:51:08,795][flwr][INFO] - fit progress: (14, 139.1326406598091, {'accuracy': 0.598}, 24.593376167002134)
+[2026-01-01 23:51:08,796][flwr][DEBUG] - evaluate_round 14: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:51:09,271][flwr][DEBUG] - evaluate_round 14 received 10 results and 0 failures
+[2026-01-01 23:51:09,271][flwr][DEBUG] - fit_round 15: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:51:09,970][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5408, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:10,061][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5409, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:10,356][flwr][DEBUG] - fit_round 15 received 6 results and 2 failures
+[2026-01-01 23:51:10,421][flwr][INFO] - fit progress: (15, 140.05147430300713, {'accuracy': 0.548}, 26.219141124980524)
+[2026-01-01 23:51:10,421][flwr][DEBUG] - evaluate_round 15: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:51:10,882][flwr][DEBUG] - evaluate_round 15 received 10 results and 0 failures
+[2026-01-01 23:51:10,882][flwr][DEBUG] - fit_round 16: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:51:11,591][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5408, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:11,613][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5413, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:11,959][flwr][DEBUG] - fit_round 16 received 6 results and 2 failures
+[2026-01-01 23:51:12,028][flwr][INFO] - fit progress: (16, 143.41039836406708, {'accuracy': 0.4965}, 27.82648725004401)
+[2026-01-01 23:51:12,029][flwr][DEBUG] - evaluate_round 16: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:51:12,485][flwr][DEBUG] - evaluate_round 16 received 10 results and 0 failures
+[2026-01-01 23:51:12,485][flwr][DEBUG] - fit_round 17: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:51:13,299][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5417, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:13,371][flwr][DEBUG] - fit_round 17 received 7 results and 1 failures
+[2026-01-01 23:51:13,429][flwr][INFO] - fit progress: (17, 149.80257415771484, {'accuracy': 0.4195}, 29.226961834006943)
+[2026-01-01 23:51:13,429][flwr][DEBUG] - evaluate_round 17: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:51:13,883][flwr][DEBUG] - evaluate_round 17 received 10 results and 0 failures
+[2026-01-01 23:51:13,884][flwr][DEBUG] - fit_round 18: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:51:14,608][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5412, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:14,712][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5408, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:14,860][flwr][DEBUG] - fit_round 18 received 6 results and 2 failures
+[2026-01-01 23:51:14,918][flwr][INFO] - fit progress: (18, 140.3387326002121, {'accuracy': 0.5465}, 30.71554470900446)
+[2026-01-01 23:51:14,918][flwr][DEBUG] - evaluate_round 18: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:51:15,380][flwr][DEBUG] - evaluate_round 18 received 10 results and 0 failures
+[2026-01-01 23:51:15,381][flwr][DEBUG] - fit_round 19: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:51:16,000][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5411, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:16,181][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5413, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:16,297][flwr][DEBUG] - fit_round 19 received 6 results and 2 failures
+[2026-01-01 23:51:16,360][flwr][INFO] - fit progress: (19, 136.92167401313782, {'accuracy': 0.5635}, 32.158283291966654)
+[2026-01-01 23:51:16,360][flwr][DEBUG] - evaluate_round 19: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:51:16,818][flwr][DEBUG] - evaluate_round 19 received 10 results and 0 failures
+[2026-01-01 23:51:16,818][flwr][DEBUG] - fit_round 20: strategy sampled 8 clients (out of 10)
+[2026-01-01 23:51:17,458][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5417, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:17,616][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=5412, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 57, in fit
+    train(self.model, self.trainloader, optimizer, epochs, self.device)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 95, in train
+    outputs = model(features)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 51, in forward
+    x = self.bn1(x)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1194, in _call_impl
+    return forward_call(*input, **kwargs)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 171, in forward
+    return F.batch_norm(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2448, in batch_norm
+    _verify_batch_size(input.size())
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/functional.py", line 2416, in _verify_batch_size
+    raise ValueError("Expected more than 1 value per channel when training, got input size {}".format(size))
+ValueError: Expected more than 1 value per channel when training, got input size torch.Size([1, 128])
+[2026-01-01 23:51:17,857][flwr][DEBUG] - fit_round 20 received 6 results and 2 failures
+[2026-01-01 23:51:17,917][flwr][INFO] - fit progress: (20, 135.40209063887596, {'accuracy': 0.557}, 33.71506637497805)
+[2026-01-01 23:51:17,917][flwr][DEBUG] - evaluate_round 20: strategy sampled 10 clients (out of 10)
+[2026-01-01 23:51:18,372][flwr][DEBUG] - evaluate_round 20 received 10 results and 0 failures
+[2026-01-01 23:51:18,372][flwr][INFO] - FL finished in 34.170372167020105
+[2026-01-01 23:51:18,373][flwr][INFO] - app_fit: losses_distributed [(1, 25.401755811708806), (2, 27.34454244335404), (3, 27.151514786405528), (4, 27.924454926233118), (5, 40.32333128272093), (6, 27.690458209832553), (7, 31.625767065647715), (8, 27.991084386103005), (9, 33.657047747744286), (10, 36.56442406764441), (11, 28.24254131488054), (12, 28.914059153444782), (13, 27.99891112975461), (14, 28.243133309257853), (15, 27.73941159591842), (16, 29.43216456076284), (17, 30.63041332398929), (18, 27.588297317986832), (19, 27.416436636534193), (20, 26.62222256597737)]
+[2026-01-01 23:51:18,373][flwr][INFO] - app_fit: metrics_distributed_fit {}
+[2026-01-01 23:51:18,373][flwr][INFO] - app_fit: metrics_distributed {}
+[2026-01-01 23:51:18,373][flwr][INFO] - app_fit: losses_centralized [(0, 139.5040682554245), (1, 130.11684840917587), (2, 135.06600457429886), (3, 135.1645523607731), (4, 137.14087080955505), (5, 196.47121649980545), (6, 138.02624666690826), (7, 155.82521724700928), (8, 138.13738590478897), (9, 163.08153188228607), (10, 178.03993141651154), (11, 139.40636509656906), (12, 142.65013337135315), (13, 137.98212069272995), (14, 139.1326406598091), (15, 140.05147430300713), (16, 143.41039836406708), (17, 149.80257415771484), (18, 140.3387326002121), (19, 136.92167401313782), (20, 135.40209063887596)]
+[2026-01-01 23:51:18,373][flwr][INFO] - app_fit: metrics_centralized {'accuracy': [(0, 0.2615), (1, 0.559), (2, 0.603), (3, 0.565), (4, 0.597), (5, 0.2465), (6, 0.568), (7, 0.3185), (8, 0.605), (9, 0.383), (10, 0.285), (11, 0.6035), (12, 0.552), (13, 0.6065), (14, 0.598), (15, 0.548), (16, 0.4965), (17, 0.4195), (18, 0.5465), (19, 0.5635), (20, 0.557)]}

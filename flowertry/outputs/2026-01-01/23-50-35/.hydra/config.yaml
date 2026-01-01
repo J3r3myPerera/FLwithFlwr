@@ -1,0 +1,14 @@
+num_rounds: 20
+num_clients: 10
+batch_size: 16
+num_clients_per_round_fit: 8
+num_clients_per_round_eval: 10
+partition_type: dirichlet
+dirichlet_alpha: 0.1
+strategy: fedavg
+fedprox_mu: 0.0
+config_fit:
+  lr: 0.005
+  momentum: 0.9
+  local_epochs: 3
+  weight_decay: 0.0001

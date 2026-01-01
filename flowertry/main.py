@@ -81,7 +81,7 @@ def main(cfg: DictConfig):
         min_fit_clients=cfg.num_clients_per_round_fit,
         min_evaluate_clients=cfg.num_clients_per_round_eval,
         min_available_clients=cfg.num_clients,
-        on_fit_config_fn=get_on_fit_config(cfg.config_fit),
+        on_fit_config_fn=get_on_fit_config(cfg.config_fit, cfg.fedprox_mu, cfg.num_rounds),
         evaluate_fn=get_evaluate_fn(num_features, num_classes, testloader)
     )
 
