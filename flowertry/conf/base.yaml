@@ -1,12 +1,33 @@
 ---
+# Federated Learning Configuration for Savings Potential Classification
+# Dataset: Indian Personal Finance and Spending Habits
+# Task: 3-class classification (Low/Medium/High savings potential)
 
-num_rounds: 10
+num_rounds: 30  # Increased to better observe FedProx benefits
 num_clients: 100
-batch_size: 20
-num_classes: 10
+batch_size: 32
+num_classes: 3
+
 num_clients_per_round_fit: 10
 num_clients_per_round_eval: 25
+
+# Data distribution parameters
+iid: false  # Set to true for IID, false for non-IID
+alpha: 0.3  # Dirichlet parameter for non-IID (lower = more heterogeneous)
+            # 0.1 = very heterogeneous, 0.5 = moderate (better for seeing FedProx benefits), 1.0 = mild
+
+# Strategy-specific parameters
+proximal_mu: 0.25  # For FedProx (increased from 0.1 for better regularization)
+                  # Typical range: 0.01-0.5, higher = stronger regularization
+scaffold_lr: 1.0  # For FedSCAFFOLD
+
+# Strategies to run in comparison (fedavg, fedprox, fedscaffold)
+strategies:
+  - fedavg
+  - fedprox
+  # - fedscaffold
+
 config_fit:
   lr: 0.01
   momentum: 0.9
-  local_epochs: 1
+  local_epochs: 3
