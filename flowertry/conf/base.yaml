@@ -3,7 +3,7 @@
 # Dataset: Indian Personal Finance and Spending Habits
 # Task: 3-class classification (Low/Medium/High savings potential)
 
-num_rounds: 30  # Increased to better observe FedProx benefits
+num_rounds: 50  # Increased to better observe FedProx benefits
 num_clients: 100
 batch_size: 32
 num_classes: 3
@@ -20,6 +20,17 @@ alpha: 0.3  # Dirichlet parameter for non-IID (lower = more heterogeneous)
 proximal_mu: 0.25  # For FedProx (increased from 0.1 for better regularization)
                   # Typical range: 0.01-0.5, higher = stronger regularization
 scaffold_lr: 1.0  # For FedSCAFFOLD
+
+# Adaptive FedProx parameters
+adaptive_mu:
+  enabled: true           # Whether to use adaptive mu (true) or fixed mu (false)
+  initial_mu: 0.1         # Starting mu value
+  mu_min: 0.01            # Minimum allowed mu (increased from 0.001 for stability)
+  mu_max: 0.5             # Maximum allowed mu (reduced from 1.0 - typical FedProx range is 0.01-0.5)
+  increase_factor: 1.2    # Multiply mu by this when loss increases (reduced from 1.5 for less aggressive growth)
+  decrease_factor: 0.95   # Multiply mu by this when loss decreases (increased from 0.9 for slower decay)
+  loss_threshold: 0.01    # Only adapt if loss change exceeds this (increased from 0.0 to ignore noise)
+  warmup_rounds: 5        # Wait this many rounds before adapting (increased from 3 for more stable start)
 
 # Strategies to run in comparison (fedavg, fedprox, fedscaffold)
 strategies:
