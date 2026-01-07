@@ -5,7 +5,7 @@ import numpy as np
 import flwr as fl
 from flwr.common.typing import Scalar, NDArrays
 
-from model import Net, train, test
+from model import Net, train, train_fedprox, test
 
 
 class FlowerClient(fl.client.NumPyClient):
@@ -26,6 +26,48 @@ class FlowerClient(fl.client.NumPyClient):
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
         # Control variate for FedSCAFFOLD
         self.c_client: Optional[NDArrays] = None
+        # Cache heterogeneity metrics (computed once per client)
+        self._label_entropy: Optional[float] = None
+        self._feature_variance: Optional[float] = None
+    
+    def _compute_label_entropy(self) -> float:
+        """Compute label distribution entropy (higher = more uniform, lower = more skewed)."""
+        if self._label_entropy is not None:
+            return self._label_entropy
+        
+        all_labels = []
+        for _, labels in self.trainloader:
+            all_labels.extend(labels.numpy().tolist())
+        
+        labels_arr = np.array(all_labels)
+        _, counts = np.unique(labels_arr, return_counts=True)
+        probs = counts / counts.sum()
+        entropy = -np.sum(probs * np.log(probs + 1e-10))
+        max_entropy = np.log(len(counts)) if len(counts) > 1 else 1.0
+        
+        # Return skewness score (1 - normalized entropy): higher = more skewed
+        self._label_entropy = 1.0 - (entropy / max_entropy) if max_entropy > 0 else 0.0
+        return self._label_entropy
+    
+    def _compute_feature_variance(self) -> float:
+        """Compute mean feature variance across all features."""
+        if self._feature_variance is not None:
+            return self._feature_variance
+        
+        all_features = []
+        for features, _ in self.trainloader:
+            all_features.append(features.numpy())
+        
+        features_arr = np.vstack(all_features)
+        self._feature_variance = float(np.mean(np.var(features_arr, axis=0)))
+        return self._feature_variance
+    
+    def get_heterogeneity_metrics(self) -> Dict[str, float]:
+        """Get local heterogeneity metrics for adaptive mu computation."""
+        return {
+            'label_entropy': self._compute_label_entropy(),
+            'feature_variance': self._compute_feature_variance()
+        }
 
     def set_parameters(self, parameters):
         """Load model parameters from server."""
@@ -58,8 +100,9 @@ class FlowerClient(fl.client.NumPyClient):
             
             # Train with SCAFFOLD correction
             scaffold_lr = config.get('scaffold_lr', 1.0)
+            max_grad_norm = config.get('max_grad_norm', 1.0)
             optimizer = torch.optim.SGD(self.model.parameters(), lr=lr, momentum=momentum)
-            self._train_scaffold(optimizer, epochs, c_global, scaffold_lr)
+            self._train_scaffold(optimizer, epochs, c_global, scaffold_lr, max_grad_norm)
             
             # Compute control variate update
             params_after = self.get_parameters({})
@@ -89,14 +132,42 @@ class FlowerClient(fl.client.NumPyClient):
             
             return params_after, len(self.trainloader.dataset), metrics
         else:
-            # Regular training (FedAvg/FedProx)
+            # Check if this is FedProx (has proximal_mu in config)
+            proximal_mu = config.get('proximal_mu', None)
+            max_grad_norm = config.get('max_grad_norm', 1.0)
             optimizer = torch.optim.SGD(self.model.parameters(), lr=lr, momentum=momentum)
-            train(self.model, self.trainloader, optimizer, epochs, self.device)
             
-            return self.get_parameters({}), len(self.trainloader.dataset), {}
+            if proximal_mu is not None and proximal_mu > 0:
+                # FedProx training with proximal term
+                # Store global parameters before training
+                global_params = [p.copy() for p in parameters]
+                train_fedprox(
+                    self.model, self.trainloader, optimizer, epochs, self.device,
+                    global_params=global_params,
+                    proximal_mu=proximal_mu,
+                    max_grad_norm=max_grad_norm
+                )
+            else:
+                # Regular FedAvg training
+                train(self.model, self.trainloader, optimizer, epochs, self.device, max_grad_norm)
+            
+            # Prepare metrics - include heterogeneity metrics if requested
+            metrics = {}
+            if config.get('report_heterogeneity', False):
+                metrics.update(self.get_heterogeneity_metrics())
+            
+            return self.get_parameters({}), len(self.trainloader.dataset), metrics
     
-    def _train_scaffold(self, optimizer, epochs, c_global, scaffold_lr):
-        """Train with SCAFFOLD correction term."""
+    def _train_scaffold(self, optimizer, epochs, c_global, scaffold_lr, max_grad_norm: float = 1.0):
+        """Train with SCAFFOLD correction term.
+        
+        Args:
+            optimizer: Optimizer for training
+            epochs: Number of training epochs
+            c_global: Global control variate
+            scaffold_lr: SCAFFOLD learning rate
+            max_grad_norm: Maximum gradient norm for clipping (default: 1.0)
+        """
         import torch.nn.functional as F
         criterion = torch.nn.CrossEntropyLoss()
         self.model.train()
@@ -136,6 +207,9 @@ class FlowerClient(fl.client.NumPyClient):
                     loss = loss - scaffold_correction
                 
                 loss.backward()
+                # Clip gradients to prevent exploding gradients
+                if max_grad_norm > 0:
+                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_grad_norm)
                 optimizer.step()
 
     def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]):

@@ -17,20 +17,34 @@ alpha: 0.3  # Dirichlet parameter for non-IID (lower = more heterogeneous)
             # 0.1 = very heterogeneous, 0.5 = moderate (better for seeing FedProx benefits), 1.0 = mild
 
 # Strategy-specific parameters
-proximal_mu: 0.25  # For FedProx (increased from 0.1 for better regularization)
-                  # Typical range: 0.01-0.5, higher = stronger regularization
+proximal_mu: 0.1  # For fixed FedProx - typical range: 0.001-0.5
 scaffold_lr: 1.0  # For FedSCAFFOLD
 
-# Adaptive FedProx parameters
+# Adaptive FedProx parameters (simple loss-based adaptation)
 adaptive_mu:
   enabled: true           # Whether to use adaptive mu (true) or fixed mu (false)
-  initial_mu: 0.1         # Starting mu value
-  mu_min: 0.01            # Minimum allowed mu (increased from 0.001 for stability)
-  mu_max: 0.5             # Maximum allowed mu (reduced from 1.0 - typical FedProx range is 0.01-0.5)
-  increase_factor: 1.2    # Multiply mu by this when loss increases (reduced from 1.5 for less aggressive growth)
-  decrease_factor: 0.95   # Multiply mu by this when loss decreases (increased from 0.9 for slower decay)
-  loss_threshold: 0.01    # Only adapt if loss change exceeds this (increased from 0.0 to ignore noise)
-  warmup_rounds: 5        # Wait this many rounds before adapting (increased from 3 for more stable start)
+  mode: 'multi_signal'     # 'simple' for loss-based, 'multi_signal' for HAPI-based
+  initial_mu: 0.01        # Starting mu value (conservative start)
+  mu_min: 0.001           # Minimum allowed mu
+  mu_max: 0.5             # Maximum allowed mu
+  increase_factor: 1.3    # Multiply mu by this when loss increases
+  decrease_factor: 0.9    # Multiply mu by this when loss decreases
+  loss_threshold: 0.01    # Only adapt if loss change exceeds this
+  warmup_rounds: 3        # Wait this many rounds before adapting
+
+# Multi-Signal Adaptive FedProx parameters (HAPI-based heterogeneity-aware adaptation)
+multi_signal_mu:
+  base_mu: 0.01            # Base mu value before adaptation (start conservative)
+  mu_min: 0.001            # Minimum allowed mu
+  mu_max: 1.0              # Maximum allowed mu
+  smoothing_factor: 0.6    # EMA smoothing for mu updates (0-1, higher = more smoothing)
+  warmup_rounds: 3         # Wait this many rounds before adapting
+  # Signal weights (should sum to ~1.0)
+  weights:
+    gradient_divergence: 0.4   # Weight for gradient/update divergence signal (most direct measure)
+    loss_variance: 0.25        # Weight for loss variance signal
+    label_entropy: 0.2         # Weight for label distribution skewness
+    feature_variance: 0.15     # Weight for feature distribution heterogeneity
 
 # Strategies to run in comparison (fedavg, fedprox, fedscaffold)
 strategies:
@@ -41,4 +55,5 @@ strategies:
 config_fit:
   lr: 0.01
   momentum: 0.9
-  local_epochs: 3
+  local_epochs: 20
+  max_grad_norm: 1.0  # Maximum gradient norm for clipping (0.0 to disable, typical: 0.5-2.0)

@@ -40,18 +40,89 @@ def run_fedavg(cfg: DictConfig, trainloaders, validationloaders, testloader, cli
 
 
 def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, client_fn):
-    """Run FedProx strategy (fixed mu or adaptive mu based on config)."""
+    """Run FedProx strategy (fixed mu, simple adaptive mu, or multi-signal adaptive mu)."""
     
     # Check if adaptive mu is enabled
     adaptive_cfg = cfg.get('adaptive_mu', {})
     use_adaptive = adaptive_cfg.get('enabled', False) if adaptive_cfg else False
+    adaptive_mode = adaptive_cfg.get('mode', 'simple') if adaptive_cfg else 'simple'
     
-    if use_adaptive:
+    if use_adaptive and adaptive_mode == 'multi_signal':
+        # Multi-signal adaptive mu (HAPI-based)
         print("\n" + "=" * 60)
-        print("RUNNING FedProx with ADAPTIVE MU")
+        print("RUNNING FedProx with MULTI-SIGNAL ADAPTIVE MU")
         print("=" * 60)
         
-        # Import adaptive strategy
+        from adaptive_fedprox import MultiSignalAdaptiveFedProx
+        
+        # Get multi-signal mu parameters
+        multi_cfg = cfg.get('multi_signal_mu', {})
+        base_mu = multi_cfg.get('base_mu', 0.1)
+        mu_min = multi_cfg.get('mu_min', 0.001)
+        mu_max = multi_cfg.get('mu_max', 2.0)
+        smoothing_factor = multi_cfg.get('smoothing_factor', 0.7)
+        warmup_rounds = multi_cfg.get('warmup_rounds', 3)
+        
+        # Get signal weights
+        weights_cfg = multi_cfg.get('weights', {})
+        signal_weights = {
+            'gradient_divergence': weights_cfg.get('gradient_divergence', 0.35),
+            'loss_variance': weights_cfg.get('loss_variance', 0.25),
+            'label_entropy': weights_cfg.get('label_entropy', 0.25),
+            'feature_variance': weights_cfg.get('feature_variance', 0.15)
+        }
+        
+        print(f"  Base mu: {base_mu}")
+        print(f"  Mu range: [{mu_min}, {mu_max}]")
+        print(f"  Smoothing factor: {smoothing_factor}")
+        print(f"  Warmup rounds: {warmup_rounds}")
+        print(f"  Signal weights: {signal_weights}")
+        
+        strategy = MultiSignalAdaptiveFedProx(
+            base_mu=base_mu,
+            mu_min=mu_min,
+            mu_max=mu_max,
+            signal_weights=signal_weights,
+            smoothing_factor=smoothing_factor,
+            warmup_rounds=warmup_rounds,
+            fraction_fit=0.00001,
+            min_fit_clients=cfg.num_clients_per_round_fit,
+            min_evaluate_clients=cfg.num_clients_per_round_eval,
+            min_available_clients=cfg.num_clients,
+            on_fit_config_fn=get_on_fit_config(cfg.config_fit),
+            evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader),
+        )
+        
+        start_time = time.time()
+        history = fl.simulation.start_simulation(
+            client_fn=client_fn,
+            num_clients=cfg.num_clients,
+            config=fl.server.ServerConfig(num_rounds=cfg.num_rounds),
+            strategy=strategy,
+            client_resources={'num_cpus': 1.0, 'num_gpus': 0}
+        )
+        elapsed_time = time.time() - start_time
+        
+        # Store adaptation history
+        mu_history = strategy.get_mu_history()
+        final_mu = strategy.get_final_mu()
+        adaptation_history = strategy.get_adaptation_history()
+        
+        print(f"\n  [MultiSignalAdaptiveFedProx] Final mu: {final_mu:.4f}")
+        print(f"  [MultiSignalAdaptiveFedProx] Mu evolution: {[(r, f'{m:.4f}') for r, m in mu_history[-5:]]}")
+        
+        return history, elapsed_time, {
+            'mu_history': mu_history, 
+            'final_mu': final_mu,
+            'adaptation_history': adaptation_history
+        }
+    
+    elif use_adaptive:
+        # Simple loss-based adaptive mu
+        print("\n" + "=" * 60)
+        print("RUNNING FedProx with SIMPLE ADAPTIVE MU")
+        print("=" * 60)
+        
         from adaptive_fedprox import AdaptiveFedProx
         
         # Get adaptive mu parameters with defaults
@@ -103,6 +174,7 @@ def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, cl
         return history, elapsed_time, {'mu_history': mu_history, 'final_mu': final_mu}
     
     else:
+        # Fixed mu
         print("\n" + "=" * 60)
         print("RUNNING FedProx (fixed mu)")
         print("=" * 60)
@@ -115,7 +187,8 @@ def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, cl
             min_fit_clients=cfg.num_clients_per_round_fit,
             min_evaluate_clients=cfg.num_clients_per_round_eval,
             min_available_clients=cfg.num_clients,
-            on_fit_config_fn=get_on_fit_config(cfg.config_fit),
+            # IMPORTANT: Pass proximal_mu to config so client applies the proximal term
+            on_fit_config_fn=get_on_fit_config(cfg.config_fit, proximal_mu=fixed_mu),
             evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader),
             proximal_mu=fixed_mu
         )
@@ -130,7 +203,7 @@ def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, cl
         )
         elapsed_time = time.time() - start_time
         
-        return history, elapsed_time, None
+        return history, elapsed_time, {'final_mu': fixed_mu}
 
 
 def run_fedscaffold(cfg: DictConfig, trainloaders, validationloaders, testloader, client_fn):
@@ -228,6 +301,18 @@ def print_comparison_summary(all_results: List[Dict]):
                 print(f"    ...")
                 for rnd, mu in mu_history[-3:]:
                     print(f"    Round {rnd}: mu = {mu:.4f}")
+        
+        # Print signal breakdown for multi-signal adaptive
+        if 'adaptation_history' in result and result['adaptation_history']:
+            print(f"\n  Signal breakdown for {result['strategy']} (final round):")
+            final_record = result['adaptation_history'][-1]
+            signals = final_record['signals']
+            score = final_record['heterogeneity_score']
+            print(f"    Gradient divergence:  {signals['gradient_divergence']:.3f}")
+            print(f"    Loss variance:        {signals['loss_variance']:.3f}")
+            print(f"    Label entropy:        {signals['label_entropy']:.3f}")
+            print(f"    Feature variance:     {signals['feature_variance']:.3f}")
+            print(f"    Heterogeneity score:  {score:.3f}")
     
     # Find best strategy
     if all_results:
@@ -306,10 +391,17 @@ def main(cfg: DictConfig):
             history, elapsed_time = result[0], result[1]
             adaptive_info = result[2] if len(result) > 2 else None
             
-            # Use appropriate name based on whether adaptive mu is used
+            # Use appropriate name based on adaptive mu mode
             adaptive_cfg = cfg.get('adaptive_mu', {})
             use_adaptive = adaptive_cfg.get('enabled', False) if adaptive_cfg else False
-            strategy_name = 'FedProx (Adaptive)' if use_adaptive else 'FedProx'
+            adaptive_mode = adaptive_cfg.get('mode', 'simple') if adaptive_cfg else 'simple'
+            
+            if use_adaptive and adaptive_mode == 'multi_signal':
+                strategy_name = 'FedProx (MultiSignal)'
+            elif use_adaptive:
+                strategy_name = 'FedProx (Adaptive)'
+            else:
+                strategy_name = 'FedProx'
             
             metrics = extract_metrics(history, strategy_name)
             metrics['elapsed_time'] = elapsed_time
@@ -318,6 +410,8 @@ def main(cfg: DictConfig):
             if adaptive_info:
                 metrics['mu_history'] = adaptive_info['mu_history']
                 metrics['final_mu'] = adaptive_info['final_mu']
+                if 'adaptation_history' in adaptive_info:
+                    metrics['adaptation_history'] = adaptive_info['adaptation_history']
             
             all_results.append(metrics)
         except Exception as e:
@@ -342,6 +436,10 @@ def main(cfg: DictConfig):
     adaptive_cfg = cfg.get('adaptive_mu', {})
     adaptive_mu_config = dict(adaptive_cfg) if adaptive_cfg else {}
     
+    # Get multi-signal config info
+    multi_signal_cfg = cfg.get('multi_signal_mu', {})
+    multi_signal_config = dict(multi_signal_cfg) if multi_signal_cfg else {}
+    
     comparison_data = {
         'results': all_results,
         'config': {
@@ -351,9 +449,13 @@ def main(cfg: DictConfig):
             'num_classes': cfg.num_classes,
             'lr': cfg.config_fit.lr,
             'local_epochs': cfg.config_fit.local_epochs,
+            'max_grad_norm': cfg.config_fit.get('max_grad_norm', 1.0),
             'strategies': strategies_to_run,
             'proximal_mu_fixed': cfg.get('proximal_mu', 0.1),
             'adaptive_mu_config': adaptive_mu_config,
+            'multi_signal_config': multi_signal_config,
+            'iid': cfg.get('iid', True),
+            'alpha': cfg.get('alpha', 0.5),
             'task': 'Savings Potential Classification'
         }
     }

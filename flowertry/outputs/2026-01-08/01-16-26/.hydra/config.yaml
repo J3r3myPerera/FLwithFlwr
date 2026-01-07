@@ -1,0 +1,27 @@
+num_rounds: 50
+num_clients: 100
+batch_size: 32
+num_classes: 3
+num_clients_per_round_fit: 10
+num_clients_per_round_eval: 25
+iid: false
+alpha: 0.1
+proximal_mu: 0.25
+scaffold_lr: 1.0
+adaptive_mu:
+  enabled: true
+  initial_mu: 0.1
+  mu_min: 0.1
+  mu_max: 0.3
+  increase_factor: 1.2
+  decrease_factor: 0.95
+  loss_threshold: 0.01
+  warmup_rounds: 5
+strategies:
+- fedavg
+- fedprox
+config_fit:
+  lr: 0.01
+  momentum: 0.9
+  local_epochs: 20
+  max_grad_norm: 1.0

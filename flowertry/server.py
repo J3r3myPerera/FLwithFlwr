@@ -4,22 +4,28 @@ import torch
 from collections import OrderedDict
 
 
-def get_on_fit_config(config_fit: DictConfig, proximal_mu: float = None):
+def get_on_fit_config(config_fit: DictConfig, proximal_mu: float = None, max_grad_norm: float = None):
     """
     Create a function that returns training configuration for each round.
     
     Args:
-        config_fit: Configuration containing lr, momentum, local_epochs
+        config_fit: Configuration containing lr, momentum, local_epochs, max_grad_norm
         proximal_mu: Optional fixed proximal mu value for FedProx
+        max_grad_norm: Maximum gradient norm for clipping (defaults to config_fit.max_grad_norm or 1.0)
     
     Returns:
         fit_config_fn: Function that returns config dict for each round
     """
+    # Get max_grad_norm from config if not explicitly provided
+    if max_grad_norm is None:
+        max_grad_norm = config_fit.get('max_grad_norm', 1.0)
+    
     def fit_config_fn(server_round: int):
         config = {
             'lr': config_fit.lr,
             'momentum': config_fit.momentum,
-            'local_epochs': config_fit.local_epochs
+            'local_epochs': config_fit.local_epochs,
+            'max_grad_norm': max_grad_norm
         }
         # Include proximal_mu if provided (for FedProx)
         if proximal_mu is not None:
