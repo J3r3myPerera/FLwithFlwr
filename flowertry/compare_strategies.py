@@ -238,6 +238,66 @@ def run_fedscaffold(cfg: DictConfig, trainloaders, validationloaders, testloader
     return history, elapsed_time
 
 
+def run_fedprox_scaffold(cfg: DictConfig, trainloaders, validationloaders, testloader, client_fn):
+    """
+    Run hybrid FedProx-SCAFFOLD strategy.
+    
+    This combines:
+    - FedProx's proximal term for regularization
+    - SCAFFOLD's control variates for variance reduction
+    
+    Particularly effective for highly heterogeneous data distributions.
+    """
+    print("\n" + "=" * 60)
+    print("RUNNING FedProx-SCAFFOLD HYBRID")
+    print("=" * 60)
+    
+    # Import custom hybrid strategy
+    from fedprox_scaffold_strategy import FedProxScaffoldStrategy
+    
+    # Get hybrid parameters from config
+    hybrid_cfg = cfg.get('hybrid', {})
+    proximal_mu = hybrid_cfg.get('proximal_mu', cfg.get('proximal_mu', 0.1))
+    scaffold_lr = hybrid_cfg.get('scaffold_lr', cfg.get('scaffold_lr', 1.0))
+    adaptive_weights = hybrid_cfg.get('adaptive_weights', True)
+    prox_weight = hybrid_cfg.get('prox_weight', 0.5)
+    
+    print(f"  Proximal mu: {proximal_mu}")
+    print(f"  SCAFFOLD lr: {scaffold_lr}")
+    print(f"  Adaptive weights: {adaptive_weights}")
+    print(f"  Initial prox_weight: {prox_weight}")
+    
+    strategy = FedProxScaffoldStrategy(
+        fraction_fit=0.00001,  # Use min_fit_clients instead
+        min_fit_clients=cfg.num_clients_per_round_fit,
+        min_evaluate_clients=cfg.num_clients_per_round_eval,
+        min_available_clients=cfg.num_clients,
+        on_fit_config_fn=get_on_fit_config(cfg.config_fit),
+        evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader),
+        proximal_mu=proximal_mu,
+        scaffold_lr=scaffold_lr,
+        adaptive_weights=adaptive_weights,
+        prox_weight=prox_weight
+    )
+    
+    start_time = time.time()
+    history = fl.simulation.start_simulation(
+        client_fn=client_fn,
+        num_clients=cfg.num_clients,
+        config=fl.server.ServerConfig(num_rounds=cfg.num_rounds),
+        strategy=strategy,
+        client_resources={'num_cpus': 1.0, 'num_gpus': 0}
+    )
+    elapsed_time = time.time() - start_time
+    
+    return history, elapsed_time, {
+        'proximal_mu': proximal_mu,
+        'scaffold_lr': scaffold_lr,
+        'adaptive_weights': adaptive_weights,
+        'prox_weight': prox_weight
+    }
+
+
 def extract_metrics(history, strategy_name: str) -> Dict:
     """Extract key metrics from history."""
     metrics = {
@@ -344,7 +404,7 @@ def main(cfg: DictConfig):
     print("=" * 80)
     print("\nConfiguration:")
     print(OmegaConf.to_yaml(cfg))
-    print(f"\nComparing strategies: FedAvg, FedProx, FedSCAFFOLD")
+    print(f"\nComparing strategies: FedAvg, FedProx, FedSCAFFOLD, FedProx-SCAFFOLD (Hybrid)")
     
     # Display data distribution settings
     iid_setting = cfg.get('iid', True)
@@ -427,6 +487,23 @@ def main(cfg: DictConfig):
             all_results.append(metrics)
         except Exception as e:
             print(f"Error running FedSCAFFOLD: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    if 'fedprox_scaffold' in strategies_to_run or 'hybrid' in strategies_to_run:
+        try:
+            result = run_fedprox_scaffold(cfg, trainloaders, validationloaders, testloader, client_fn)
+            history, elapsed_time = result[0], result[1]
+            hybrid_info = result[2] if len(result) > 2 else {}
+            
+            metrics = extract_metrics(history, 'FedProx-SCAFFOLD')
+            metrics['elapsed_time'] = elapsed_time
+            metrics['hybrid_config'] = hybrid_info
+            all_results.append(metrics)
+        except Exception as e:
+            print(f"Error running FedProx-SCAFFOLD: {e}")
+            import traceback
+            traceback.print_exc()
 
     ## 5. Save comparison results
     save_path = HydraConfig.get().runtime.output_dir

@@ -1,11 +1,12 @@
 from collections import OrderedDict
 from typing import Dict, Optional
+import random
 import torch
 import numpy as np
 import flwr as fl
 from flwr.common.typing import Scalar, NDArrays
 
-from model import Net, train, train_fedprox, test
+from model import Net, train, train_fedprox, train_fedprox_scaffold, test
 
 
 class FlowerClient(fl.client.NumPyClient):
@@ -87,11 +88,18 @@ class FlowerClient(fl.client.NumPyClient):
         momentum = config['momentum']
         epochs = config['local_epochs']
         
-        # Check if this is FedSCAFFOLD
-        is_scaffold = 'scaffold_lr' in config
+        # Check if this is hybrid FedProx-SCAFFOLD
+        is_hybrid = config.get('is_hybrid', False)
+        # Check if this is FedSCAFFOLD only
+        is_scaffold = 'scaffold_lr' in config and not is_hybrid
         c_global = config.get('c_global', None)
         
-        if is_scaffold:
+        if is_hybrid:
+            # Hybrid FedProx-SCAFFOLD training
+            if random.random() < 0.01:  # 1% chance to print
+                print(f"  [Hybrid] Training with proximal_mu={config.get('proximal_mu', 0):.4f}, scaffold_lr={config.get('scaffold_lr', 0):.4f}")
+            return self._fit_hybrid(parameters, config)
+        elif is_scaffold:
             # Initialize or update client control variate
             if self.c_client is None:
                 self.c_client = [np.zeros_like(p) for p in parameters]
@@ -141,6 +149,9 @@ class FlowerClient(fl.client.NumPyClient):
                 # FedProx training with proximal term
                 # Store global parameters before training
                 global_params = [p.copy() for p in parameters]
+                # Debug: Print that FedProx is being used (only occasionally)
+                if random.random() < 0.01:  # 1% chance to print
+                    print(f"  [FedProx] Training with proximal_mu={proximal_mu:.4f}")
                 train_fedprox(
                     self.model, self.trainloader, optimizer, epochs, self.device,
                     global_params=global_params,
@@ -211,6 +222,83 @@ class FlowerClient(fl.client.NumPyClient):
                 if max_grad_norm > 0:
                     torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_grad_norm)
                 optimizer.step()
+
+    def _fit_hybrid(self, parameters, config):
+        """
+        Train with hybrid FedProx-SCAFFOLD approach.
+        
+        Combines proximal regularization with SCAFFOLD control variates
+        for improved convergence on heterogeneous data.
+        """
+        lr = config['lr']
+        momentum = config['momentum']
+        epochs = config['local_epochs']
+        max_grad_norm = config.get('max_grad_norm', 1.0)
+        
+        # FedProx parameters
+        proximal_mu = config.get('proximal_mu', 0.1)
+        
+        # SCAFFOLD parameters
+        scaffold_lr = config.get('scaffold_lr', 1.0)
+        c_global = config.get('c_global', None)
+        
+        # Initialize or update client control variate
+        if self.c_client is None:
+            self.c_client = [np.zeros_like(p) for p in parameters]
+        elif 'c_client' in config:
+            self.c_client = config['c_client']
+        
+        # Store global parameters before training
+        global_params = [p.copy() for p in parameters]
+        
+        # Create optimizer
+        optimizer = torch.optim.SGD(self.model.parameters(), lr=lr, momentum=momentum)
+        
+        # Train with hybrid approach
+        train_fedprox_scaffold(
+            self.model, self.trainloader, optimizer, epochs, self.device,
+            global_params=global_params,
+            proximal_mu=proximal_mu,
+            c_global=c_global,
+            c_client=self.c_client,
+            scaffold_lr=scaffold_lr,
+            max_grad_norm=max_grad_norm
+        )
+        
+        # Get updated parameters
+        params_after = self.get_parameters({})
+        
+        # Compute control variate update (SCAFFOLD-style)
+        c_update = [
+            (pa - pb) / (lr * epochs) if lr * epochs > 0 else (pa - pb)
+            for pa, pb in zip(params_after, global_params)
+        ]
+        
+        # Update client control variate
+        if c_global is not None:
+            num_samples = len(self.trainloader.dataset)
+            c_client_new = [
+                cc + (cu - cg) * (num_samples / (num_samples * epochs + 1))
+                for cc, cu, cg in zip(self.c_client, c_update, c_global)
+            ]
+        else:
+            c_client_new = self.c_client
+        
+        # Prepare metrics
+        metrics = {
+            'c_update': c_update,
+            'c_client_new': c_client_new,
+            'proximal_mu': proximal_mu,
+            'scaffold_lr': scaffold_lr,
+            'prox_weight': config.get('prox_weight', 0.5),
+            'scaffold_weight': config.get('scaffold_weight', 0.5)
+        }
+        
+        # Include heterogeneity metrics if requested
+        if config.get('report_heterogeneity', False):
+            metrics.update(self.get_heterogeneity_metrics())
+        
+        return params_after, len(self.trainloader.dataset), metrics
 
     def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]):
         """Evaluate the model on local validation data."""

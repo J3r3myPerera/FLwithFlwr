@@ -13,19 +13,23 @@ num_clients_per_round_eval: 25
 
 # Data distribution parameters
 iid: false  # Set to true for IID, false for non-IID
-alpha: 0.3  # Dirichlet parameter for non-IID (lower = more heterogeneous)
-            # 0.1 = very heterogeneous, 0.5 = moderate (better for seeing FedProx benefits), 1.0 = mild
+alpha: 0.1  # Dirichlet parameter for non-IID - VERY heterogeneous to show FedProx benefits
+            # 0.1 = very heterogeneous (clients have mostly 1-2 classes)
+            # 0.5 = moderate, 1.0 = mild
 
 # Strategy-specific parameters
-proximal_mu: 0.1  # For fixed FedProx - typical range: 0.001-0.5
+proximal_mu: 0.3  # For fixed FedProx - increased for better regularization
 scaffold_lr: 1.0  # For FedSCAFFOLD
 
 # Adaptive FedProx parameters (simple loss-based adaptation)
+# Note: When enabled=true, it uses adaptive mu instead of fixed proximal_mu
+#enabled: true           # Whether to use adaptive mu (true) or fixed mu (false)
+#   mode: 'multi_signal'     # 'simple' for loss-based, 'multi_signal' for HAPI-based
 adaptive_mu:
-  enabled: true           # Whether to use adaptive mu (true) or fixed mu (false)
-  mode: 'multi_signal'     # 'simple' for loss-based, 'multi_signal' for HAPI-based
-  initial_mu: 0.01        # Starting mu value (conservative start)
-  mu_min: 0.001           # Minimum allowed mu
+  enabled: false          # DISABLED - use fixed proximal_mu instead for fair comparison
+  mode: 'simple'          # 'simple' for loss-based, 'multi_signal' for HAPI-based
+  initial_mu: 0.1         # Starting mu value
+  mu_min: 0.01            # Minimum allowed mu
   mu_max: 0.5             # Maximum allowed mu
   increase_factor: 1.3    # Multiply mu by this when loss increases
   decrease_factor: 0.9    # Multiply mu by this when loss decreases
@@ -34,8 +38,8 @@ adaptive_mu:
 
 # Multi-Signal Adaptive FedProx parameters (HAPI-based heterogeneity-aware adaptation)
 multi_signal_mu:
-  base_mu: 0.01            # Base mu value before adaptation (start conservative)
-  mu_min: 0.001            # Minimum allowed mu
+  base_mu: 0.1             # Base mu value (INCREASED from 0.01)
+  mu_min: 0.01             # Minimum allowed mu (INCREASED from 0.001)
   mu_max: 1.0              # Maximum allowed mu
   smoothing_factor: 0.6    # EMA smoothing for mu updates (0-1, higher = more smoothing)
   warmup_rounds: 3         # Wait this many rounds before adapting
@@ -46,14 +50,28 @@ multi_signal_mu:
     label_entropy: 0.2         # Weight for label distribution skewness
     feature_variance: 0.15     # Weight for feature distribution heterogeneity
 
-# Strategies to run in comparison (fedavg, fedprox, fedscaffold)
+# Hybrid FedProx-SCAFFOLD parameters
+# Combines proximal regularization with SCAFFOLD control variates
+hybrid:
+  proximal_mu: 0.25        # Proximal term weight (increased for better effect)
+  scaffold_lr: 1.0         # SCAFFOLD correction learning rate
+  adaptive_weights: true   # Dynamically adjust prox/scaffold weights
+  prox_weight: 0.5         # Initial weight for proximal term (1-prox_weight for SCAFFOLD)
+
+# Strategies to run in comparison (fedavg, fedprox, fedscaffold, fedprox_scaffold)
 strategies:
   - fedavg
   - fedprox
   # - fedscaffold
+  - fedprox_scaffold  # Hybrid FedProx + SCAFFOLD
 
 config_fit:
   lr: 0.01
   momentum: 0.9
-  local_epochs: 20
+  local_epochs: 5  # Reduced from 20 - FedProx/SCAFFOLD benefits show with fewer local epochs
   max_grad_norm: 1.0  # Maximum gradient norm for clipping (0.0 to disable, typical: 0.5-2.0)
+
+# NOTE: FedProx and SCAFFOLD are designed to handle client drift that occurs
+# during local training. With too many local epochs (e.g., 20), clients
+# overfit to local data regardless of strategy, and all methods perform
+# similarly. Use 3-5 local epochs to see the true benefits of FedProx/SCAFFOLD.
