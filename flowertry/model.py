@@ -117,13 +117,98 @@ def train_fedprox(net, trainloader, optimizer, epochs, device: str,
             optimizer.step()
 
 
+def train_scaffold(model, trainloader, optimizer, epochs, device: str,
+                   c_global: list, c_i: list, max_grad_norm: float = 1.0):
+    """Train with SCAFFOLD control variates.
+
+    SCAFFOLD client update:
+    The correction term (c_global - c_i) is added to gradients during training.
+    This corrects for client drift in heterogeneous settings.
+
+    Args:
+        net: Neural network model
+        trainloader: Training data loader
+        optimizer: Optimizer for training
+        epochs: Number of training epochs
+        device: Device to train on ('cpu' or 'cuda')
+        c_global: Global control variate (list of numpy arrays)
+        c_i: Client control variate (list of numpy arrays)
+        max_grad_norm: Maximum gradient norm for clipping (default: 1.0)
+
+    Returns:
+        c_i_new: Updated client control variate
+        delta_c: Change in client control variate (c_i_new - c_i)
+    """
+    criterion = nn.CrossEntropyLoss()
+    model.train()
+    model.to(device)
+
+    # Convert control variates to tensors
+    c_global_tensors = [torch.tensor(c, device=device, dtype=torch.float32) for c in c_global]
+    c_i_tensors = [torch.tensor(c, device=device, dtype=torch.float32) for c in c_i]
+
+    # Store initial parameters for control variate update
+    params_before = [p.detach().clone() for p in model.parameters()]
+
+    # Count total steps for control variate calculation
+    total_steps = 0
+
+    # Training loop
+    for _ in range(epochs):
+        for features, labels in trainloader:
+            features, labels = features.to(device), labels.to(device)
+            optimizer.zero_grad()
+
+            # Forward pass
+            outputs = model(features)
+            loss = criterion(outputs, labels)
+
+            # Backward pass
+            loss.backward()
+
+            # SCAFFOLD correction: add (c_global - c_i) to gradients
+            # This corrects the local gradient to align with the global objective
+            with torch.no_grad():
+                for param, cg, ci in zip(model.parameters(), c_global_tensors, c_i_tensors):
+                    if param.grad is not None:
+                        param.grad.data += (cg - ci)  # CORRECT: c_global - c_i
+
+            # Clip gradients
+            if max_grad_norm > 0:
+                torch.nn.utils.clip_grad_norm_(model.parameters(), max_grad_norm)
+
+            optimizer.step()
+            total_steps += 1
+
+    # Compute updated client control variate
+    # c_i_new = c_i - c_global + (1/(K*η)) * (x_before - x_after)
+    # where K = epochs, η = learning rate
+    # Simplified: c_i_new = c_global - (x_after - x_before) / (K * η)
+
+    lr = optimizer.param_groups[0]['lr']
+
+    c_i_new = []
+    delta_c = []
+
+    with torch.no_grad():
+        for p_before, p_after, cg, ci in zip(params_before, model.parameters(),
+                                              c_global_tensors, c_i_tensors):
+            # Option II update: c_i_new = c_i - c_global + (x_before - x_after) / (K * η)
+            param_diff = (p_before - p_after) / (total_steps * lr) if (total_steps * lr) > 0 else (p_before - p_after)
+            c_new = ci - cg + param_diff
+
+            c_i_new.append(c_new.cpu().numpy())
+
+    return c_i_new
+
+
 def test(net, testloader, device: str):
     """Evaluate the MLP on the test/validation set."""
     criterion = nn.CrossEntropyLoss()
     correct, loss = 0, 0.0
     net.eval()
     net.to(device)
-    
+
     with torch.no_grad():
         for features, labels in testloader:
             features, labels = features.to(device), labels.to(device)
@@ -131,6 +216,6 @@ def test(net, testloader, device: str):
             loss += criterion(outputs, labels).item()
             _, predicted = torch.max(outputs.data, 1)
             correct += (predicted == labels).sum().item()
-    
+
     accuracy = correct / len(testloader.dataset)
     return loss, accuracy

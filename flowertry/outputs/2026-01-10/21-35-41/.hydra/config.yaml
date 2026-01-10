@@ -1,0 +1,40 @@
+num_rounds: 50
+num_clients: 100
+batch_size: 32
+num_classes: 3
+num_clients_per_round_fit: 10
+num_clients_per_round_eval: 25
+iid: false
+alpha: 0.2
+proximal_mu: 0.005
+scaffold_server_lr: 1.0
+adaptive_mu:
+  enabled: true
+  mode: multi_signal
+  initial_mu: 0.005
+  mu_min: 0.0001
+  mu_max: 0.2
+  increase_factor: 1.2
+  decrease_factor: 0.95
+  loss_threshold: 0.01
+  warmup_rounds: 5
+multi_signal_mu:
+  base_mu: 0.001
+  mu_min: 0.0001
+  mu_max: 0.15
+  smoothing_factor: 0.8
+  warmup_rounds: 5
+  weights:
+    gradient_divergence: 0.45
+    loss_variance: 0.25
+    label_entropy: 0.2
+    feature_variance: 0.1
+strategies:
+- fedavg
+- fedprox
+- fedscaffold
+config_fit:
+  lr: 0.015
+  momentum: 0.9
+  local_epochs: 5
+  max_grad_norm: 1.0

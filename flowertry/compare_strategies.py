@@ -18,7 +18,7 @@ def run_fedavg(cfg: DictConfig, trainloaders, validationloaders, testloader, cli
     print("=" * 60)
     
     strategy = fl.server.strategy.FedAvg(
-        fraction_fit=0.00001,  # Use min_fit_clients instead
+        # fraction_fit=0.00001,  # Use min_fit_clients instead
         min_fit_clients=cfg.num_clients_per_round_fit,
         min_evaluate_clients=cfg.num_clients_per_round_eval,
         min_available_clients=cfg.num_clients,
@@ -85,7 +85,7 @@ def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, cl
             signal_weights=signal_weights,
             smoothing_factor=smoothing_factor,
             warmup_rounds=warmup_rounds,
-            fraction_fit=0.00001,
+            # fraction_fit=0.00001,
             min_fit_clients=cfg.num_clients_per_round_fit,
             min_evaluate_clients=cfg.num_clients_per_round_eval,
             min_available_clients=cfg.num_clients,
@@ -147,7 +147,7 @@ def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, cl
             mu_decrease_factor=decrease_factor,
             loss_threshold=loss_threshold,
             warmup_rounds=warmup_rounds,
-            fraction_fit=0.00001,  # Use min_fit_clients instead
+            # fraction_fit=0.00001,  # Use min_fit_clients instead
             min_fit_clients=cfg.num_clients_per_round_fit,
             min_evaluate_clients=cfg.num_clients_per_round_eval,
             min_available_clients=cfg.num_clients,
@@ -183,7 +183,7 @@ def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, cl
         print(f"  Fixed mu: {fixed_mu}")
         
         strategy = fl.server.strategy.FedProx(
-            fraction_fit=0.00001,  # Use min_fit_clients instead
+            # fraction_fit=0.00001,  # Use min_fit_clients instead
             min_fit_clients=cfg.num_clients_per_round_fit,
             min_evaluate_clients=cfg.num_clients_per_round_eval,
             min_available_clients=cfg.num_clients,
@@ -206,25 +206,40 @@ def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, cl
         return history, elapsed_time, {'final_mu': fixed_mu}
 
 
-def run_fedscaffold(cfg: DictConfig, trainloaders, validationloaders, testloader, client_fn):
-    """Run FedSCAFFOLD strategy."""
+def run_fedscaffold(cfg: DictConfig, trainloaders, validationloaders, testloader):
+    """Run FedSCAFFOLD strategy with improved implementation."""
     print("\n" + "=" * 60)
-    print("RUNNING FedSCAFFOLD")
+    print("RUNNING FedSCAFFOLD (Improved)")
     print("=" * 60)
-    
+
     # Import custom FedSCAFFOLD strategy
     from scaffold_strategy import FedScaffoldStrategy
-    
+    from cleint import generate_client_fn
+
+    # Get SCAFFOLD parameters
+    server_lr = cfg.get('scaffold_server_lr', 1.0)
+    print(f"  Server learning rate: {server_lr}")
+
+    # Create strategy
     strategy = FedScaffoldStrategy(
-        fraction_fit=0.00001,  # Use min_fit_clients instead
+        # fraction_fit=0.00001,  # Use min_fit_clients instead
         min_fit_clients=cfg.num_clients_per_round_fit,
         min_evaluate_clients=cfg.num_clients_per_round_eval,
         min_available_clients=cfg.num_clients,
+        total_clients=cfg.num_clients,
         on_fit_config_fn=get_on_fit_config(cfg.config_fit),
         evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader),
-        scaffold_lr=cfg.get('scaffold_lr', 1.0)  # Default to 1.0 if not specified
+        # server_learning_rate=server_lr
     )
-    
+
+    # Create SCAFFOLD-aware client function with strategy reference
+    client_fn = generate_client_fn(
+        trainloaders,
+        validationloaders,
+        cfg.num_classes,
+        strategy=strategy
+    )
+
     start_time = time.time()
     history = fl.simulation.start_simulation(
         client_fn=client_fn,
@@ -234,7 +249,9 @@ def run_fedscaffold(cfg: DictConfig, trainloaders, validationloaders, testloader
         client_resources={'num_cpus': 1.0, 'num_gpus': 0}
     )
     elapsed_time = time.time() - start_time
-    
+
+    print(f"\n  [SCAFFOLD] Training completed in {elapsed_time:.2f}s")
+
     return history, elapsed_time
 
 
@@ -421,12 +438,15 @@ def main(cfg: DictConfig):
     
     if 'fedscaffold' in strategies_to_run:
         try:
-            history, elapsed_time = run_fedscaffold(cfg, trainloaders, validationloaders, testloader, client_fn)
+            # SCAFFOLD creates its own client function with strategy reference
+            history, elapsed_time = run_fedscaffold(cfg, trainloaders, validationloaders, testloader)
             metrics = extract_metrics(history, 'FedSCAFFOLD')
             metrics['elapsed_time'] = elapsed_time
             all_results.append(metrics)
         except Exception as e:
             print(f"Error running FedSCAFFOLD: {e}")
+            import traceback
+            traceback.print_exc()
 
     ## 5. Save comparison results
     save_path = HydraConfig.get().runtime.output_dir

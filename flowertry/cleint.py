@@ -5,7 +5,7 @@ import numpy as np
 import flwr as fl
 from flwr.common.typing import Scalar, NDArrays
 
-from model import Net, train, train_fedprox, test
+from model import Net, train, train_fedprox, train_scaffold, test
 
 
 class FlowerClient(fl.client.NumPyClient):
@@ -86,57 +86,57 @@ class FlowerClient(fl.client.NumPyClient):
         lr = config['lr']
         momentum = config['momentum']
         epochs = config['local_epochs']
-        
-        # Check if this is FedSCAFFOLD
-        is_scaffold = 'scaffold_lr' in config
-        c_global = config.get('c_global', None)
-        
-        if is_scaffold:
-            # Initialize or update client control variate
+        max_grad_norm = config.get('max_grad_norm', 1.0)
+
+        if config.get("scaffold", False):
+            c_global = config["c_global"]
+            c_i = config["c_local"]
+
+            # Defensive init (first participation)
             if self.c_client is None:
-                self.c_client = [np.zeros_like(p) for p in parameters]
-            elif 'c_client' in config:
-                self.c_client = config['c_client']
-            
-            # Train with SCAFFOLD correction
-            scaffold_lr = config.get('scaffold_lr', 1.0)
-            max_grad_norm = config.get('max_grad_norm', 1.0)
-            optimizer = torch.optim.SGD(self.model.parameters(), lr=lr, momentum=momentum)
-            self._train_scaffold(optimizer, epochs, c_global, scaffold_lr, max_grad_norm)
-            
-            # Compute control variate update
-            params_after = self.get_parameters({})
-            params_before = [p.copy() for p in parameters]
-            
-            # c_update = (params_after - params_before) / (lr * epochs)
-            # Simplified version: difference in parameters
-            c_update = [
-                (pa - pb) / (lr * epochs) if lr * epochs > 0 else (pa - pb)
-                for pa, pb in zip(params_after, params_before)
+                self.c_client = [ci.copy() for ci in c_i]
+
+            # Snapshot before training
+            c_i_old = [ci.copy() for ci in self.c_client]
+
+            optimizer = torch.optim.SGD(
+                self.model.parameters(),
+                lr=lr,
+                momentum=momentum
+            )
+
+            # Perform SCAFFOLD local training
+            c_i_new = train_scaffold(
+                model=self.model,
+                trainloader=self.trainloader,
+                optimizer=optimizer,
+                epochs=epochs,
+                device=self.device,
+                c_global=c_global,
+                c_i=self.c_client,
+                max_grad_norm=max_grad_norm
+            )
+
+            # Compute delta_c explicitly (REQUIRED)
+            delta_c = [
+                c_i_new[j] - c_i_old[j]
+                for j in range(len(c_i_old))
             ]
-            
-            # Update client control variate
-            if c_global is not None:
-                c_client_new = [
-                    cc + (cg - cc) / (len(self.trainloader.dataset) * epochs)
-                    if len(self.trainloader.dataset) * epochs > 0 else cc
-                    for cc, cg in zip(self.c_client, c_global)
-                ]
-            else:
-                c_client_new = self.c_client
-            
+
+            # Update local cache ONLY (server owns truth)
+            self.c_client = c_i_new
+
             metrics = {
-                'c_update': c_update,
-                'c_client_new': c_client_new
+                "delta_c": delta_c
             }
-            
-            return params_after, len(self.trainloader.dataset), metrics
+
+            return self.get_parameters({}), len(self.trainloader.dataset), metrics
+
         else:
             # Check if this is FedProx (has proximal_mu in config)
             proximal_mu = config.get('proximal_mu', None)
-            max_grad_norm = config.get('max_grad_norm', 1.0)
             optimizer = torch.optim.SGD(self.model.parameters(), lr=lr, momentum=momentum)
-            
+
             if proximal_mu is not None and proximal_mu > 0:
                 # FedProx training with proximal term
                 # Store global parameters before training
@@ -150,67 +150,13 @@ class FlowerClient(fl.client.NumPyClient):
             else:
                 # Regular FedAvg training
                 train(self.model, self.trainloader, optimizer, epochs, self.device, max_grad_norm)
-            
+
             # Prepare metrics - include heterogeneity metrics if requested
             metrics = {}
             if config.get('report_heterogeneity', False):
                 metrics.update(self.get_heterogeneity_metrics())
-            
+
             return self.get_parameters({}), len(self.trainloader.dataset), metrics
-    
-    def _train_scaffold(self, optimizer, epochs, c_global, scaffold_lr, max_grad_norm: float = 1.0):
-        """Train with SCAFFOLD correction term.
-        
-        Args:
-            optimizer: Optimizer for training
-            epochs: Number of training epochs
-            c_global: Global control variate
-            scaffold_lr: SCAFFOLD learning rate
-            max_grad_norm: Maximum gradient norm for clipping (default: 1.0)
-        """
-        import torch.nn.functional as F
-        criterion = torch.nn.CrossEntropyLoss()
-        self.model.train()
-        self.model.to(self.device)
-        
-        # Convert control variates to tensors
-        c_global_tensors = None
-        c_client_tensors = None
-        if c_global is not None:
-            param_dict = dict(self.model.named_parameters())
-            c_global_tensors = {
-                name: torch.tensor(cg, device=self.device, requires_grad=False)
-                for (name, _), cg in zip(param_dict.items(), c_global)
-            }
-        if self.c_client is not None:
-            param_dict = dict(self.model.named_parameters())
-            c_client_tensors = {
-                name: torch.tensor(cc, device=self.device, requires_grad=False)
-                for (name, _), cc in zip(param_dict.items(), self.c_client)
-            }
-        
-        for _ in range(epochs):
-            for features, labels in self.trainloader:
-                features, labels = features.to(self.device), labels.to(self.device)
-                optimizer.zero_grad()
-                
-                outputs = self.model(features)
-                loss = criterion(outputs, labels)
-                
-                # Add SCAFFOLD correction term
-                if c_global_tensors is not None and c_client_tensors is not None:
-                    scaffold_correction = 0.0
-                    for name, param in self.model.named_parameters():
-                        if name in c_global_tensors and name in c_client_tensors:
-                            correction = scaffold_lr * (c_global_tensors[name] - c_client_tensors[name])
-                            scaffold_correction += (correction * param).sum()
-                    loss = loss - scaffold_correction
-                
-                loss.backward()
-                # Clip gradients to prevent exploding gradients
-                if max_grad_norm > 0:
-                    torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_grad_norm)
-                optimizer.step()
 
     def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]):
         """Evaluate the model on local validation data."""
@@ -219,23 +165,65 @@ class FlowerClient(fl.client.NumPyClient):
         return float(loss), len(self.valloader.dataset), {'accuracy': accuracy}
 
 
-def generate_client_fn(trainloaders, valloaders, num_classes: int = 3):
+class ScaffoldFlowerClient(FlowerClient):
+    """
+    SCAFFOLD-aware Flower client that retrieves control variates from strategy.
+
+    This client extends FlowerClient to support SCAFFOLD by maintaining
+    a reference to the strategy instance to retrieve control variates.
+    """
+
+    def __init__(self, trainloader, valloader, num_classes: int = 3, strategy=None):
+        super().__init__(trainloader, valloader, num_classes)
+        self.strategy = strategy
+
+    def fit(self, parameters, config):
+        """Train with SCAFFOLD using control variates from strategy."""
+        # Check if SCAFFOLD and strategy is available
+        if config.get('is_scaffold', False) and self.strategy is not None:
+            client_id = config.get('client_id', '0')
+
+            # Get control variates from strategy
+            c_global, c_i = self.strategy.get_control_variates(client_id)
+
+            # Add them to config for parent class to use
+            if c_global is not None:
+                config['c_global'] = c_global
+            if c_i is not None:
+                config['c_i'] = c_i
+
+        # Call parent fit method
+        return super().fit(parameters, config)
+
+
+def generate_client_fn(trainloaders, valloaders, num_classes: int = 3, strategy=None):
     """
     Generate a client function for Flower simulation.
-    
+
     Args:
         trainloaders: List of training DataLoaders (one per client)
         valloaders: List of validation DataLoaders (one per client)
         num_classes: Number of output classes (3 for savings classification)
-    
+        strategy: Optional strategy instance (for SCAFFOLD)
+
     Returns:
         client_fn: Function that creates FlowerClient instances
     """
     def client_fn(cid: str):
-        return FlowerClient(
-            trainloader=trainloaders[int(cid)],
-            valloader=valloaders[int(cid)],
-            num_classes=num_classes
-        )
+        if strategy is not None:
+            # Use SCAFFOLD-aware client
+            return ScaffoldFlowerClient(
+                trainloader=trainloaders[int(cid)],
+                valloader=valloaders[int(cid)],
+                num_classes=num_classes,
+                strategy=strategy
+            )
+        else:
+            # Use standard client
+            return FlowerClient(
+                trainloader=trainloaders[int(cid)],
+                valloader=valloaders[int(cid)],
+                num_classes=num_classes
+            )
 
     return client_fn

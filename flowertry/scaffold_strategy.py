@@ -1,303 +1,256 @@
-"""
-FedSCAFFOLD Strategy Implementation for Flower.
+from typing import Dict, List, Optional, Tuple
 
-FedSCAFFOLD (SCAFFOLD) addresses client-drift in federated learning by using
-control variates to correct for the difference between local and global updates.
-"""
-
-from typing import Callable, Dict, List, Optional, Tuple, Union
-import numpy as np
+import flwr as fl
 from flwr.common import (
-    EvaluateRes,
+    FitIns,
     FitRes,
-    MetricsAggregationFn,
-    NDArrays,
     Parameters,
     Scalar,
-    ndarrays_to_parameters,
     parameters_to_ndarrays,
+    ndarrays_to_parameters,
 )
-from flwr.server.client_manager import ClientManager
+import numpy as np
 from flwr.server.client_proxy import ClientProxy
-from flwr.server.strategy import Strategy
-from flwr.server.strategy.aggregate import aggregate
+import torch
 
 
-class FedScaffoldStrategy(Strategy):
+class FedScaffoldStrategy(fl.server.strategy.Strategy):
     """
-    FedSCAFFOLD strategy implementation.
-    
-    Paper: "SCAFFOLD: Stochastic Controlled Averaging for Federated Learning"
-    by Karimireddy et al., 2020
+    Correct SCAFFOLD (Option II) implementation.
+
+    Paper:
+    Karimireddy et al., "SCAFFOLD: Stochastic Controlled Averaging for Federated Learning"
+    ICML 2020
     """
-    
+
     def __init__(
         self,
-        fraction_fit: float = 0.1,
-        fraction_evaluate: float = 0.1,
-        min_fit_clients: int = 2,
-        min_evaluate_clients: int = 2,
-        min_available_clients: int = 2,
-        evaluate_fn: Optional[
-            Callable[
-                [int, NDArrays, Dict[str, Scalar]],
-                Optional[Tuple[float, Dict[str, Scalar]]],
-            ]
-        ] = None,
-        on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
-        accept_failures: bool = True,
-        initial_parameters: Optional[Parameters] = None,
-        fit_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        evaluate_metrics_aggregation_fn: Optional[MetricsAggregationFn] = None,
-        scaffold_lr: float = 1.0,
-    ) -> None:
-        super().__init__()
-        self.fraction_fit = fraction_fit
-        self.fraction_evaluate = fraction_evaluate
+        min_fit_clients: int,
+        min_available_clients: int,
+        min_evaluate_clients: int,
+        on_fit_config_fn=None,
+        evaluate_fn=None,
+        total_clients: Optional[int] = None,
+        model: Optional[torch.nn.Module] = None,
+        test_loader=None,
+        criterion=None,
+        config: Optional[dict] = None,
+    ):
         self.min_fit_clients = min_fit_clients
-        self.min_evaluate_clients = min_evaluate_clients
         self.min_available_clients = min_available_clients
-        self.evaluate_fn = evaluate_fn
+        self.min_evaluate_clients = min_evaluate_clients
+
         self.on_fit_config_fn = on_fit_config_fn
-        self.on_evaluate_config_fn = on_evaluate_config_fn
-        self.accept_failures = accept_failures
-        self.initial_parameters = initial_parameters
-        self.fit_metrics_aggregation_fn = fit_metrics_aggregation_fn
-        self.evaluate_metrics_aggregation_fn = evaluate_metrics_aggregation_fn
-        self.scaffold_lr = scaffold_lr
-        
-        # Global control variate (server-side)
-        self.c_global: Optional[NDArrays] = None
-        # Client control variates (stored per client)
-        self.c_client: Dict[int, NDArrays] = {}
-    
-    def __repr__(self) -> str:
-        return "FedScaffoldStrategy"
-    
-    def num_fit_clients(self, num_available_clients: int) -> Tuple[int, int]:
-        """Return sample size and required number of clients."""
-        num_clients = int(num_available_clients * self.fraction_fit)
-        return max(num_clients, self.min_fit_clients), self.min_available_clients
-    
-    def num_evaluation_clients(self, num_available_clients: int) -> Tuple[int, int]:
-        """Return sample size and required number of clients."""
-        num_clients = int(num_available_clients * self.fraction_evaluate)
-        return max(num_clients, self.min_evaluate_clients), self.min_available_clients
-    
+        self.user_evaluate_fn = evaluate_fn  # user-provided fn
+
+        if total_clients is None:
+            raise ValueError("total_clients must be provided for SCAFFOLD")
+        self.total_clients = total_clients
+
+        self.current_parameters: Optional[List] = None
+        self.c_global: Optional[List[np.ndarray]] = None
+        self.client_control_variates: Dict[str, List[np.ndarray]] = {}
+
+        # PyTorch evaluation setup
+        self.model = model
+        self.test_loader = test_loader
+        self.criterion = criterion
+        self.config = config or {}
+
+    # -------------------------------------------------------------------------
+    # Initialization
+    # -------------------------------------------------------------------------
+
     def initialize_parameters(
-        self, client_manager: ClientManager
+        self, client_manager: fl.server.client_manager.ClientManager
     ) -> Optional[Parameters]:
-        """Initialize global model parameters."""
-        if self.initial_parameters is not None:
-            return self.initial_parameters
-        
-        # Initialize control variates to zero
-        # We'll initialize them when we get the first model parameters
-        return self.initial_parameters
-    
+        return None
+
+    # -------------------------------------------------------------------------
+    # Client Sampling
+    # -------------------------------------------------------------------------
+
     def configure_fit(
-        self, server_round: int, parameters: Parameters, client_manager: ClientManager
-    ) -> List[Tuple[ClientProxy, FitRes]]:
-        """Configure the next round of training."""
-        config = {}
-        if self.on_fit_config_fn is not None:
-            config = self.on_fit_config_fn(server_round)
-        
-        # Add scaffold_lr to config
-        config["scaffold_lr"] = self.scaffold_lr
-        
-        # Initialize c_global if not done yet
-        if self.c_global is None and parameters is not None:
-            # Initialize to zero (same shape as parameters)
-            self.c_global = [np.zeros_like(arr) for arr in parameters_to_ndarrays(parameters)]
-        
-        # Sample clients
+        self,
+        server_round: int,
+        parameters: Parameters,
+        client_manager: fl.server.client_manager.ClientManager,
+    ) -> List[Tuple[ClientProxy, FitIns]]:
+
+        if self.current_parameters is None:
+            self.current_parameters = parameters_to_ndarrays(parameters)
+
+        # Initialize global control variate c_global if not done
+        if self.c_global is None:
+            self.c_global = [np.zeros_like(p) for p in self.current_parameters]
+
         sample_size, min_num_clients = self.num_fit_clients(
             client_manager.num_available()
         )
         clients = client_manager.sample(
-            num_clients=sample_size, min_num_clients=min_num_clients
+            num_clients=sample_size,
+            min_num_clients=min_num_clients,
         )
-        
-        # Prepare config for each client
-        fit_configurations = []
-        for idx, client in enumerate(clients):
-            # Get or initialize client control variate
-            client_id = id(client)
-            if client_id not in self.c_client:
-                if parameters is not None:
-                    self.c_client[client_id] = [np.zeros_like(arr) for arr in parameters_to_ndarrays(parameters)]
-                else:
-                    self.c_client[client_id] = None
-            
-            # Add control variates to config
-            client_config = config.copy()
-            if self.c_global is not None:
-                # Convert c_global to a format that can be sent
-                # We'll send it as a list that the client can reconstruct
-                client_config["c_global"] = self.c_global
-            if self.c_client[client_id] is not None:
-                client_config["c_client"] = self.c_client[client_id]
-            
-            fit_configurations.append((client, client_config))
-        
-        return fit_configurations
-    
+
+        fit_instructions = []
+
+        for client in clients:
+            cid = client.cid
+
+            # Initialize per-client control variate c_i
+            if cid not in self.client_control_variates:
+                self.client_control_variates[cid] = [
+                    np.zeros_like(p) for p in self.current_parameters
+                ]
+
+            config_dict = {}
+            if self.on_fit_config_fn is not None:
+                config_dict.update(self.on_fit_config_fn(server_round))
+
+            # Inject SCAFFOLD info
+            config_dict["scaffold"] = True
+            config_dict["c_global"] = self.c_global
+            config_dict["c_local"] = self.client_control_variates[cid]
+
+            fit_ins = FitIns(parameters, config_dict)
+            fit_instructions.append((client, fit_ins))
+
+        return fit_instructions
+
+    # -------------------------------------------------------------------------
+    # Aggregation (SCAFFOLD logic)
+    # -------------------------------------------------------------------------
+
     def aggregate_fit(
         self,
         server_round: int,
         results: List[Tuple[ClientProxy, FitRes]],
-        failures: List[Union[Tuple[ClientProxy, FitRes], BaseException]],
+        failures,
     ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
-        """Aggregate fit results using weighted average."""
+
         if not results:
             return None, {}
-        
-        # Check for failures
-        if failures and not self.accept_failures:
-            return None, {}
-        
-        # Convert results
-        weights_results = [
-            (parameters_to_ndarrays(fit_res.parameters), fit_res.num_examples)
-            for _, fit_res in results
-        ]
-        
-        # Aggregate model parameters
-        aggregated_weights = aggregate(weights_results)
-        
-        # Update global control variate
-        # In SCAFFOLD, we update c_global based on client updates
-        # For simplicity, we use a simple averaging approach
-        # More sophisticated implementations can use the exact SCAFFOLD update rule
-        
-        # Extract control variate updates from results if available
-        c_updates = []
-        total_samples = 0
-        
-        for _, fit_res in results:
-            if "c_update" in fit_res.metrics:
-                c_update = fit_res.metrics["c_update"]
-                num_examples = fit_res.num_examples
-                c_updates.append((c_update, num_examples))
-                total_samples += num_examples
-        
-        # Update global control variate
-        if c_updates and self.c_global is not None:
-            # Weighted average of control variate updates
-            for i in range(len(self.c_global)):
-                self.c_global[i] = np.zeros_like(self.c_global[i])
-                for c_update, num_examples in c_updates:
-                    if c_update is not None and len(c_update) > i:
-                        self.c_global[i] += c_update[i] * (num_examples / total_samples)
-        
-        # Update client control variates
-        for client_proxy, fit_res in results:
-            client_id = id(client_proxy)
-            if "c_client_new" in fit_res.metrics:
-                self.c_client[client_id] = fit_res.metrics["c_client_new"]
-        
-        parameters_aggregated = ndarrays_to_parameters(aggregated_weights)
-        
-        # Aggregate custom metrics if provided
-        metrics_aggregated = {}
-        if self.fit_metrics_aggregation_fn:
-            fit_metrics = [(res.num_examples, res.metrics) for _, res in results]
-            metrics_aggregated = self.fit_metrics_aggregation_fn(fit_metrics)
-        elif results:
-            # Simple average of metrics
-            for _, fit_res in results:
-                for key, value in fit_res.metrics.items():
-                    if key not in ["c_update", "c_client_new"]:  # Skip internal metrics
-                        if key not in metrics_aggregated:
-                            metrics_aggregated[key] = []
-                        metrics_aggregated[key].append(value)
-            
-            # Average the metrics
-            for key in metrics_aggregated:
-                metrics_aggregated[key] = sum(metrics_aggregated[key]) / len(metrics_aggregated[key])
-        
-        return parameters_aggregated, metrics_aggregated
-    
-    def configure_evaluate(
-        self, server_round: int, parameters: Parameters, client_manager: ClientManager
-    ) -> List[Tuple[ClientProxy, Dict[str, Scalar]]]:
-        """Configure the next round of evaluation."""
-        if self.fraction_evaluate == 0.0:
-            return []
-        
-        config = {}
-        if self.on_evaluate_config_fn is not None:
-            config = self.on_evaluate_config_fn(server_round)
-        
-        sample_size, min_num_clients = self.num_evaluation_clients(
-            client_manager.num_available()
-        )
-        clients = client_manager.sample(
-            num_clients=sample_size, min_num_clients=min_num_clients
-        )
-        
-        return [(client, config) for client in clients]
-    
-    def aggregate_evaluate(
-        self,
-        server_round: int,
-        results: List[Tuple[ClientProxy, EvaluateRes]],
-        failures: List[Union[Tuple[ClientProxy, EvaluateRes], BaseException]],
-    ) -> Tuple[Optional[float], Dict[str, Scalar]]:
-        """Aggregate evaluation losses using weighted average."""
-        if not results:
-            return None, {}
-        
-        if failures and not self.accept_failures:
-            return None, {}
-        
-        # Aggregate loss
-        loss_aggregated = weighted_loss_avg(
-            [
-                (evaluate_res.num_examples, evaluate_res.loss)
-                for _, evaluate_res in results
+
+        deltas_w = []
+        delta_cs = []
+        num_examples = []
+
+        for client, fit_res in results:
+            cid = client.cid
+            if fit_res.num_examples == 0:
+                continue
+
+            # Model delta
+            w_i = parameters_to_ndarrays(fit_res.parameters)
+            delta_w = [w_i[j] - self.current_parameters[j] for j in range(len(w_i))]
+            deltas_w.append(delta_w)
+            num_examples.append(fit_res.num_examples)
+
+            # Control variate delta
+            if "delta_c" not in fit_res.metrics:
+                raise RuntimeError(f"Client {cid} did not return delta_c")
+
+            delta_c = fit_res.metrics["delta_c"]
+            # Ensure each delta_c element is numpy array
+            delta_c = [
+                np.array(dc) if not isinstance(dc, np.ndarray) else dc
+                for dc in delta_c
             ]
-        )
-        
-        # Aggregate metrics
-        metrics_aggregated = {}
-        if self.evaluate_metrics_aggregation_fn:
-            eval_metrics = [(res.num_examples, res.metrics) for _, res in results]
-            metrics_aggregated = self.evaluate_metrics_aggregation_fn(eval_metrics)
-        elif results:
-            # Simple average
-            for _, evaluate_res in results:
-                for key, value in evaluate_res.metrics.items():
-                    if key not in metrics_aggregated:
-                        metrics_aggregated[key] = []
-                    metrics_aggregated[key].append(value)
-            
-            for key in metrics_aggregated:
-                metrics_aggregated[key] = sum(metrics_aggregated[key]) / len(metrics_aggregated[key])
-        
-        return loss_aggregated, metrics_aggregated
-    
-    def evaluate(
-        self, server_round: int, parameters: Parameters
-    ) -> Optional[Tuple[float, Dict[str, Scalar]]]:
-        """Evaluate model parameters using an evaluation function."""
-        if self.evaluate_fn is None:
+
+            if len(delta_c) != len(self.c_global):
+                raise ValueError(f"Invalid delta_c dimension from client {cid}")
+
+            delta_cs.append(delta_c)
+
+            # Update local c_i
+            self.client_control_variates[cid] = [
+                self.client_control_variates[cid][j] + delta_c[j]
+                for j in range(len(delta_c))
+            ]
+
+        # Aggregate model updates (weighted)
+        total_examples = sum(num_examples)
+        avg_delta_w = [
+            sum(deltas_w[i][j] * num_examples[i] for i in range(len(deltas_w)))
+            / total_examples
+            for j in range(len(deltas_w[0]))
+        ]
+        self.current_parameters = [
+            self.current_parameters[j] + avg_delta_w[j] for j in range(len(avg_delta_w))
+        ]
+
+        # Aggregate control variates (Option II)
+        avg_delta_c = [
+            sum(delta_cs[i][j] for i in range(len(delta_cs))) / self.total_clients
+            for j in range(len(self.c_global))
+        ]
+        self.c_global = [
+            self.c_global[j] + avg_delta_c[j] for j in range(len(self.c_global))
+        ]
+
+        metrics = {
+            "c_global_norm": np.sqrt(
+                sum(np.sum(x * x) for x in self.c_global)
+            ),
+            "num_clients": len(results),
+        }
+
+        return ndarrays_to_parameters(self.current_parameters), metrics
+
+    # -------------------------------------------------------------------------
+    # Evaluation
+    # -------------------------------------------------------------------------
+
+    def configure_evaluate(
+        self, server_round: int, parameters: Parameters, client_manager
+    ):
+        return []
+
+    def aggregate_evaluate(self, server_round, results, failures):
+        return None, {}
+
+    def evaluate(self, server_round: int, parameters: Parameters):
+        if self.user_evaluate_fn is not None:
+            return self.user_evaluate_fn(server_round, parameters, config=self.config)
+
+        if self.model is None or self.test_loader is None or self.criterion is None:
             return None
-        
-        parameters_ndarrays = parameters_to_ndarrays(parameters)
-        eval_res = self.evaluate_fn(server_round, parameters_ndarrays, {})
-        if eval_res is None:
-            return None
-        
-        loss, metrics = eval_res
-        return loss, metrics
 
+        ndarrays = parameters_to_ndarrays(parameters)
+        state_dict = {
+            k: torch.tensor(v, dtype=torch.float32)
+            for k, v in zip(self.model.state_dict().keys(), ndarrays)
+        }
+        self.model.load_state_dict(state_dict)
 
-def weighted_loss_avg(results: List[Tuple[int, float]]) -> float:
-    """Aggregate evaluation results obtained from multiple clients."""
-    total_examples = sum([num_examples for num_examples, _ in results])
-    weighted_sum = sum([num_examples * loss for num_examples, loss in results])
-    return weighted_sum / total_examples if total_examples > 0 else 0.0
+        # Evaluate on test set
+        self.model.eval()
+        total_loss, total_correct, total_samples = 0.0, 0, 0
+        batch_size = self.config.get("batch_size", None)
 
+        with torch.no_grad():
+            for X, y in self.test_loader:
+                if batch_size:
+                    X = X[:batch_size]
+                    y = y[:batch_size]
+
+                outputs = self.model(X)
+                loss = self.criterion(outputs, y)
+                total_loss += loss.item() * X.size(0)
+                _, predicted = outputs.max(1)
+                total_correct += (predicted == y).sum().item()
+                total_samples += y.size(0)
+
+        avg_loss = total_loss / total_samples
+        accuracy = total_correct / total_samples
+        return avg_loss, {"accuracy": accuracy}
+
+    # -------------------------------------------------------------------------
+    # Client count helpers
+    # -------------------------------------------------------------------------
+
+    def num_fit_clients(self, num_available_clients: int) -> Tuple[int, int]:
+        return self.min_fit_clients, self.min_available_clients
+
+    def num_evaluate_clients(self, num_available_clients: int) -> Tuple[int, int]:
+        return self.min_evaluate_clients, self.min_available_clients

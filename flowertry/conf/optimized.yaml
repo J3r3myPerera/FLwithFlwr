@@ -1,0 +1,64 @@
+---
+# Optimized Configuration for Comparing FL Strategies
+# This config is tuned to show clear differences between FedAvg, FedProx, and SCAFFOLD
+
+num_rounds: 50
+num_clients: 100
+batch_size: 32
+num_classes: 3
+
+num_clients_per_round_fit: 10
+num_clients_per_round_eval: 25
+
+# Data distribution parameters - CRITICAL for seeing strategy differences
+iid: false
+alpha: 0.2  # Lower alpha = more heterogeneous = bigger differences between strategies
+            # Try 0.1 for even more extreme heterogeneity
+
+# Strategy-specific parameters
+
+# Fixed FedProx - start small
+proximal_mu: 0.005  # Very small to start - adaptive will tune up if needed
+
+# FedSCAFFOLD parameters
+scaffold_server_lr: 1.0  # Keep at 1.0 as per paper
+
+# Adaptive FedProx parameters (simple loss-based adaptation)
+adaptive_mu:
+  enabled: true
+  mode: "multi_signal"  # Use multi-signal for best results
+  initial_mu: 0.005     # Start very small
+  mu_min: 0.0001
+  mu_max: 0.2           # Lower max to prevent over-regularization
+  increase_factor: 1.2  # Smaller increases
+  decrease_factor: 0.95 # Slower decreases
+  loss_threshold: 0.01
+  warmup_rounds: 5      # More warmup for stability
+
+# Multi-Signal Adaptive FedProx parameters (RECOMMENDED)
+multi_signal_mu:
+  base_mu: 0.001        # Start very conservative
+  mu_min: 0.0001
+  mu_max: 0.15          # Lower ceiling - prevents over-regularization
+  smoothing_factor: 0.8 # More smoothing for stability
+  warmup_rounds: 5      # Let model stabilize first
+  # Signal weights (sum to 1.0)
+  weights:
+    gradient_divergence: 0.45  # Increase weight on most direct signal
+    loss_variance: 0.25
+    label_entropy: 0.20
+    feature_variance: 0.10
+
+# Strategies to compare
+strategies:
+  - fedavg
+  - fedprox
+  - fedscaffold
+
+# Training hyperparameters - CRITICAL for performance
+config_fit:
+  lr: 0.015             # Slightly higher LR helps with non-IID
+  momentum: 0.9
+  local_epochs: 5       # Fewer epochs = less overfitting, faster to see results
+                        # Try 10 once you confirm things work
+  max_grad_norm: 1.0    # Gradient clipping for stability

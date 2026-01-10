@@ -2,6 +2,7 @@ from omegaconf import DictConfig
 from model import Net, test
 import torch
 from collections import OrderedDict
+from flwr.common import parameters_to_ndarrays
 
 
 def get_on_fit_config(config_fit: DictConfig, proximal_mu: float = None, max_grad_norm: float = None):
@@ -51,9 +52,15 @@ def get_evaluate_fn(num_classes: int, testloader):
         model = Net(num_classes)
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
+        #Convert Flower Parameters to ndarrays
+        ndarrays = parameters_to_ndarrays(parameters)
+
         # Load parameters into model
-        params_dict = zip(model.state_dict().keys(), parameters)
-        state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
+        # params_dict = zip(model.state_dict().keys(), parameters)
+        # state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
+        state_dict = OrderedDict(
+            {k: torch.tensor(v, dtype=torch.float32) for k, v in zip(model.state_dict().keys(), ndarrays)}
+        )
         model.load_state_dict(state_dict, strict=True)
 
         # Evaluate on test set
