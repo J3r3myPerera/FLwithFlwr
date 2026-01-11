@@ -16,14 +16,17 @@ def run_fedavg(cfg: DictConfig, trainloaders, validationloaders, testloader, cli
     print("\n" + "=" * 60)
     print("RUNNING FedAvg")
     print("=" * 60)
-    
+
+    from server import get_initial_parameters
+
     strategy = fl.server.strategy.FedAvg(
         # fraction_fit=0.00001,  # Use min_fit_clients instead
         min_fit_clients=cfg.num_clients_per_round_fit,
         min_evaluate_clients=cfg.num_clients_per_round_eval,
         min_available_clients=cfg.num_clients,
         on_fit_config_fn=get_on_fit_config(cfg.config_fit),
-        evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader)
+        evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader),
+        initial_parameters=get_initial_parameters(cfg.num_classes)
     )
     
     start_time = time.time()
@@ -52,9 +55,10 @@ def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, cl
         print("\n" + "=" * 60)
         print("RUNNING FedProx with MULTI-SIGNAL ADAPTIVE MU")
         print("=" * 60)
-        
+
         from adaptive_fedprox import MultiSignalAdaptiveFedProx
-        
+        from server import get_initial_parameters
+
         # Get multi-signal mu parameters
         multi_cfg = cfg.get('multi_signal_mu', {})
         base_mu = multi_cfg.get('base_mu', 0.1)
@@ -62,7 +66,7 @@ def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, cl
         mu_max = multi_cfg.get('mu_max', 2.0)
         smoothing_factor = multi_cfg.get('smoothing_factor', 0.7)
         warmup_rounds = multi_cfg.get('warmup_rounds', 3)
-        
+
         # Get signal weights
         weights_cfg = multi_cfg.get('weights', {})
         signal_weights = {
@@ -71,13 +75,13 @@ def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, cl
             'label_entropy': weights_cfg.get('label_entropy', 0.25),
             'feature_variance': weights_cfg.get('feature_variance', 0.15)
         }
-        
+
         print(f"  Base mu: {base_mu}")
         print(f"  Mu range: [{mu_min}, {mu_max}]")
         print(f"  Smoothing factor: {smoothing_factor}")
         print(f"  Warmup rounds: {warmup_rounds}")
         print(f"  Signal weights: {signal_weights}")
-        
+
         strategy = MultiSignalAdaptiveFedProx(
             base_mu=base_mu,
             mu_min=mu_min,
@@ -91,6 +95,7 @@ def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, cl
             min_available_clients=cfg.num_clients,
             on_fit_config_fn=get_on_fit_config(cfg.config_fit),
             evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader),
+            initial_parameters=get_initial_parameters(cfg.num_classes)
         )
         
         start_time = time.time()
@@ -122,9 +127,10 @@ def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, cl
         print("\n" + "=" * 60)
         print("RUNNING FedProx with SIMPLE ADAPTIVE MU")
         print("=" * 60)
-        
+
         from adaptive_fedprox import AdaptiveFedProx
-        
+        from server import get_initial_parameters
+
         # Get adaptive mu parameters with defaults
         initial_mu = adaptive_cfg.get('initial_mu', 0.1)
         mu_min = adaptive_cfg.get('mu_min', 0.001)
@@ -133,12 +139,12 @@ def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, cl
         decrease_factor = adaptive_cfg.get('decrease_factor', 0.9)
         loss_threshold = adaptive_cfg.get('loss_threshold', 0.0)
         warmup_rounds = adaptive_cfg.get('warmup_rounds', 3)
-        
+
         print(f"  Initial mu: {initial_mu}")
         print(f"  Mu range: [{mu_min}, {mu_max}]")
         print(f"  Increase/Decrease factors: {increase_factor}/{decrease_factor}")
         print(f"  Warmup rounds: {warmup_rounds}")
-        
+
         strategy = AdaptiveFedProx(
             initial_mu=initial_mu,
             mu_min=mu_min,
@@ -153,6 +159,7 @@ def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, cl
             min_available_clients=cfg.num_clients,
             on_fit_config_fn=get_on_fit_config(cfg.config_fit),
             evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader),
+            initial_parameters=get_initial_parameters(cfg.num_classes)
         )
         
         start_time = time.time()
@@ -178,10 +185,12 @@ def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, cl
         print("\n" + "=" * 60)
         print("RUNNING FedProx (fixed mu)")
         print("=" * 60)
-        
+
+        from server import get_initial_parameters
+
         fixed_mu = cfg.get('proximal_mu', 0.1)
         print(f"  Fixed mu: {fixed_mu}")
-        
+
         strategy = fl.server.strategy.FedProx(
             # fraction_fit=0.00001,  # Use min_fit_clients instead
             min_fit_clients=cfg.num_clients_per_round_fit,
@@ -190,7 +199,8 @@ def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, cl
             # IMPORTANT: Pass proximal_mu to config so client applies the proximal term
             on_fit_config_fn=get_on_fit_config(cfg.config_fit, proximal_mu=fixed_mu),
             evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader),
-            proximal_mu=fixed_mu
+            proximal_mu=fixed_mu,
+            initial_parameters=get_initial_parameters(cfg.num_classes)
         )
         
         start_time = time.time()
@@ -215,6 +225,7 @@ def run_fedscaffold(cfg: DictConfig, trainloaders, validationloaders, testloader
     # Import custom FedSCAFFOLD strategy
     from scaffold_strategy import FedScaffoldStrategy
     from cleint import generate_client_fn
+    from server import get_initial_parameters
 
     # Get SCAFFOLD parameters
     server_lr = cfg.get('scaffold_server_lr', 1.0)
@@ -229,6 +240,7 @@ def run_fedscaffold(cfg: DictConfig, trainloaders, validationloaders, testloader
         total_clients=cfg.num_clients,
         on_fit_config_fn=get_on_fit_config(cfg.config_fit),
         evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader),
+        initial_parameters=get_initial_parameters(cfg.num_classes)
         # server_learning_rate=server_lr
     )
 
@@ -252,7 +264,19 @@ def run_fedscaffold(cfg: DictConfig, trainloaders, validationloaders, testloader
 
     print(f"\n  [SCAFFOLD] Training completed in {elapsed_time:.2f}s")
 
-    return history, elapsed_time
+    # Extract c_global_norm history from metrics
+    c_global_norm_history = []
+    if hasattr(history, 'metrics_distributed_fit') and history.metrics_distributed_fit:
+        c_global_norm_history = history.metrics_distributed_fit.get('c_global_norm', [])
+
+        # Print c_global_norm evolution
+        if c_global_norm_history:
+            print(f"\n  [SCAFFOLD] Control Variate Norm Evolution:")
+            print(f"    Initial: {c_global_norm_history[0][1]:.4f}")
+            print(f"    Final:   {c_global_norm_history[-1][1]:.4f}")
+            print(f"    Max:     {max(norm for _, norm in c_global_norm_history):.4f}")
+
+    return history, elapsed_time, {'c_global_norm_history': c_global_norm_history}
 
 
 def extract_metrics(history, strategy_name: str) -> Dict:
@@ -439,9 +463,17 @@ def main(cfg: DictConfig):
     if 'fedscaffold' in strategies_to_run:
         try:
             # SCAFFOLD creates its own client function with strategy reference
-            history, elapsed_time = run_fedscaffold(cfg, trainloaders, validationloaders, testloader)
+            result = run_fedscaffold(cfg, trainloaders, validationloaders, testloader)
+            history, elapsed_time = result[0], result[1]
+            scaffold_info = result[2] if len(result) > 2 else None
+
             metrics = extract_metrics(history, 'FedSCAFFOLD')
             metrics['elapsed_time'] = elapsed_time
+
+            # Store c_global_norm history if available
+            if scaffold_info and 'c_global_norm_history' in scaffold_info:
+                metrics['c_global_norm_history'] = scaffold_info['c_global_norm_history']
+
             all_results.append(metrics)
         except Exception as e:
             print(f"Error running FedSCAFFOLD: {e}")

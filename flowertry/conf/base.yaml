@@ -13,12 +13,11 @@ num_clients_per_round_eval: 25
 
 # Data distribution parameters
 iid: false # Set to true for IID, false for non-IID
-alpha:
-  0.1 # Dirichlet parameter for non-IID (lower = more heterogeneous)
-  # 0.1 = very heterogeneous, 0.5 = moderate (better for seeing FedProx benefits), 1.0 = mild
+alpha: 0.1 # Dirichlet parameter for non-IID (lower = more heterogeneous)
+# 0.1 = very heterogeneous, 0.5 = moderate (better for seeing FedProx benefits), 1.0 = mild
 
 # Strategy-specific parameters
-proximal_mu: 0.01 # For fixed FedProx - typical range: 0.001-0.5
+proximal_mu: 0.1 # For fixed FedProx - typical range: 0.001-0.5
 
 # FedSCAFFOLD parameters
 scaffold_server_lr: 1.0 # Server-side learning rate for control variate updates (default: 1.0)
@@ -37,9 +36,9 @@ adaptive_mu:
 
 # Multi-Signal Adaptive FedProx parameters (HAPI-based heterogeneity-aware adaptation)
 multi_signal_mu:
-  base_mu: 0.001 # Base mu value before adaptation (start conservative)
-  mu_min: 0.0001 # Minimum allowed mu
-  mu_max: 0.3 # Maximum allowed mu
+  base_mu: 0.1 # Base mu value before adaptation (start conservative)
+  mu_min: 0.01 # Minimum allowed mu
+  mu_max: 1.0 # Maximum allowed mu
   smoothing_factor: 0.7 # EMA smoothing for mu updates (0-1, higher = more smoothing)
   warmup_rounds: 3 # Wait this many rounds before adapting
   # Signal weights (should sum to ~1.0)
@@ -56,7 +55,7 @@ strategies:
   - fedscaffold
 
 config_fit:
-  lr: 0.01
+  lr: 0.005
   momentum: 0.9
-  local_epochs: 10
+  local_epochs: 3
   max_grad_norm: 1.0 # Maximum gradient norm for clipping (0.0 to disable, typical: 0.5-2.0)

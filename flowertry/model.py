@@ -166,12 +166,13 @@ def train_scaffold(model, trainloader, optimizer, epochs, device: str,
             # Backward pass
             loss.backward()
 
-            # SCAFFOLD correction: add (c_global - c_i) to gradients
+            # SCAFFOLD correction: add (c_i - c_global) to gradients
             # This corrects the local gradient to align with the global objective
             with torch.no_grad():
                 for param, cg, ci in zip(model.parameters(), c_global_tensors, c_i_tensors):
                     if param.grad is not None:
-                        param.grad.data += (cg - ci)  # CORRECT: c_global - c_i
+                        param.grad.data += (ci - cg)  # FIXED: c_i - c_global
+                        # OLD (WRONG): param.grad.data += (cg - ci)
 
             # Clip gradients
             if max_grad_norm > 0:
@@ -194,7 +195,8 @@ def train_scaffold(model, trainloader, optimizer, epochs, device: str,
         for p_before, p_after, cg, ci in zip(params_before, model.parameters(),
                                               c_global_tensors, c_i_tensors):
             # Option II update: c_i_new = c_i - c_global + (x_before - x_after) / (K * η)
-            param_diff = (p_before - p_after) / (total_steps * lr) if (total_steps * lr) > 0 else (p_before - p_after)
+            # CRITICAL FIX: Use epochs, not total_steps!
+            param_diff = (p_before - p_after) / (epochs * lr) if (epochs * lr) > 0 else (p_before - p_after)
             c_new = ci - cg + param_diff
 
             c_i_new.append(c_new.cpu().numpy())

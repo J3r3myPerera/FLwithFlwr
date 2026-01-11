@@ -35,6 +35,7 @@ class FedScaffoldStrategy(fl.server.strategy.Strategy):
         test_loader=None,
         criterion=None,
         config: Optional[dict] = None,
+        initial_parameters: Optional[Parameters] = None,
     ):
         self.min_fit_clients = min_fit_clients
         self.min_available_clients = min_available_clients
@@ -56,6 +57,7 @@ class FedScaffoldStrategy(fl.server.strategy.Strategy):
         self.test_loader = test_loader
         self.criterion = criterion
         self.config = config or {}
+        self.initial_parameters = initial_parameters
 
     # -------------------------------------------------------------------------
     # Initialization
@@ -64,6 +66,11 @@ class FedScaffoldStrategy(fl.server.strategy.Strategy):
     def initialize_parameters(
         self, client_manager: fl.server.client_manager.ClientManager
     ) -> Optional[Parameters]:
+        # Return initial parameters if provided during initialization
+        if self.initial_parameters is not None:
+            return self.initial_parameters
+
+        # Otherwise, request from client
         return None
 
     # -------------------------------------------------------------------------
@@ -180,10 +187,23 @@ class FedScaffoldStrategy(fl.server.strategy.Strategy):
         ]
 
         # Aggregate control variates (Option II)
+        # CRITICAL FIX: Divide by number of sampled clients, not total clients!
+        # avg_delta_c = [
+        #     sum(delta_cs[i][j] for i in range(len(delta_cs))) / len(delta_cs)
+        #     for j in range(len(self.c_global))
+        # ]
+        #option 1 fix
         avg_delta_c = [
-            sum(delta_cs[i][j] for i in range(len(delta_cs))) / self.total_clients
+            sum(delta_cs[i][j] for i in range(len(delta_cs))) / len(delta_cs)
             for j in range(len(self.c_global))
         ]
+        #option 2 fix
+        # num_sampled = len(delta_cs)
+        # scaling = 1.0 / (self.total_clients * num_sampled)
+        # avg_delta_c = [
+        #     sum(delta_cs[i][j] for i in range(len(delta_cs))) * scaling * self.total_clients
+        #     for j in range(len(self.c_global))
+        # ]
         self.c_global = [
             self.c_global[j] + avg_delta_c[j] for j in range(len(self.c_global))
         ]
@@ -211,7 +231,10 @@ class FedScaffoldStrategy(fl.server.strategy.Strategy):
 
     def evaluate(self, server_round: int, parameters: Parameters):
         if self.user_evaluate_fn is not None:
-            return self.user_evaluate_fn(server_round, parameters, config=self.config)
+            # Convert Parameters to ndarrays before passing to evaluate_fn
+            # (FedAvg/FedProx do this automatically, we need to do it manually)
+            parameters_ndarrays = parameters_to_ndarrays(parameters)
+            return self.user_evaluate_fn(server_round, parameters_ndarrays, self.config)
 
         if self.model is None or self.test_loader is None or self.criterion is None:
             return None

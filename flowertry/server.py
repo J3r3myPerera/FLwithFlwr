@@ -2,7 +2,23 @@ from omegaconf import DictConfig
 from model import Net, test
 import torch
 from collections import OrderedDict
-from flwr.common import parameters_to_ndarrays
+from flwr.common import ndarrays_to_parameters
+
+
+def get_initial_parameters(num_classes: int = 3):
+    """
+    Create initial parameters for the model.
+
+    Args:
+        num_classes: Number of output classes (default: 3)
+
+    Returns:
+        Parameters: Initial model parameters as Flower Parameters object
+    """
+    model = Net(num_classes)
+    # Get model parameters as numpy arrays
+    params = [val.cpu().numpy() for _, val in model.state_dict().items()]
+    return ndarrays_to_parameters(params)
 
 
 def get_on_fit_config(config_fit: DictConfig, proximal_mu: float = None, max_grad_norm: float = None):
@@ -39,11 +55,11 @@ def get_on_fit_config(config_fit: DictConfig, proximal_mu: float = None, max_gra
 def get_evaluate_fn(num_classes: int, testloader):
     """
     Create a function for server-side model evaluation.
-    
+
     Args:
         num_classes: Number of output classes (3 for savings classification)
         testloader: Global test DataLoader
-    
+
     Returns:
         evaluate_fn: Function that evaluates the global model on test set
     """
@@ -52,8 +68,9 @@ def get_evaluate_fn(num_classes: int, testloader):
         model = Net(num_classes)
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
-        #Convert Flower Parameters to ndarrays
-        ndarrays = parameters_to_ndarrays(parameters)
+        # Parameters are already ndarrays (list of numpy arrays) when passed from FedAvg/FedProx
+        # No need to convert
+        ndarrays = parameters
 
         # Load parameters into model
         # params_dict = zip(model.state_dict().keys(), parameters)
