@@ -13,11 +13,15 @@ num_clients_per_round_eval: 25
 
 # Data distribution parameters
 iid: false # Set to true for IID, false for non-IID
-alpha: 0.7 # Dirichlet parameter for non-IID (lower = more heterogeneous)
+alpha: 0.1 # Dirichlet parameter for non-IID (lower = more heterogeneous)
 # 0.1 = very heterogeneous, 0.5 = moderate (better for seeing FedProx benefits), 1.0 = mild
 
+# Class weighting for imbalanced datasets
+use_class_weights: true # Whether to use class weights in loss function
+class_weight_method: "balanced" # 'balanced' (inverse frequency) or 'sqrt' (softer weighting)
+
 # Strategy-specific parameters
-proximal_mu: 0.5 # For fixed FedProx - typical range: 0.001-0.5
+proximal_mu: 0.1 # For fixed FedProx - typical range: 0.001-0.5
 
 # FedSCAFFOLD parameters
 scaffold_server_lr: 1.0 # Server-side learning rate for control variate updates (default: 1.0)
@@ -54,8 +58,30 @@ strategies:
   - fedprox
   - fedscaffold
 
+# Global training configuration (used as defaults for all strategies)
 config_fit:
-  lr: 0.02
+  lr: 0.005
   momentum: 0.9
-  local_epochs: 1
+  local_epochs: 3
   max_grad_norm: 1.0 # Maximum gradient norm for clipping (0.0 to disable, typical: 0.5-2.0)
+
+# Strategy-specific configurations (override global config_fit if specified)
+# These allow fine-tuning each strategy independently
+strategy_configs:
+  fedavg:
+    lr: 0.01 # FedAvg can handle higher LR
+    momentum: 0.9
+    local_epochs: 3
+    max_grad_norm: 1.0
+
+  fedprox:
+    lr: 0.005 # Lower LR for FedProx (proximal term amplifies gradients)
+    momentum: 0.9
+    local_epochs: 3
+    max_grad_norm: 2.0 # Higher threshold to allow proximal corrections
+
+  fedscaffold:
+    lr: 0.005 # Lower LR for SCAFFOLD (control variates amplify gradients)
+    momentum: 0.9
+    local_epochs: 3
+    max_grad_norm: 2.0 # Higher threshold to allow SCAFFOLD corrections

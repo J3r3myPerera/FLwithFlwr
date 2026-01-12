@@ -35,18 +35,25 @@ def main(cfg: DictConfig):
     print("PREPARING DATASET")
     print("=" * 60)
     
-    trainloaders, validationloaders, testloader = prepare_dataset(
+    # Feature engineering and discretization options
+    use_engineered_features = cfg.get('use_engineered_features', True)
+    discretization_method = cfg.get('discretization_method', 'quantile')
+    
+    trainloaders, validationloaders, testloader, class_weights, input_dim = prepare_dataset(
         num_partitions=cfg.num_clients,
         batch_size=cfg.batch_size,
         iid=cfg.get('iid', True),
-        alpha=cfg.get('alpha', 0.5)
+        alpha=cfg.get('alpha', 0.5),
+        use_engineered_features=use_engineered_features,
+        discretization_method=discretization_method
     )
     
     print(f"\nNumber of clients: {len(trainloaders)}")
     print(f"Samples in first client's training set: {len(trainloaders[0].dataset)}")
+    print(f"Input dimension: {input_dim}")
 
     ## 3. Define the client function
-    client_fn = generate_client_fn(trainloaders, validationloaders, cfg.num_classes)
+    client_fn = generate_client_fn(trainloaders, validationloaders, cfg.num_classes, input_dim=input_dim)
 
     ## 4. Define the server strategy (FedAvg)
     strategy = fl.server.strategy.FedAvg(
@@ -55,7 +62,7 @@ def main(cfg: DictConfig):
         min_evaluate_clients=cfg.num_clients_per_round_eval,
         min_available_clients=cfg.num_clients,
         on_fit_config_fn=get_on_fit_config(cfg.config_fit),
-        evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader)
+        evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader, input_dim=input_dim)
     )
 
     ## 5. Start the simulation

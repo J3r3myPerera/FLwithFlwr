@@ -3,42 +3,92 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+# Default input dimension - will be updated based on feature engineering settings
+DEFAULT_INPUT_DIM = 25  # 14 numerical + 9 engineered + 2 categorical
+
+
 class Net(nn.Module):
     """
-    Multi-Layer Perceptron (MLP) for Savings Potential Classification.
+    Improved Multi-Layer Perceptron (MLP) for Savings Potential Classification.
     
-    Task: Classify users into 3 savings potential categories:
-    - Low (<7% savings)
-    - Medium (7-12% savings)
-    - High (>12% savings)
+    Task: Classify users into 4 savings potential categories:
+    - Low savers (< 5%)
+    - Lower-Middle savers (5-10%)
+    - Upper-Middle savers (10-15%)
+    - High savers (> 15%)
     
-    Input: 16 features from Indian Personal Finance dataset
-    Output: 3 classes
+    Architecture: Wider and deeper network without batch normalization (better for FL)
+    - Input: Variable features → 256 → 128 → 128 → 64 → 32 → 4 classes
+    - Uses LayerNorm instead of BatchNorm for FL compatibility
+    - Reduced dropout to prevent underfitting with small client data
+    
+    Input: Features from Indian Personal Finance dataset (default: 25 with engineering)
+    Output: 4 classes
     """
     
-    def __init__(self, num_classes: int = 3) -> None:
+    def __init__(self, num_classes: int = 4, input_dim: int = DEFAULT_INPUT_DIM) -> None:
         super(Net, self).__init__()
         
-        # Input: 16 features (14 numerical + 2 categorical encoded)
-        self.fc1 = nn.Linear(16, 64)
-        self.fc2 = nn.Linear(64, 32)
-        self.fc3 = nn.Linear(32, 16)
-        self.fc4 = nn.Linear(16, num_classes)
+        self.input_dim = input_dim
         
-        # Dropout for regularization
-        self.dropout = nn.Dropout(0.3)
+        # Wider and deeper architecture for better learning
+        self.fc1 = nn.Linear(input_dim, 256)   # Input layer: N → 256
+        
+        self.fc2 = nn.Linear(256, 128)         # Hidden layer: 256 → 128
+        
+        self.fc3 = nn.Linear(128, 128)         # Hidden layer: 128 → 128
+        
+        self.fc4 = nn.Linear(128, 64)          # Hidden layer: 128 → 64
+        
+        self.fc5 = nn.Linear(64, 32)           # Hidden layer: 64 → 32
+        
+        self.fc6 = nn.Linear(32, num_classes)  # Output layer: 32 → 4
+        
+        # Lighter dropout to prevent underfitting
+        self.dropout = nn.Dropout(0.2)
+        
+        # Initialize weights for better convergence
+        self._init_weights()
+    
+    def _init_weights(self):
+        """Initialize weights using Xavier/Glorot initialization."""
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight)
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
     
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        x = F.relu(self.fc1(x))
+        # Layer 1
+        x = self.fc1(x)
+        x = F.relu(x)
         x = self.dropout(x)
-        x = F.relu(self.fc2(x))
+        
+        # Layer 2
+        x = self.fc2(x)
+        x = F.relu(x)
         x = self.dropout(x)
-        x = F.relu(self.fc3(x))
+        
+        # Layer 3
+        x = self.fc3(x)
+        x = F.relu(x)
+        x = self.dropout(x)
+        
+        # Layer 4
         x = self.fc4(x)
+        x = F.relu(x)
+        x = self.dropout(x)
+        
+        # Layer 5
+        x = self.fc5(x)
+        x = F.relu(x)
+        
+        # Output layer (no activation, CrossEntropyLoss applies softmax)
+        x = self.fc6(x)
         return x
 
 
-def train(net, trainloader, optimizer, epochs, device: str, max_grad_norm: float = 1.0):
+def train(net, trainloader, optimizer, epochs, device: str, max_grad_norm: float = 1.0, class_weights=None):
     """Train the MLP on the training set (FedAvg style).
     
     Args:
@@ -48,8 +98,15 @@ def train(net, trainloader, optimizer, epochs, device: str, max_grad_norm: float
         epochs: Number of training epochs
         device: Device to train on ('cpu' or 'cuda')
         max_grad_norm: Maximum gradient norm for clipping (default: 1.0)
+        class_weights: Optional tensor of class weights for weighted loss
     """
-    criterion = nn.CrossEntropyLoss()
+    # Setup loss function with optional class weights
+    if class_weights is not None:
+        weight_tensor = torch.tensor(class_weights, dtype=torch.float32, device=device)
+        criterion = nn.CrossEntropyLoss(weight=weight_tensor)
+    else:
+        criterion = nn.CrossEntropyLoss()
+    
     net.train()
     net.to(device)
     
@@ -66,7 +123,7 @@ def train(net, trainloader, optimizer, epochs, device: str, max_grad_norm: float
 
 
 def train_fedprox(net, trainloader, optimizer, epochs, device: str, 
-                  global_params: list, proximal_mu: float, max_grad_norm: float = 1.0):
+                  global_params: list, proximal_mu: float, max_grad_norm: float = 1.0, class_weights=None):
     """Train with FedProx proximal term.
     
     FedProx adds a proximal term to the loss to prevent client drift:
@@ -84,8 +141,15 @@ def train_fedprox(net, trainloader, optimizer, epochs, device: str,
         global_params: List of global model parameters (numpy arrays)
         proximal_mu: Proximal term coefficient (higher = stronger regularization)
         max_grad_norm: Maximum gradient norm for clipping (default: 1.0)
+        class_weights: Optional tensor of class weights for weighted loss
     """
-    criterion = nn.CrossEntropyLoss()
+    # Setup loss function with optional class weights
+    if class_weights is not None:
+        weight_tensor = torch.tensor(class_weights, dtype=torch.float32, device=device)
+        criterion = nn.CrossEntropyLoss(weight=weight_tensor)
+    else:
+        criterion = nn.CrossEntropyLoss()
+    
     net.train()
     net.to(device)
     
@@ -118,7 +182,7 @@ def train_fedprox(net, trainloader, optimizer, epochs, device: str,
 
 
 def train_scaffold(model, trainloader, optimizer, epochs, device: str,
-                   c_global: list, c_i: list, max_grad_norm: float = 1.0):
+                   c_global: list, c_i: list, max_grad_norm: float = 1.0, class_weights=None):
     """Train with SCAFFOLD control variates.
 
     SCAFFOLD client update:
@@ -134,12 +198,19 @@ def train_scaffold(model, trainloader, optimizer, epochs, device: str,
         c_global: Global control variate (list of numpy arrays)
         c_i: Client control variate (list of numpy arrays)
         max_grad_norm: Maximum gradient norm for clipping (default: 1.0)
+        class_weights: Optional tensor of class weights for weighted loss
 
     Returns:
         c_i_new: Updated client control variate
         delta_c: Change in client control variate (c_i_new - c_i)
     """
-    criterion = nn.CrossEntropyLoss()
+    # Setup loss function with optional class weights
+    if class_weights is not None:
+        weight_tensor = torch.tensor(class_weights, dtype=torch.float32, device=device)
+        criterion = nn.CrossEntropyLoss(weight=weight_tensor)
+    else:
+        criterion = nn.CrossEntropyLoss()
+    
     model.train()
     model.to(device)
 
@@ -204,9 +275,15 @@ def train_scaffold(model, trainloader, optimizer, epochs, device: str,
     return c_i_new
 
 
-def test(net, testloader, device: str):
+def test(net, testloader, device: str, class_weights=None):
     """Evaluate the MLP on the test/validation set."""
-    criterion = nn.CrossEntropyLoss()
+    # Setup loss function with optional class weights
+    if class_weights is not None:
+        weight_tensor = torch.tensor(class_weights, dtype=torch.float32, device=device)
+        criterion = nn.CrossEntropyLoss(weight=weight_tensor)
+    else:
+        criterion = nn.CrossEntropyLoss()
+    
     correct, loss = 0, 0.0
     net.eval()
     net.to(device)

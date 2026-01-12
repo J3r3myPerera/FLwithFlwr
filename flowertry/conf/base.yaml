@@ -1,26 +1,33 @@
 ---
 # Federated Learning Configuration for Savings Potential Classification
 # Dataset: Indian Personal Finance and Spending Habits
-# Task: 3-class classification (Low/Medium/High savings potential)
+# Task: 4-class classification (Low/Lower-Middle/Upper-Middle/High savings potential)
 
 num_rounds: 50 # Increased to better observe FedProx benefits
-num_clients: 100
-batch_size: 32
-num_classes: 3
+num_clients: 20
+batch_size: 8
+num_classes: 4
 
-num_clients_per_round_fit: 10
-num_clients_per_round_eval: 25
+# Discretization method for target variable
+# 'quantile': Use quartile thresholds (balanced ~25% each class)
+# 'fixed': Use data-driven fixed thresholds (<6.5%, 6.5-9%, 9-13%, >13%)
+discretization_method: "quantile"
+
+num_clients_per_round_fit: 5
+num_clients_per_round_eval: 5 # Must be <= num_clients (20)
 
 # Data distribution parameters
 iid: false # Set to true for IID, false for non-IID
-alpha: 0.1 # Dirichlet parameter for non-IID (lower = more heterogeneous)
-# 0.1 = very heterogeneous, 0.5 = moderate (better for seeing FedProx benefits), 1.0 = mild
+alpha: 0.3 # Dirichlet parameter for non-IID (lower = more heterogeneous)
+# Class weighting for imbalanced datasets
+use_class_weights: true # Enable class weights to handle imbalanced classes
+class_weight_method: "balanced" # 'balanced' (inverse frequency) or 'sqrt' (softer weighting)# 0.1 = very heterogeneous, 0.5 = moderate (better for seeing FedProx benefits), 1.0 = mild
 
 # Strategy-specific parameters
-proximal_mu: 0.1 # For fixed FedProx - typical range: 0.001-0.5
+proximal_mu: 0.5 # For fixed FedProx - typical range: 0.001-0.5
 
 # FedSCAFFOLD parameters
-scaffold_server_lr: 1.0 # Server-side learning rate for control variate updates (default: 1.0)
+scaffold_server_lr: 0.5 # Server-side learning rate for control variate updates (default: 1.0)
 
 # Adaptive FedProx parameters (simple loss-based adaptation)
 adaptive_mu:
@@ -36,9 +43,9 @@ adaptive_mu:
 
 # Multi-Signal Adaptive FedProx parameters (HAPI-based heterogeneity-aware adaptation)
 multi_signal_mu:
-  base_mu: 0.1 # Base mu value before adaptation (start conservative)
-  mu_min: 0.01 # Minimum allowed mu
-  mu_max: 1.0 # Maximum allowed mu
+  base_mu: 0.3 # Base mu value before adaptation (start conservative)
+  mu_min: 0.05 # Minimum allowed mu
+  mu_max: 2.0 # Maximum allowed mu
   smoothing_factor: 0.7 # EMA smoothing for mu updates (0-1, higher = more smoothing)
   warmup_rounds: 3 # Wait this many rounds before adapting
   # Signal weights (should sum to ~1.0)
@@ -52,10 +59,32 @@ multi_signal_mu:
 strategies:
   - fedavg
   - fedprox
-  - fedscaffold
+  # - fedscaffold
 
+# Global training configuration (used as defaults for all strategies)
 config_fit:
   lr: 0.005
   momentum: 0.9
   local_epochs: 3
   max_grad_norm: 1.0 # Maximum gradient norm for clipping (0.0 to disable, typical: 0.5-2.0)
+
+# Strategy-specific configurations (override global config_fit if specified)
+# Comment out or remove this section to use global config_fit for all strategies
+strategy_configs:
+  fedavg:
+    lr: 0.01 # FedAvg can handle higher LR
+    momentum: 0.5
+    local_epochs: 3
+    max_grad_norm: 1.0
+
+  fedprox:
+    lr: 0.01 # FedProx benefits from moderate LR (proximal term provides implicit regularization)
+    momentum: 0.9 # Higher momentum for stability
+    local_epochs: 5 # More local epochs leverages proximal term constraint
+    max_grad_norm: 2.0 # Higher threshold to allow proximal corrections
+
+  fedscaffold:
+    lr: 0.005 # Lower LR for SCAFFOLD (control variates amplify gradients)
+    momentum: 0.5
+    local_epochs: 3
+    max_grad_norm: 1.0 # Higher threshold to allow SCAFFOLD corrections

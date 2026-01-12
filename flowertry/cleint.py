@@ -5,25 +5,28 @@ import numpy as np
 import flwr as fl
 from flwr.common.typing import Scalar, NDArrays
 
-from model import Net, train, train_fedprox, train_scaffold, test
+from model import Net, train, train_fedprox, train_scaffold, test, DEFAULT_INPUT_DIM
 
 
 class FlowerClient(fl.client.NumPyClient):
     """
     Flower client for Savings Potential Classification.
     
-    Uses MLP model for 3-class classification:
-    - Low (<7% savings)
-    - Medium (7-12% savings)
-    - High (>12% savings)
+    Uses MLP model for 4-class classification:
+    - Low savers (< 5%)
+    - Lower-Middle savers (5-10%)
+    - Upper-Middle savers (10-15%)
+    - High savers (> 15%)
     """
     
-    def __init__(self, trainloader, valloader, num_classes: int = 3) -> None:
+    def __init__(self, trainloader, valloader, num_classes: int = 4, class_weights=None, input_dim: int = DEFAULT_INPUT_DIM) -> None:
         super().__init__()
         self.trainloader = trainloader
         self.valloader = valloader
-        self.model = Net(num_classes)
+        self.model = Net(num_classes, input_dim=input_dim)
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+        self.class_weights = class_weights
+        self.input_dim = input_dim
         # Control variate for FedSCAFFOLD
         self.c_client: Optional[NDArrays] = None
         # Cache heterogeneity metrics (computed once per client)
@@ -114,7 +117,8 @@ class FlowerClient(fl.client.NumPyClient):
                 device=self.device,
                 c_global=c_global,
                 c_i=self.c_client,
-                max_grad_norm=max_grad_norm
+                max_grad_norm=max_grad_norm,
+                class_weights=self.class_weights
             )
 
             # Compute delta_c explicitly (REQUIRED)
@@ -145,11 +149,12 @@ class FlowerClient(fl.client.NumPyClient):
                     self.model, self.trainloader, optimizer, epochs, self.device,
                     global_params=global_params,
                     proximal_mu=proximal_mu,
-                    max_grad_norm=max_grad_norm
+                    max_grad_norm=max_grad_norm,
+                    class_weights=self.class_weights
                 )
             else:
                 # Regular FedAvg training
-                train(self.model, self.trainloader, optimizer, epochs, self.device, max_grad_norm)
+                train(self.model, self.trainloader, optimizer, epochs, self.device, max_grad_norm, self.class_weights)
 
             # Prepare metrics - include heterogeneity metrics if requested
             metrics = {}
@@ -161,7 +166,7 @@ class FlowerClient(fl.client.NumPyClient):
     def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]):
         """Evaluate the model on local validation data."""
         self.set_parameters(parameters)
-        loss, accuracy = test(self.model, self.valloader, self.device)
+        loss, accuracy = test(self.model, self.valloader, self.device, self.class_weights)
         return float(loss), len(self.valloader.dataset), {'accuracy': accuracy}
 
 
@@ -173,8 +178,8 @@ class ScaffoldFlowerClient(FlowerClient):
     a reference to the strategy instance to retrieve control variates.
     """
 
-    def __init__(self, trainloader, valloader, num_classes: int = 3, strategy=None):
-        super().__init__(trainloader, valloader, num_classes)
+    def __init__(self, trainloader, valloader, num_classes: int = 4, strategy=None, class_weights=None, input_dim: int = DEFAULT_INPUT_DIM):
+        super().__init__(trainloader, valloader, num_classes, class_weights, input_dim)
         self.strategy = strategy
 
     def fit(self, parameters, config):
@@ -196,15 +201,17 @@ class ScaffoldFlowerClient(FlowerClient):
         return super().fit(parameters, config)
 
 
-def generate_client_fn(trainloaders, valloaders, num_classes: int = 3, strategy=None):
+def generate_client_fn(trainloaders, valloaders, num_classes: int = 4, strategy=None, class_weights=None, input_dim: int = DEFAULT_INPUT_DIM):
     """
     Generate a client function for Flower simulation.
 
     Args:
         trainloaders: List of training DataLoaders (one per client)
         valloaders: List of validation DataLoaders (one per client)
-        num_classes: Number of output classes (3 for savings classification)
+        num_classes: Number of output classes (4 for savings classification)
         strategy: Optional strategy instance (for SCAFFOLD)
+        class_weights: Optional class weights for weighted loss
+        input_dim: Number of input features
 
     Returns:
         client_fn: Function that creates FlowerClient instances
@@ -216,14 +223,18 @@ def generate_client_fn(trainloaders, valloaders, num_classes: int = 3, strategy=
                 trainloader=trainloaders[int(cid)],
                 valloader=valloaders[int(cid)],
                 num_classes=num_classes,
-                strategy=strategy
+                strategy=strategy,
+                class_weights=class_weights,
+                input_dim=input_dim
             )
         else:
             # Use standard client
             return FlowerClient(
                 trainloader=trainloaders[int(cid)],
                 valloader=valloaders[int(cid)],
-                num_classes=num_classes
+                num_classes=num_classes,
+                class_weights=class_weights,
+                input_dim=input_dim
             )
 
     return client_fn

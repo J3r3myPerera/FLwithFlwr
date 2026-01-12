@@ -55,12 +55,14 @@ def diagnose(cfg: DictConfig):
     print("\n3. DATA DISTRIBUTION ANALYSIS")
     print("-" * 80)
 
-    trainloaders, valloaders, testloader = prepare_dataset(
+    trainloaders, valloaders, testloader, class_weights, input_dim = prepare_dataset(
         num_partitions=cfg.num_clients,
         batch_size=cfg.batch_size,
         iid=cfg.get('iid', True),
         alpha=cfg.get('alpha', 0.5)
     )
+    
+    print(f"Input dimension: {input_dim}")
 
     # Analyze class distribution across clients
     print("\n4. CLIENT HETEROGENEITY ANALYSIS")

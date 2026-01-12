@@ -14,11 +14,12 @@ class PersonalFinanceDataset(Dataset):
     """
     PyTorch Dataset for Indian Personal Finance and Spending Habits.
     
-    Task: Savings Potential Classification
-    - Target: Desired_Savings_Percentage discretized into 3 classes
-        - Class 0 (Low): < 7%
-        - Class 1 (Medium): 7-12%
-        - Class 2 (High): > 12%
+    Task: Savings Potential Classification (4 Classes)
+    - Target: Desired_Savings_Percentage discretized into 4 classes
+        - Class 0 (Low Savers): < 6.5%
+        - Class 1 (Lower-Middle Savers): 6.5-9%
+        - Class 2 (Upper-Middle Savers): 9-13%
+        - Class 3 (High Savers): > 13%
     """
     
     def __init__(self, features: np.ndarray, labels: np.ndarray):
@@ -32,29 +33,152 @@ class PersonalFinanceDataset(Dataset):
         return self.features[idx], self.labels[idx]
 
 
-def discretize_savings(savings_percentage: pd.Series) -> np.ndarray:
+def discretize_savings(savings_percentage: pd.Series, method: str = 'quantile') -> np.ndarray:
     """
-    Discretize Desired_Savings_Percentage into 3 classes:
-    - 0 (Low): < 7%
-    - 1 (Medium): 7-12%
-    - 2 (High): > 12%
+    Discretize savings percentage into 4 classes.
+    
+    Methods:
+    - 'fixed': Use data-driven thresholds (< 6.5%, 6.5-9%, 9-13%, > 13%)
+    - 'quantile': Use quartile thresholds (25th/50th/75th percentiles)
+    
+    Args:
+        savings_percentage: Series of savings percentages
+        method: 'fixed' or 'quantile'
+    
+    Returns:
+        labels: Class labels (0=Low, 1=Lower-Middle, 2=Upper-Middle, 3=High)
     """
     labels = np.zeros(len(savings_percentage), dtype=np.int64)
-    labels[savings_percentage >= 7] = 1   # Medium
-    labels[savings_percentage > 12] = 2   # High
+    
+    if method == 'quantile':
+        # Use quartiles for balanced 4 classes
+        q25 = savings_percentage.quantile(0.25)
+        q50 = savings_percentage.quantile(0.50)
+        q75 = savings_percentage.quantile(0.75)
+        labels[savings_percentage >= q25] = 1   # Lower-Middle
+        labels[savings_percentage >= q50] = 2   # Upper-Middle
+        labels[savings_percentage >= q75] = 3   # High
+        print(f"  Quantile thresholds: Low < {q25:.2f}% < Lower-Middle < {q50:.2f}% < Upper-Middle < {q75:.2f}% < High")
+    else:
+        # Fixed thresholds based on data analysis (range 5-25%, median ~9%)
+        labels[savings_percentage >= 6.5] = 1   # Lower-Middle (6.5-9%)
+        labels[savings_percentage >= 9] = 2     # Upper-Middle (9-13%)
+        labels[savings_percentage > 13] = 3     # High (>13%)
+        print(f"  Fixed thresholds: Low < 6.5% < Lower-Middle < 9% < Upper-Middle < 13% < High")
+    
     return labels
 
 
-def load_and_preprocess_data(data_path: str = DATA_PATH) -> Tuple[np.ndarray, np.ndarray]:
+def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     """
-    Load and preprocess the Personal Finance dataset.
+    Create derived features that better capture savings potential.
+    
+    These engineered features have higher correlation with savings behavior.
+    """
+    df = df.copy()
+    
+    # Expense columns
+    expense_cols = ['Rent', 'Loan_Repayment', 'Insurance', 'Groceries', 'Transport',
+                    'Eating_Out', 'Entertainment', 'Utilities', 'Healthcare', 
+                    'Education', 'Miscellaneous']
+    
+    # Total expenses
+    df['Total_Expenses'] = df[expense_cols].sum(axis=1)
+    
+    # Actual savings rate (derived from income and expenses)
+    df['Actual_Savings_Rate'] = (df['Income'] - df['Total_Expenses']) / df['Income']
+    
+    # Expense-to-income ratio (key indicator)
+    df['Expense_to_Income'] = df['Total_Expenses'] / df['Income']
+    
+    # Discretionary spending ratio
+    df['Discretionary_Ratio'] = (df['Eating_Out'] + df['Entertainment'] + df['Miscellaneous']) / df['Income']
+    
+    # Essential spending ratio
+    df['Essential_Ratio'] = (df['Rent'] + df['Groceries'] + df['Utilities'] + df['Healthcare']) / df['Income']
+    
+    # Financial burden indicators
+    df['Rent_Burden'] = df['Rent'] / df['Income']
+    df['Debt_Burden'] = df['Loan_Repayment'] / df['Income']
+    
+    # Per-capita income (adjusted for dependents)
+    df['Per_Capita_Income'] = df['Income'] / (1 + df['Dependents'])
+    
+    # Age-income interaction
+    df['Age_Income_Ratio'] = df['Age'] / 100 * df['Income'] / df['Income'].mean()
+    
+    return df
+
+
+def compute_class_weights(labels: np.ndarray, method: str = 'balanced') -> np.ndarray:
+    """
+    Compute class weights for handling imbalanced datasets.
+    
+    Args:
+        labels: Array of class labels
+        method: 'balanced' for inverse frequency, 'sqrt' for sqrt of inverse frequency,
+                'middle_boost' to boost the harder middle classes (for 4-class)
     
     Returns:
-        features: Preprocessed feature matrix (N x 16)
+        class_weights: Array of weights for each class
+    """
+    unique_classes, counts = np.unique(labels, return_counts=True)
+    n_samples = len(labels)
+    n_classes = len(unique_classes)
+    
+    if method == 'balanced':
+        # Weight inversely proportional to class frequency
+        # w_i = n_samples / (n_classes * count_i)
+        weights = n_samples / (n_classes * counts)
+    elif method == 'sqrt':
+        # Softer weighting: sqrt of balanced weights
+        balanced_weights = n_samples / (n_classes * counts)
+        weights = np.sqrt(balanced_weights)
+    elif method == 'middle_boost':
+        # Boost the middle classes (1 and 2) which are harder to classify
+        # Start with balanced weights
+        weights = n_samples / (n_classes * counts)
+        # Increase weight for middle classes
+        if len(weights) >= 4:
+            weights[1] *= 2.0  # 2x weight for Lower-Middle class
+            weights[2] *= 2.5  # 2.5x weight for Upper-Middle class (hardest)
+        elif len(weights) >= 2:
+            weights[1] *= 1.5  # 1.5x weight for Medium class (3-class case)
+    else:
+        # Uniform weights (no weighting)
+        weights = np.ones(n_classes)
+    
+    print(f"\nClass Weights ({method}):")
+    class_names = ['Low (<6.5%)', 'Lower-Middle (6.5-9%)', 'Upper-Middle (9-13%)', 'High (>13%)']
+    for cls, weight in zip(unique_classes, weights):
+        print(f"  Class {cls} ({class_names[cls]}): {weight:.4f}")
+    
+    return weights
+
+
+def load_and_preprocess_data(data_path: str = DATA_PATH, use_engineered_features: bool = True, 
+                              discretization_method: str = 'quantile') -> Tuple[np.ndarray, np.ndarray]:
+    """
+    Load and preprocess the Personal Finance dataset with improved feature engineering.
+    
+    Args:
+        data_path: Path to CSV file
+        use_engineered_features: If True, add derived features (ratios, interactions)
+        discretization_method: 'quantile' for balanced classes, 'fixed' for original thresholds
+    
+    Returns:
+        features: Preprocessed feature matrix
         labels: Discretized class labels (0, 1, 2)
     """
     # Load data
     df = pd.read_csv(data_path)
+    
+    print(f"\n[Data Loading] Loaded {len(df)} samples")
+    
+    # Apply feature engineering if enabled
+    if use_engineered_features:
+        df = engineer_features(df)
+        print("[Feature Engineering] Added 9 derived features")
     
     # Define feature columns
     numerical_features = [
@@ -64,11 +188,25 @@ def load_and_preprocess_data(data_path: str = DATA_PATH) -> Tuple[np.ndarray, np
         'Education', 'Miscellaneous'
     ]
     
+    # Add engineered features if enabled
+    engineered_features = []
+    if use_engineered_features:
+        engineered_features = [
+            'Total_Expenses', 'Actual_Savings_Rate', 'Expense_to_Income',
+            'Discretionary_Ratio', 'Essential_Ratio', 'Rent_Burden', 
+            'Debt_Burden', 'Per_Capita_Income', 'Age_Income_Ratio'
+        ]
+    
+    all_numerical_features = numerical_features + engineered_features
+    
     categorical_features = ['Occupation', 'City_Tier']
     target_col = 'Desired_Savings_Percentage'
     
     # Extract numerical features
-    X_numerical = df[numerical_features].values
+    X_numerical = df[all_numerical_features].values
+    
+    # Handle any NaN/inf values from divisions
+    X_numerical = np.nan_to_num(X_numerical, nan=0.0, posinf=0.0, neginf=0.0)
     
     # Encode categorical features
     X_categorical_list = []
@@ -79,20 +217,22 @@ def load_and_preprocess_data(data_path: str = DATA_PATH) -> Tuple[np.ndarray, np
     
     X_categorical = np.hstack(X_categorical_list)
     
-    # Combine features (14 numerical + 2 categorical = 16 features)
+    # Combine features
     X = np.hstack([X_numerical, X_categorical])
+    
+    print(f"[Features] Total features: {X.shape[1]} ({len(all_numerical_features)} numerical + {len(categorical_features)} categorical)")
     
     # Standardize all features
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
     
-    # Discretize target into 3 classes
-    y = discretize_savings(df[target_col])
+    # Discretize target into 4 classes using specified method
+    y = discretize_savings(df[target_col], method=discretization_method)
     
     # Print class distribution
     unique, counts = np.unique(y, return_counts=True)
     print("\nClass Distribution:")
-    class_names = ['Low (<7%)', 'Medium (7-12%)', 'High (>12%)']
+    class_names = ['Low', 'Lower-Middle', 'Upper-Middle', 'High']
     for cls, count in zip(unique, counts):
         print(f"  Class {cls} ({class_names[cls]}): {count} samples ({100*count/len(y):.1f}%)")
     
@@ -199,8 +339,12 @@ def prepare_dataset(
     test_ratio: float = 0.1,
     seed: int = 2023,
     iid: bool = True,
-    alpha: float = 0.5
-) -> Tuple[List[DataLoader], List[DataLoader], DataLoader]:
+    alpha: float = 0.5,
+    use_class_weights: bool = False,
+    class_weight_method: str = 'balanced',
+    use_engineered_features: bool = True,
+    discretization_method: str = 'quantile'
+) -> Tuple[List[DataLoader], List[DataLoader], DataLoader, Optional[np.ndarray], int]:
     """
     Prepare the Personal Finance dataset for federated learning.
     
@@ -215,17 +359,33 @@ def prepare_dataset(
               - alpha -> 0: extreme non-IID (each client has mostly one class)
               - alpha -> inf: approaches IID (uniform class distribution)
               - Typical values: 0.1 (very heterogeneous), 0.5 (moderate), 1.0 (mild)
+        use_engineered_features: If True, add derived features
+        discretization_method: 'quantile' for balanced classes or 'fixed' for original thresholds
     
     Returns:
         trainloaders: List of training DataLoaders (one per client)
         valloaders: List of validation DataLoaders (one per client)
         testloader: Global test DataLoader
+        class_weights: Array of class weights (or None)
+        input_dim: Number of input features
     """
     np.random.seed(seed)
     torch.manual_seed(seed)
     
     # Load and preprocess data
-    X, y = load_and_preprocess_data()
+    X, y = load_and_preprocess_data(
+        use_engineered_features=use_engineered_features,
+        discretization_method=discretization_method
+    )
+    
+    # Get input dimension
+    input_dim = X.shape[1]
+    print(f"\nFeatures: {input_dim} (engineered={use_engineered_features}, discretization={discretization_method})")
+    
+    # Compute class weights if requested
+    class_weights = None
+    if use_class_weights:
+        class_weights = compute_class_weights(y, method=class_weight_method)
     
     # Create full dataset
     full_dataset = PersonalFinanceDataset(X, y)
@@ -280,7 +440,7 @@ def prepare_dataset(
         
         # Print class distribution for first few clients
         print("\nClass Distribution for First 5 Clients:")
-        class_names = ['Low (<7%)', 'Medium (7-12%)', 'High (>12%)']
+        class_names = ['Low (<6.5%)', 'Lower-Middle (6.5-9%)', 'Upper-Middle (9-13%)', 'High (>13%)']
         for client_idx in range(min(5, num_partitions)):
             # Get indices relative to trainval_dataset
             client_subset_indices = np.array(client_datasets[client_idx].indices)  # Convert to numpy array
@@ -320,6 +480,7 @@ def prepare_dataset(
     print(f"  Test samples: {test_size}")
     print(f"  Train+Val samples: {trainval_size}")
     print(f"  Number of clients: {num_partitions}")
+    print(f"  Input features: {input_dim}")
     if iid:
         partition_size = trainval_size // num_partitions
         print(f"  Samples per client: ~{partition_size}")
@@ -328,4 +489,4 @@ def prepare_dataset(
         client_sizes = [len(ds) for ds in client_datasets]
         print(f"  Samples per client: min={min(client_sizes)}, max={max(client_sizes)}, avg={np.mean(client_sizes):.1f}")
     
-    return trainloaders, valloaders, testloader
+    return trainloaders, valloaders, testloader, class_weights, input_dim

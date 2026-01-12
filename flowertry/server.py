@@ -1,21 +1,22 @@
 from omegaconf import DictConfig
-from model import Net, test
+from model import Net, test, DEFAULT_INPUT_DIM
 import torch
 from collections import OrderedDict
 from flwr.common import ndarrays_to_parameters
 
 
-def get_initial_parameters(num_classes: int = 3):
+def get_initial_parameters(num_classes: int = 4, input_dim: int = DEFAULT_INPUT_DIM):
     """
     Create initial parameters for the model.
 
     Args:
-        num_classes: Number of output classes (default: 3)
+        num_classes: Number of output classes (default: 4)
+        input_dim: Number of input features (default: DEFAULT_INPUT_DIM)
 
     Returns:
         Parameters: Initial model parameters as Flower Parameters object
     """
-    model = Net(num_classes)
+    model = Net(num_classes, input_dim=input_dim)
     # Get model parameters as numpy arrays
     params = [val.cpu().numpy() for _, val in model.state_dict().items()]
     return ndarrays_to_parameters(params)
@@ -52,20 +53,22 @@ def get_on_fit_config(config_fit: DictConfig, proximal_mu: float = None, max_gra
     return fit_config_fn
 
 
-def get_evaluate_fn(num_classes: int, testloader):
+def get_evaluate_fn(num_classes: int, testloader, class_weights=None, input_dim: int = DEFAULT_INPUT_DIM):
     """
     Create a function for server-side model evaluation.
 
     Args:
-        num_classes: Number of output classes (3 for savings classification)
+        num_classes: Number of output classes (4 for savings classification)
         testloader: Global test DataLoader
+        class_weights: Optional class weights for weighted loss
+        input_dim: Number of input features
 
     Returns:
         evaluate_fn: Function that evaluates the global model on test set
     """
     def evaluate_fn(server_round: int, parameters, config):
-        # Create model
-        model = Net(num_classes)
+        # Create model with correct input dimension
+        model = Net(num_classes, input_dim=input_dim)
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         # Parameters are already ndarrays (list of numpy arrays) when passed from FedAvg/FedProx
@@ -73,15 +76,13 @@ def get_evaluate_fn(num_classes: int, testloader):
         ndarrays = parameters
 
         # Load parameters into model
-        # params_dict = zip(model.state_dict().keys(), parameters)
-        # state_dict = OrderedDict({k: torch.Tensor(v) for k, v in params_dict})
         state_dict = OrderedDict(
             {k: torch.tensor(v, dtype=torch.float32) for k, v in zip(model.state_dict().keys(), ndarrays)}
         )
         model.load_state_dict(state_dict, strict=True)
 
         # Evaluate on test set
-        loss, accuracy = test(model, testloader, device)
+        loss, accuracy = test(model, testloader, device, class_weights)
         
         # Print progress
         print(f"Round {server_round}: Test Accuracy = {accuracy*100:.2f}%")

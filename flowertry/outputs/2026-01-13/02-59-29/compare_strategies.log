@@ -1,0 +1,1138 @@
+[2026-01-13 02:59:29,508][flwr][INFO] - Starting Flower simulation, config: ServerConfig(num_rounds=5, round_timeout=None)
+[2026-01-13 02:59:34,460][flwr][INFO] - Flower VCE: Ray initialized with resources: {'node:127.0.0.1': 1.0, 'object_store_memory': 2147483648.0, 'CPU': 10.0, 'memory': 11890379162.0}
+[2026-01-13 02:59:34,460][flwr][INFO] - Initializing global parameters
+[2026-01-13 02:59:34,461][flwr][INFO] - Using initial parameters provided by strategy
+[2026-01-13 02:59:34,461][flwr][INFO] - Evaluating initial parameters
+[2026-01-13 02:59:34,612][flwr][INFO] - initial parameters (loss, other metrics): 275.81483793258667, {'accuracy': 0.3415}
+[2026-01-13 02:59:34,613][flwr][INFO] - FL starting
+[2026-01-13 02:59:34,613][flwr][DEBUG] - fit_round 1: strategy sampled 5 clients (out of 5)
+[2026-01-13 02:59:38,165][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24438, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,165][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24440, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,165][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24435, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,165][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24439, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,166][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24432, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,166][flwr][DEBUG] - fit_round 1 received 0 results and 5 failures
+[2026-01-13 02:59:38,287][flwr][INFO] - fit progress: (1, 275.81483793258667, {'accuracy': 0.3415}, 3.6741309170029126)
+[2026-01-13 02:59:38,287][flwr][DEBUG] - evaluate_round 1: strategy sampled 5 clients (out of 5)
+[2026-01-13 02:59:38,324][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24439, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,325][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24432, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,329][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24435, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,330][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24438, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,331][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24440, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,331][flwr][DEBUG] - evaluate_round 1 received 0 results and 5 failures
+[2026-01-13 02:59:38,332][flwr][DEBUG] - fit_round 2: strategy sampled 5 clients (out of 5)
+[2026-01-13 02:59:38,368][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24440, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,369][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24435, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,369][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24438, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,371][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24439, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,372][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24432, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,373][flwr][DEBUG] - fit_round 2 received 0 results and 5 failures
+[2026-01-13 02:59:38,492][flwr][INFO] - fit progress: (2, 275.81483793258667, {'accuracy': 0.3415}, 3.8797567499859724)
+[2026-01-13 02:59:38,493][flwr][DEBUG] - evaluate_round 2: strategy sampled 5 clients (out of 5)
+[2026-01-13 02:59:38,526][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24439, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,527][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24438, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,527][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24432, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,528][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24435, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,528][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24440, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,529][flwr][DEBUG] - evaluate_round 2 received 0 results and 5 failures
+[2026-01-13 02:59:38,530][flwr][DEBUG] - fit_round 3: strategy sampled 5 clients (out of 5)
+[2026-01-13 02:59:38,561][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24440, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,562][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24438, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,563][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24432, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,564][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24435, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,568][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24439, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,569][flwr][DEBUG] - fit_round 3 received 0 results and 5 failures
+[2026-01-13 02:59:38,700][flwr][INFO] - fit progress: (3, 275.81483793258667, {'accuracy': 0.3415}, 4.087461374991108)
+[2026-01-13 02:59:38,700][flwr][DEBUG] - evaluate_round 3: strategy sampled 5 clients (out of 5)
+[2026-01-13 02:59:38,731][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24439, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,731][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24432, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,732][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24435, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,732][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24438, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,736][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24440, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,737][flwr][DEBUG] - evaluate_round 3 received 0 results and 5 failures
+[2026-01-13 02:59:38,737][flwr][DEBUG] - fit_round 4: strategy sampled 5 clients (out of 5)
+[2026-01-13 02:59:38,764][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24438, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,765][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24435, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,765][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24440, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,765][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24439, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,766][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24432, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,767][flwr][DEBUG] - fit_round 4 received 0 results and 5 failures
+[2026-01-13 02:59:38,889][flwr][INFO] - fit progress: (4, 275.81483793258667, {'accuracy': 0.3415}, 4.2759347499813884)
+[2026-01-13 02:59:38,889][flwr][DEBUG] - evaluate_round 4: strategy sampled 5 clients (out of 5)
+[2026-01-13 02:59:38,916][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24435, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,917][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24439, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,917][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24440, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,918][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24432, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,918][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24438, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,920][flwr][DEBUG] - evaluate_round 4 received 0 results and 5 failures
+[2026-01-13 02:59:38,920][flwr][DEBUG] - fit_round 5: strategy sampled 5 clients (out of 5)
+[2026-01-13 02:59:38,946][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24432, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,947][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24439, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,947][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24438, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,947][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24435, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,948][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=24440, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 86, in fit
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:38,949][flwr][DEBUG] - fit_round 5 received 0 results and 5 failures
+[2026-01-13 02:59:39,070][flwr][INFO] - fit progress: (5, 275.81483793258667, {'accuracy': 0.3415}, 4.457721832994139)
+[2026-01-13 02:59:39,071][flwr][DEBUG] - evaluate_round 5: strategy sampled 5 clients (out of 5)
+[2026-01-13 02:59:39,098][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24440, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:39,098][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24438, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:39,099][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24439, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:39,099][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24432, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:39,100][flwr][ERROR] - [36mray::launch_and_evaluate()[39m (pid=24435, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 160, in launch_and_evaluate
+    return maybe_call_evaluate(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 205, in maybe_call_evaluate
+    return client.evaluate(evaluate_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 321, in _evaluate
+    results = self.numpy_client.evaluate(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 167, in evaluate
+    self.set_parameters(parameters)
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/cleint.py", line 78, in set_parameters
+    self.model.load_state_dict(state_dict, strict=True)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1657, in load_state_dict
+    load(self, state_dict)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1645, in load
+    load(child, child_state_dict, child_prefix)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1639, in load
+    module._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/batchnorm.py", line 110, in _load_from_state_dict
+    super(_NormBase, self)._load_from_state_dict(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/torch/nn/modules/module.py", line 1562, in _load_from_state_dict
+    input_param = input_param[0]
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+[2026-01-13 02:59:39,101][flwr][DEBUG] - evaluate_round 5 received 0 results and 5 failures
+[2026-01-13 02:59:39,101][flwr][INFO] - FL finished in 4.488375457993243
+[2026-01-13 02:59:39,101][flwr][INFO] - app_fit: losses_distributed []
+[2026-01-13 02:59:39,101][flwr][INFO] - app_fit: metrics_distributed_fit {}
+[2026-01-13 02:59:39,102][flwr][INFO] - app_fit: metrics_distributed {}
+[2026-01-13 02:59:39,102][flwr][INFO] - app_fit: losses_centralized [(0, 275.81483793258667), (1, 275.81483793258667), (2, 275.81483793258667), (3, 275.81483793258667), (4, 275.81483793258667), (5, 275.81483793258667)]
+[2026-01-13 02:59:39,102][flwr][INFO] - app_fit: metrics_centralized {'accuracy': [(0, 0.3415), (1, 0.3415), (2, 0.3415), (3, 0.3415), (4, 0.3415), (5, 0.3415)]}
