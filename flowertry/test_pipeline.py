@@ -18,19 +18,19 @@ print(f'\nInput dimension: {input_dim}')
 print(f'Number of clients: {len(trainloaders)}')
 
 # Test client function creation
-client_fn = generate_client_fn(trainloaders, valloaders, 4, class_weights=class_weights, input_dim=input_dim)
+client_fn = generate_client_fn(trainloaders, valloaders, 3, class_weights=class_weights, input_dim=input_dim)
 print('Client function created successfully')
 
 # Test initial parameters
-initial_params = get_initial_parameters(4, input_dim=input_dim)
+initial_params = get_initial_parameters(3, input_dim=input_dim)
 print('Initial parameters created successfully')
 
 # Test evaluation function
-eval_fn = get_evaluate_fn(4, testloader, class_weights, input_dim=input_dim)
+eval_fn = get_evaluate_fn(3, testloader, class_weights, input_dim=input_dim)
 print('Evaluation function created successfully')
 
 # Test a single forward pass
-model = Net(num_classes=4, input_dim=input_dim)
+model = Net(num_classes=3, input_dim=input_dim)
 for batch in testloader:
     x, y = batch
     output = model(x)

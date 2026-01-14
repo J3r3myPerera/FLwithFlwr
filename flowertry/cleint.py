@@ -12,14 +12,13 @@ class FlowerClient(fl.client.NumPyClient):
     """
     Flower client for Savings Potential Classification.
     
-    Uses MLP model for 4-class classification:
-    - Low savers (< 5%)
-    - Lower-Middle savers (5-10%)
-    - Upper-Middle savers (10-15%)
-    - High savers (> 15%)
+    Uses MLP model for 3-class classification:
+    - Low savings
+    - Medium savings
+    - High savings
     """
     
-    def __init__(self, trainloader, valloader, num_classes: int = 4, class_weights=None, input_dim: int = DEFAULT_INPUT_DIM) -> None:
+    def __init__(self, trainloader, valloader, num_classes: int = 3, class_weights=None, input_dim: int = DEFAULT_INPUT_DIM) -> None:
         super().__init__()
         self.trainloader = trainloader
         self.valloader = valloader
@@ -178,7 +177,7 @@ class ScaffoldFlowerClient(FlowerClient):
     a reference to the strategy instance to retrieve control variates.
     """
 
-    def __init__(self, trainloader, valloader, num_classes: int = 4, strategy=None, class_weights=None, input_dim: int = DEFAULT_INPUT_DIM):
+    def __init__(self, trainloader, valloader, num_classes: int = 3, strategy=None, class_weights=None, input_dim: int = DEFAULT_INPUT_DIM):
         super().__init__(trainloader, valloader, num_classes, class_weights, input_dim)
         self.strategy = strategy
 
@@ -201,14 +200,14 @@ class ScaffoldFlowerClient(FlowerClient):
         return super().fit(parameters, config)
 
 
-def generate_client_fn(trainloaders, valloaders, num_classes: int = 4, strategy=None, class_weights=None, input_dim: int = DEFAULT_INPUT_DIM):
+def generate_client_fn(trainloaders, valloaders, num_classes: int = 3, strategy=None, class_weights=None, input_dim: int = DEFAULT_INPUT_DIM):
     """
     Generate a client function for Flower simulation.
 
     Args:
         trainloaders: List of training DataLoaders (one per client)
         valloaders: List of validation DataLoaders (one per client)
-        num_classes: Number of output classes (4 for savings classification)
+        num_classes: Number of output classes (3 for savings classification)
         strategy: Optional strategy instance (for SCAFFOLD)
         class_weights: Optional class weights for weighted loss
         input_dim: Number of input features

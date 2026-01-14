@@ -5,12 +5,12 @@ from collections import OrderedDict
 from flwr.common import ndarrays_to_parameters
 
 
-def get_initial_parameters(num_classes: int = 4, input_dim: int = DEFAULT_INPUT_DIM):
+def get_initial_parameters(num_classes: int = 3, input_dim: int = DEFAULT_INPUT_DIM):
     """
     Create initial parameters for the model.
 
     Args:
-        num_classes: Number of output classes (default: 4)
+        num_classes: Number of output classes (default: 3)
         input_dim: Number of input features (default: DEFAULT_INPUT_DIM)
 
     Returns:
@@ -58,7 +58,7 @@ def get_evaluate_fn(num_classes: int, testloader, class_weights=None, input_dim:
     Create a function for server-side model evaluation.
 
     Args:
-        num_classes: Number of output classes (4 for savings classification)
+        num_classes: Number of output classes (3 for savings classification)
         testloader: Global test DataLoader
         class_weights: Optional class weights for weighted loss
         input_dim: Number of input features

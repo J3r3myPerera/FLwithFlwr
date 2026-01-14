@@ -14,12 +14,11 @@ class PersonalFinanceDataset(Dataset):
     """
     PyTorch Dataset for Indian Personal Finance and Spending Habits.
     
-    Task: Savings Potential Classification (4 Classes)
-    - Target: Desired_Savings_Percentage discretized into 4 classes
-        - Class 0 (Low Savers): < 6.5%
-        - Class 1 (Lower-Middle Savers): 6.5-9%
-        - Class 2 (Upper-Middle Savers): 9-13%
-        - Class 3 (High Savers): > 13%
+    Task: Savings Potential Classification
+    - Target: Desired_Savings_Percentage discretized into 3 classes
+        - Class 0 (Low): < 7%
+        - Class 1 (Medium): 7-12%
+        - Class 2 (High): > 12%
     """
     
     def __init__(self, features: np.ndarray, labels: np.ndarray):
@@ -35,36 +34,32 @@ class PersonalFinanceDataset(Dataset):
 
 def discretize_savings(savings_percentage: pd.Series, method: str = 'quantile') -> np.ndarray:
     """
-    Discretize savings percentage into 4 classes.
+    Discretize savings percentage into 3 classes.
     
     Methods:
-    - 'fixed': Use data-driven thresholds (< 6.5%, 6.5-9%, 9-13%, > 13%)
-    - 'quantile': Use quartile thresholds (25th/50th/75th percentiles)
+    - 'fixed': Use fixed thresholds (< 7%, 7-12%, > 12%)
+    - 'quantile': Use data-driven thresholds (33rd/67th percentiles)
     
     Args:
         savings_percentage: Series of savings percentages
         method: 'fixed' or 'quantile'
     
     Returns:
-        labels: Class labels (0=Low, 1=Lower-Middle, 2=Upper-Middle, 3=High)
+        labels: Class labels (0=Low, 1=Medium, 2=High)
     """
     labels = np.zeros(len(savings_percentage), dtype=np.int64)
     
     if method == 'quantile':
-        # Use quartiles for balanced 4 classes
-        q25 = savings_percentage.quantile(0.25)
-        q50 = savings_percentage.quantile(0.50)
-        q75 = savings_percentage.quantile(0.75)
-        labels[savings_percentage >= q25] = 1   # Lower-Middle
-        labels[savings_percentage >= q50] = 2   # Upper-Middle
-        labels[savings_percentage >= q75] = 3   # High
-        print(f"  Quantile thresholds: Low < {q25:.2f}% < Lower-Middle < {q50:.2f}% < Upper-Middle < {q75:.2f}% < High")
+        # Use percentiles for balanced classes
+        q33 = savings_percentage.quantile(0.33)
+        q67 = savings_percentage.quantile(0.67)
+        labels[savings_percentage >= q33] = 1   # Medium
+        labels[savings_percentage >= q67] = 2   # High
+        print(f"  Quantile thresholds: Low < {q33:.2f}% < Medium < {q67:.2f}% < High")
     else:
-        # Fixed thresholds based on data analysis (range 5-25%, median ~9%)
-        labels[savings_percentage >= 6.5] = 1   # Lower-Middle (6.5-9%)
-        labels[savings_percentage >= 9] = 2     # Upper-Middle (9-13%)
-        labels[savings_percentage > 13] = 3     # High (>13%)
-        print(f"  Fixed thresholds: Low < 6.5% < Lower-Middle < 9% < Upper-Middle < 13% < High")
+        # Fixed thresholds
+        labels[savings_percentage >= 7] = 1   # Medium
+        labels[savings_percentage > 12] = 2   # High
     
     return labels
 
@@ -117,7 +112,7 @@ def compute_class_weights(labels: np.ndarray, method: str = 'balanced') -> np.nd
     Args:
         labels: Array of class labels
         method: 'balanced' for inverse frequency, 'sqrt' for sqrt of inverse frequency,
-                'middle_boost' to boost the harder middle classes (for 4-class)
+                'medium_boost' to boost the harder middle class
     
     Returns:
         class_weights: Array of weights for each class
@@ -134,22 +129,19 @@ def compute_class_weights(labels: np.ndarray, method: str = 'balanced') -> np.nd
         # Softer weighting: sqrt of balanced weights
         balanced_weights = n_samples / (n_classes * counts)
         weights = np.sqrt(balanced_weights)
-    elif method == 'middle_boost':
-        # Boost the middle classes (1 and 2) which are harder to classify
+    elif method == 'medium_boost':
+        # Boost the middle class which is often harder to classify
         # Start with balanced weights
         weights = n_samples / (n_classes * counts)
-        # Increase weight for middle classes
-        if len(weights) >= 4:
-            weights[1] *= 2.0  # 2x weight for Lower-Middle class
-            weights[2] *= 2.5  # 2.5x weight for Upper-Middle class (hardest)
-        elif len(weights) >= 2:
-            weights[1] *= 1.5  # 1.5x weight for Medium class (3-class case)
+        # Increase weight for middle class (index 1) - milder boost
+        if len(weights) >= 2:
+            weights[1] *= 1.5  # 1.5x weight for Medium class
     else:
         # Uniform weights (no weighting)
         weights = np.ones(n_classes)
     
     print(f"\nClass Weights ({method}):")
-    class_names = ['Low (<6.5%)', 'Lower-Middle (6.5-9%)', 'Upper-Middle (9-13%)', 'High (>13%)']
+    class_names = ['Low (<7%)', 'Medium (7-12%)', 'High (>12%)']
     for cls, weight in zip(unique_classes, weights):
         print(f"  Class {cls} ({class_names[cls]}): {weight:.4f}")
     
@@ -226,13 +218,13 @@ def load_and_preprocess_data(data_path: str = DATA_PATH, use_engineered_features
     scaler = StandardScaler()
     X = scaler.fit_transform(X)
     
-    # Discretize target into 4 classes using specified method
+    # Discretize target into 3 classes using specified method
     y = discretize_savings(df[target_col], method=discretization_method)
     
     # Print class distribution
     unique, counts = np.unique(y, return_counts=True)
     print("\nClass Distribution:")
-    class_names = ['Low', 'Lower-Middle', 'Upper-Middle', 'High']
+    class_names = ['Low', 'Medium', 'High']
     for cls, count in zip(unique, counts):
         print(f"  Class {cls} ({class_names[cls]}): {count} samples ({100*count/len(y):.1f}%)")
     
@@ -440,7 +432,7 @@ def prepare_dataset(
         
         # Print class distribution for first few clients
         print("\nClass Distribution for First 5 Clients:")
-        class_names = ['Low (<6.5%)', 'Lower-Middle (6.5-9%)', 'Upper-Middle (9-13%)', 'High (>13%)']
+        class_names = ['Low (<7%)', 'Medium (7-12%)', 'High (>12%)']
         for client_idx in range(min(5, num_partitions)):
             # Get indices relative to trainval_dataset
             client_subset_indices = np.array(client_datasets[client_idx].indices)  # Convert to numpy array

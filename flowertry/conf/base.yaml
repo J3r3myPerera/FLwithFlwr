@@ -1,17 +1,12 @@
 ---
 # Federated Learning Configuration for Savings Potential Classification
 # Dataset: Indian Personal Finance and Spending Habits
-# Task: 4-class classification (Low/Lower-Middle/Upper-Middle/High savings potential)
+# Task: 3-class classification (Low/Medium/High savings potential)
 
-num_rounds: 50 # Increased to better observe FedProx benefits
+num_rounds: 30 # Reduced for quick testing
 num_clients: 20
 batch_size: 8
-num_classes: 4
-
-# Discretization method for target variable
-# 'quantile': Use quartile thresholds (balanced ~25% each class)
-# 'fixed': Use data-driven fixed thresholds (<6.5%, 6.5-9%, 9-13%, >13%)
-discretization_method: "quantile"
+num_classes: 3
 
 num_clients_per_round_fit: 5
 num_clients_per_round_eval: 5 # Must be <= num_clients (20)
@@ -27,39 +22,39 @@ class_weight_method: "balanced" # 'balanced' (inverse frequency) or 'sqrt' (soft
 proximal_mu: 0.5 # For fixed FedProx - typical range: 0.001-0.5
 
 # FedSCAFFOLD parameters
-scaffold_server_lr: 0.5 # Server-side learning rate for control variate updates (default: 1.0)
+scaffold_server_lr: 1.0 # Server-side learning rate for control variate updates (1.0 = full update)
 
 # Adaptive FedProx parameters (simple loss-based adaptation)
 adaptive_mu:
   enabled: true # Whether to use adaptive mu (true) or fixed mu (false)
-  mode: "multi_signal" # 'simple' for loss-based, 'multi_signal' for HAPI-based
-  initial_mu: 0.01 # Starting mu value (conservative start)
-  mu_min: 0.001 # Minimum allowed mu
+  mode: "simple" # 'simple' for loss-based - more stable than multi_signal
+  initial_mu: 0.1 # Starting mu value
+  mu_min: 0.01 # Minimum allowed mu
   mu_max: 0.5 # Maximum allowed mu
-  increase_factor: 1.3 # Multiply mu by this when loss increases
-  decrease_factor: 0.9 # Multiply mu by this when loss decreases
+  increase_factor: 1.2 # Multiply mu by this when loss increases
+  decrease_factor: 0.95 # Multiply mu by this when loss decreases
   loss_threshold: 0.01 # Only adapt if loss change exceeds this
-  warmup_rounds: 3 # Wait this many rounds before adapting
+  warmup_rounds: 5 # Wait this many rounds before adapting
 
 # Multi-Signal Adaptive FedProx parameters (HAPI-based heterogeneity-aware adaptation)
 multi_signal_mu:
-  base_mu: 0.3 # Base mu value before adaptation (start conservative)
-  mu_min: 0.05 # Minimum allowed mu
-  mu_max: 2.0 # Maximum allowed mu
-  smoothing_factor: 0.7 # EMA smoothing for mu updates (0-1, higher = more smoothing)
-  warmup_rounds: 3 # Wait this many rounds before adapting
+  base_mu: 0.1 # Base mu value before adaptation (start conservative)
+  mu_min: 0.01 # Minimum allowed mu
+  mu_max: 0.5 # Maximum allowed mu
+  smoothing_factor: 0.8 # EMA smoothing for mu updates (0-1, higher = more smoothing)
+  warmup_rounds: 5 # Wait this many rounds before adapting
   # Signal weights (should sum to ~1.0)
   weights:
     gradient_divergence: 0.4 # Weight for gradient/update divergence signal (most direct measure)
-    loss_variance: 0.25 # Weight for loss variance signal
+    loss_variance: 0.3 # Weight for loss variance signal
     label_entropy: 0.2 # Weight for label distribution skewness
-    feature_variance: 0.15 # Weight for feature distribution heterogeneity
+    feature_variance: 0.1 # Weight for feature distribution heterogeneity
 
 # Strategies to run in comparison (fedavg, fedprox, fedscaffold)
 strategies:
   - fedavg
   - fedprox
-  # - fedscaffold
+  - fedscaffold
 
 # Global training configuration (used as defaults for all strategies)
 config_fit:
@@ -78,13 +73,13 @@ strategy_configs:
     max_grad_norm: 1.0
 
   fedprox:
-    lr: 0.01 # FedProx benefits from moderate LR (proximal term provides implicit regularization)
-    momentum: 0.9 # Higher momentum for stability
-    local_epochs: 5 # More local epochs leverages proximal term constraint
-    max_grad_norm: 2.0 # Higher threshold to allow proximal corrections
+    lr: 0.005 # Lower LR for FedProx - proximal term provides regularization
+    momentum: 0.5 # Lower momentum to reduce oscillation with proximal term
+    local_epochs: 3 # Fewer epochs to prevent over-correction
+    max_grad_norm: 1.0 # Standard gradient clipping
 
   fedscaffold:
-    lr: 0.005 # Lower LR for SCAFFOLD (control variates amplify gradients)
-    momentum: 0.5
-    local_epochs: 3
-    max_grad_norm: 1.0 # Higher threshold to allow SCAFFOLD corrections
+    lr: 0.01 # Higher LR for SCAFFOLD - control variates correct drift
+    momentum: 0.0 # No momentum for SCAFFOLD (control variates replace momentum's role)
+    local_epochs: 5 # More local epochs to benefit from variance reduction
+    max_grad_norm: 2.0 # Higher threshold for SCAFFOLD corrections

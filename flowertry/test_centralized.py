@@ -15,9 +15,7 @@ trainloaders, valloaders, testloader, class_weights, input_dim = prepare_dataset
     num_partitions=1,  # Just one partition = centralized
     batch_size=64,
     iid=True,
-    use_class_weights=True,
-    class_weight_method='balanced',
-    discretization_method='fixed'  # Use fixed thresholds for wider class boundaries
+    use_class_weights=False  # Try without class weights first
 )
 
 print(f'\nInput dimension: {input_dim}')
@@ -26,7 +24,7 @@ print(f'Test samples: {len(testloader.dataset)}')
 
 # Create model
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-model = Net(num_classes=4, input_dim=input_dim).to(device)
+model = Net(num_classes=3, input_dim=input_dim).to(device)
 
 # Loss and optimizer
 if class_weights is not None:
@@ -36,12 +34,12 @@ if class_weights is not None:
 else:
     criterion = nn.CrossEntropyLoss()
 
-optimizer = optim.Adam(model.parameters(), lr=0.0005, weight_decay=1e-5)
-scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=10)
+optimizer = optim.Adam(model.parameters(), lr=0.001)
+scheduler = optim.lr_scheduler.ReduceLROnPlateau(optimizer, mode='min', factor=0.5, patience=5)
 
 # Training
 print('\nTraining centralized model...')
-num_epochs = 100  # Train longer for better convergence
+num_epochs = 50
 
 for epoch in range(num_epochs):
     model.train()
@@ -89,8 +87,8 @@ for epoch in range(num_epochs):
 model.eval()
 test_correct = 0
 test_total = 0
-class_correct = [0, 0, 0, 0]
-class_total = [0, 0, 0, 0]
+class_correct = [0, 0, 0]
+class_total = [0, 0, 0]
 
 with torch.no_grad():
     for data, target in testloader:
@@ -100,7 +98,7 @@ with torch.no_grad():
         test_correct += pred.eq(target).sum().item()
         test_total += target.size(0)
         
-        for i in range(4):
+        for i in range(3):
             mask = target == i
             class_total[i] += mask.sum().item()
             class_correct[i] += (pred[mask] == i).sum().item()
@@ -110,7 +108,7 @@ print('FINAL RESULTS')
 print('=' * 60)
 print(f'Overall Test Accuracy: {test_correct/test_total*100:.2f}%')
 print(f'\nPer-class Accuracy:')
-class_names = ['Low (<6.5%)', 'Lower-Middle (6.5-9%)', 'Upper-Middle (9-13%)', 'High (>13%)']
+class_names = ['Low Savings', 'Medium Savings', 'High Savings']
 for i, name in enumerate(class_names):
     if class_total[i] > 0:
         acc = class_correct[i] / class_total[i] * 100

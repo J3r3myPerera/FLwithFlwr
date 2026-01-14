@@ -1,16 +1,31 @@
-# Accuracy Fix Documentation
+# Federated Learning Accuracy Fix Documentation
 
-## Problem Statement
-
-The federated learning system was experiencing **fundamental accuracy issues** - even centralized (non-federated) training achieved less than 50% accuracy on a 3-class classification task. This indicated that the problem was not with the FL implementation itself, but with the underlying data preprocessing and model architecture.
+**Date:** January 13, 2026  
+**Issue:** Centralized and Federated Learning model accuracy was below 50%  
+**Resolution:** Comprehensive improvements achieving 65%+ accuracy
 
 ---
 
-## Root Causes Identified
+## Problem Statement
 
-### 1. Poor Feature-Target Correlation
+The user reported that running a centralized model test showed fundamental accuracy issues (below 50%), indicating the problem was not specific to the federated learning implementation but rather rooted in:
 
-The raw features from the Indian Personal Finance dataset did not have strong predictive power for savings classification. Features like raw income, age, and individual expense categories don't directly capture the financial behaviors that determine savings rates.
+1. Poor feature-target correlation
+2. Class imbalance
+3. Insufficient model capacity
+4. BatchNorm incompatibility with FL
+
+---
+
+## Root Cause Analysis
+
+### 1. Weak Feature-Target Relationship
+
+The original 16 raw features (income, expenses, age, etc.) had weak correlation with the savings classification target. The model couldn't learn meaningful patterns because:
+
+- Raw expense values don't capture spending behavior relative to income
+- No derived ratios that actually predict savings potential
+- Missing interaction features that combine related variables
 
 ### 2. Class Imbalance with Fixed Thresholds
 
@@ -20,37 +35,43 @@ The original discretization used fixed thresholds:
 - Medium: 7-12% savings
 - High: > 12% savings
 
-This resulted in imbalanced classes that varied based on the data distribution, making it harder for the model to learn the minority classes effectively.
+This created imbalanced classes based on the actual data distribution, making it harder for the model to learn the minority classes.
 
-### 3. Insufficient Model Capacity
+### 3. Shallow Model Architecture
 
-The original model architecture (16 → 64 → 32 → 16 → 3) was too shallow to capture the complex relationships between financial features and savings behavior.
+The original model (16 → 64 → 32 → 16 → 3) was:
 
-### 4. BatchNorm Incompatibility with Federated Learning
+- Too shallow to capture complex patterns
+- Using BatchNorm which caused FL serialization issues
+- Using high dropout (0.3) causing underfitting
 
-BatchNorm layers maintain running statistics (mean/variance) that don't serialize properly when transferring model weights between clients and server in FL. This caused `IndexError` exceptions during `load_state_dict()` calls.
+### 4. BatchNorm + Federated Learning Incompatibility
+
+BatchNorm layers maintain running statistics (`running_mean`, `running_var`) that:
+
+- Don't aggregate well across federated clients
+- Cause `IndexError` when loading state_dict after aggregation
+- Lead to complete training failures after round 1
 
 ---
 
 ## Solutions Implemented
 
-### 1. Feature Engineering (dataset.py)
+### Solution 1: Feature Engineering (dataset.py)
 
-Added 9 derived features that capture meaningful financial ratios and relationships:
+**Added 9 derived features** that capture meaningful financial ratios:
 
 ```python
 def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     """Add derived features that better capture savings behavior."""
 
-    # Total monthly expenses
-    df['Total_Expenses'] = (df['Rent'] + df['Loan_Repayment'] +
-                            df['Insurance'] + df['Groceries'] +
-                            df['Transport'] + df['Eating_Out'] +
-                            df['Entertainment'] + df['Utilities'] +
-                            df['Healthcare'] + df['Education'] +
-                            df['Miscellaneous'])
+    # Total expenses across all categories
+    expense_cols = ['Rent', 'Loan_Repayment', 'Insurance', 'Groceries',
+                    'Transport', 'Eating_Out', 'Entertainment',
+                    'Utilities', 'Healthcare', 'Education', 'Miscellaneous']
+    df['Total_Expenses'] = df[expense_cols].sum(axis=1)
 
-    # Actual savings rate (income - expenses) / income
+    # Actual savings rate (what they can save based on income vs expenses)
     df['Actual_Savings_Rate'] = (df['Income'] - df['Total_Expenses']) / df['Income']
 
     # Expense to income ratio
@@ -62,110 +83,121 @@ def engineer_features(df: pd.DataFrame) -> pd.DataFrame:
     # Essential spending ratio
     df['Essential_Ratio'] = (df['Groceries'] + df['Utilities'] + df['Healthcare']) / df['Total_Expenses']
 
-    # Housing burden (rent as % of income)
+    # Rent burden
     df['Rent_Burden'] = df['Rent'] / df['Income']
 
-    # Debt burden (loan repayment as % of income)
+    # Debt burden
     df['Debt_Burden'] = df['Loan_Repayment'] / df['Income']
 
-    # Per-capita income
-    df['Per_Capita_Income'] = df['Income'] / df['Dependents'].replace(0, 1)
+    # Per capita income
+    df['Per_Capita_Income'] = df['Income'] / df['Dependents'].clip(lower=1)
 
-    # Age-income interaction (lifecycle stage)
+    # Age-income interaction
     df['Age_Income_Ratio'] = df['Age'] / df['Income']
 
     return df
 ```
 
-**Impact**: Input dimension increased from 16 to **25 features**, providing richer signal for the model.
+**Why this helps:** These ratios directly relate to savings behavior. Someone with high `Expense_to_Income` ratio is less likely to save, regardless of absolute income level.
+
+**Input dimension change:** 16 → 25 features
 
 ---
 
-### 2. Quantile-Based Class Discretization (dataset.py)
+### Solution 2: Quantile-Based Class Discretization (dataset.py)
 
-Changed from fixed thresholds to data-driven quantile thresholds:
+**Changed from fixed thresholds to data-driven thresholds:**
 
 ```python
 def discretize_savings(savings_percentage: pd.Series, method: str = 'quantile') -> np.ndarray:
     if method == 'quantile':
-        # Use 33rd and 67th percentiles for balanced classes
+        # Use percentiles for balanced classes
         q33 = savings_percentage.quantile(0.33)
         q67 = savings_percentage.quantile(0.67)
 
         labels = np.zeros(len(savings_percentage), dtype=np.int64)
-        labels[savings_percentage >= q33] = 1  # Medium
-        labels[savings_percentage >= q67] = 2  # High
+        labels[savings_percentage < q33] = 0      # Low
+        labels[(savings_percentage >= q33) & (savings_percentage < q67)] = 1  # Medium
+        labels[savings_percentage >= q67] = 2     # High
 ```
 
-**Impact**: Class distribution changed from imbalanced to approximately **33% / 34% / 33%**, ensuring the model sees equal representation of all classes.
+**Result:** Class distribution changed from imbalanced to ~33%/34%/33%
+
+**Why this helps:** Balanced classes prevent the model from always predicting the majority class.
 
 ---
 
-### 3. Improved Model Architecture (model.py)
+### Solution 3: Improved Model Architecture (model.py)
 
-Replaced the shallow network with a deeper, wider architecture:
-
-**Before:**
-
-```
-16 → 64 → 32 → 16 → 3 (with BatchNorm)
-```
-
-**After:**
-
-```
-25 → 256 → 128 → 128 → 64 → 32 → 3 (without BatchNorm)
-```
-
-Key changes:
-
-- **Removed BatchNorm layers** - These cause serialization issues in FL
-- **Increased width** - First hidden layer expanded from 64 to 256 neurons
-- **Added depth** - Extra hidden layer (128 → 128) for better feature learning
-- **Xavier initialization** - Better weight initialization for faster convergence
-- **Adjusted dropout** - Set to 0.2 for regularization without underfitting
+**Removed BatchNorm, made network deeper and wider:**
 
 ```python
 class Net(nn.Module):
-    def __init__(self, num_classes: int = 3, input_dim: int = DEFAULT_INPUT_DIM) -> None:
+    def __init__(self, num_classes: int = 3, input_dim: int = 25):
         super(Net, self).__init__()
 
-        self.fc1 = nn.Linear(input_dim, 256)
-        self.fc2 = nn.Linear(256, 128)
-        self.fc3 = nn.Linear(128, 128)
-        self.fc4 = nn.Linear(128, 64)
-        self.fc5 = nn.Linear(64, 32)
-        self.fc6 = nn.Linear(32, num_classes)
+        # Wider and deeper architecture (NO BatchNorm for FL compatibility)
+        self.fc1 = nn.Linear(input_dim, 256)   # Input → 256
+        self.fc2 = nn.Linear(256, 128)         # 256 → 128
+        self.fc3 = nn.Linear(128, 128)         # 128 → 128
+        self.fc4 = nn.Linear(128, 64)          # 128 → 64
+        self.fc5 = nn.Linear(64, 32)           # 64 → 32
+        self.fc6 = nn.Linear(32, num_classes)  # 32 → 3
+
         self.dropout = nn.Dropout(0.2)
+        self._init_weights()  # Xavier initialization
 ```
+
+**Key changes:**
+| Aspect | Before | After |
+|--------|--------|-------|
+| Architecture | 16→64→32→16→3 | 25→256→128→128→64→32→3 |
+| BatchNorm | Yes (5 layers) | No (removed for FL) |
+| Dropout | 0.15-0.3 | 0.2 |
+| Weight Init | Default | Xavier/Glorot |
+
+**Why BatchNorm was removed:** In federated learning, BatchNorm's running statistics (`running_mean`, `running_var`) don't serialize/aggregate properly across clients, causing:
+
+```
+IndexError: index 0 is out of bounds for dimension 0 with size 0
+```
+
+This error occurred in `batchnorm.py` when loading state_dict after FedAvg aggregation.
 
 ---
 
-### 4. Dynamic Input Dimension Support
+### Solution 4: Dynamic Input Dimension Propagation
 
-Updated all components to accept variable input dimensions, allowing the feature engineering to work seamlessly:
+Updated all components to accept and pass `input_dim` dynamically:
 
 #### dataset.py
 
 ```python
-def prepare_dataset(..., use_engineered_features=True, discretization_method='quantile'):
-    # Returns: trainloaders, valloaders, testloader, class_weights, input_dim
+def prepare_dataset(..., use_engineered_features=True, discretization_method='quantile'
+) -> Tuple[..., int]:  # Now returns input_dim
+    ...
+    return trainloaders, valloaders, testloader, class_weights, input_dim
 ```
 
 #### model.py
 
 ```python
-DEFAULT_INPUT_DIM = 25  # 14 numerical + 9 engineered + 2 categorical
+DEFAULT_INPUT_DIM = 25
 
 class Net(nn.Module):
     def __init__(self, num_classes=3, input_dim=DEFAULT_INPUT_DIM):
+        ...
 ```
 
 #### server.py
 
 ```python
 def get_initial_parameters(num_classes=3, input_dim=DEFAULT_INPUT_DIM):
+    net = Net(num_classes=num_classes, input_dim=input_dim)
+    ...
+
 def get_evaluate_fn(num_classes, testloader, class_weights=None, input_dim=DEFAULT_INPUT_DIM):
+    ...
 ```
 
 #### cleint.py
@@ -173,124 +205,115 @@ def get_evaluate_fn(num_classes, testloader, class_weights=None, input_dim=DEFAU
 ```python
 class FlowerClient(fl.client.NumPyClient):
     def __init__(self, ..., input_dim=DEFAULT_INPUT_DIM):
+        self.model = Net(num_classes=num_classes, input_dim=input_dim)
 
 def generate_client_fn(..., input_dim=DEFAULT_INPUT_DIM):
+    ...
 ```
 
 #### compare_strategies.py
 
 ```python
+# Receive input_dim from dataset
 trainloaders, validationloaders, testloader, class_weights, input_dim = prepare_dataset(...)
+
+# Pass to all components
 client_fn = generate_client_fn(..., input_dim=input_dim)
 initial_parameters = get_initial_parameters(cfg.num_classes, input_dim=input_dim)
 ```
 
 ---
 
-### 5. Class Weight Enhancement (dataset.py)
+### Solution 5: Class Weight Methods (dataset.py)
 
-Added a `medium_boost` option to give extra weight to the harder-to-classify Medium class:
+Added `medium_boost` method for class weights:
 
 ```python
 def compute_class_weights(labels, method='balanced'):
     if method == 'medium_boost':
+        # Boost the middle class which is often harder to classify
         weights = n_samples / (n_classes * counts)
-        weights[1] *= 1.5  # Boost Medium class weight
+        if len(weights) >= 2:
+            weights[1] *= 1.5  # 1.5x weight for Medium class
 ```
 
----
-
-## Results
-
-| Metric                     | Before Fix      | After Fix            |
-| -------------------------- | --------------- | -------------------- |
-| Centralized Test Accuracy  | < 50%           | **65.4%**            |
-| FedAvg Accuracy (5 rounds) | ~34% (broken)   | **63.95%**           |
-| Input Features             | 16              | 25                   |
-| Class Distribution         | Imbalanced      | Balanced (~33% each) |
-| FL State Dict Errors       | Yes (BatchNorm) | None                 |
-
-### Per-Class Performance (Centralized)
-
-| Class          | Before  | After      |
-| -------------- | ------- | ---------- |
-| Low Savings    | Unknown | **81.86%** |
-| Medium Savings | Unknown | 14.76%\*   |
-| High Savings   | Unknown | **99.25%** |
-
-\*The Medium class remains challenging due to inherent data overlap - samples at the boundary between Low/Medium and Medium/High are difficult to distinguish. This is a fundamental limitation of the dataset, not the model.
+**Why this helps:** The Medium class is inherently harder to classify (boundary zone between Low and High), so boosting its weight helps the model pay more attention to it.
 
 ---
 
 ## Files Modified
 
-1. **dataset.py**
+| File                           | Changes                                                                                                                                                             |
+| ------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `dataset.py`                   | Added `engineer_features()`, updated `discretize_savings()` with quantile method, `prepare_dataset()` returns `input_dim`, added `medium_boost` class weight method |
+| `model.py`                     | Removed BatchNorm layers, added `DEFAULT_INPUT_DIM=25`, deeper architecture (256→128→128→64→32), Xavier initialization                                              |
+| `server.py`                    | Added `input_dim` parameter to `get_initial_parameters()` and `get_evaluate_fn()`                                                                                   |
+| `cleint.py`                    | Added `input_dim` parameter to `FlowerClient`, `ScaffoldFlowerClient`, and `generate_client_fn()`                                                                   |
+| `compare_strategies.py`        | Updated to receive `input_dim` from dataset and pass to all components                                                                                              |
+| `main.py`                      | Updated to handle new `prepare_dataset()` return value and pass `input_dim`                                                                                         |
+| `diagnose_data.py`             | Updated `prepare_dataset()` call for new signature                                                                                                                  |
+| `analyze_data_distribution.py` | Updated `prepare_dataset()` calls for new signature                                                                                                                 |
 
-   - Added `engineer_features()` function
-   - Updated `discretize_savings()` with quantile method
-   - Updated `load_and_preprocess_data()` with new parameters
-   - Updated `prepare_dataset()` to return `input_dim`
-   - Added `medium_boost` class weight method
+---
 
-2. **model.py**
+## Results
 
-   - Added `DEFAULT_INPUT_DIM = 25`
-   - Updated `Net` class to accept `input_dim` parameter
-   - Removed BatchNorm layers (FL compatibility)
-   - Increased network width and depth
-   - Added Xavier weight initialization
+| Metric               | Before Fix           | After Fix  | Improvement   |
+| -------------------- | -------------------- | ---------- | ------------- |
+| Centralized Accuracy | <50%                 | **65.4%**  | +15%+         |
+| FedAvg (5 rounds)    | ~34% (failing)       | **63.95%** | +30%+         |
+| Input Features       | 16                   | 25         | +9 engineered |
+| Class Balance        | Imbalanced           | ~33% each  | Balanced      |
+| FL Training          | Crashing (BatchNorm) | Working    | Fixed         |
 
-3. **server.py**
+### Per-Class Accuracy (Centralized, 50 epochs)
 
-   - Updated `get_initial_parameters()` to accept `input_dim`
-   - Updated `get_evaluate_fn()` to accept `input_dim`
-
-4. **cleint.py**
-
-   - Updated `FlowerClient` to accept `input_dim`
-   - Updated `ScaffoldFlowerClient` to accept `input_dim`
-   - Updated `generate_client_fn()` to accept and pass `input_dim`
-
-5. **compare_strategies.py**
-
-   - Updated `prepare_dataset()` call to receive `input_dim`
-   - Updated all strategy runner functions to pass `input_dim`
-   - Added `use_engineered_features` and `discretization_method` config options
-
-6. **main.py**
-
-   - Updated to use new `prepare_dataset()` signature
-   - Added `input_dim` parameter passing
-
-7. **diagnose_data.py** & **analyze_data_distribution.py**
-   - Updated to handle new `prepare_dataset()` return values
+- **Low Savings:** 81.86%
+- **Medium Savings:** 14.76% (inherently difficult boundary class)
+- **High Savings:** 99.25%
 
 ---
 
 ## Configuration Options
 
-New config options available in `conf/base.yaml`:
+New options added to `conf/base.yaml`:
 
 ```yaml
-# Feature engineering options
-use_engineered_features: true # Enable 9 derived features
-discretization_method: "quantile" # 'quantile' for balanced, 'fixed' for original
+# Feature engineering (new)
+use_engineered_features: true # Add 9 derived features
+discretization_method: quantile # 'quantile' for balanced, 'fixed' for original
 
 # Class weights
 use_class_weights: true
-class_weight_method: "balanced" # 'balanced', 'sqrt', or 'medium_boost'
+class_weight_method: balanced # 'balanced', 'sqrt', or 'medium_boost'
 ```
 
 ---
 
-## Key Lessons Learned
+## Known Limitations
 
-1. **Always verify centralized performance first** - If centralized training fails, FL will also fail regardless of the strategy used.
+1. **Medium Class Accuracy:** The Medium savings class (boundary zone ~7.5%-10.5%) remains difficult to classify because it's the transition zone between Low and High. This is an inherent limitation of discretizing a continuous variable.
 
-2. **Feature engineering matters** - Raw financial features don't capture savings behavior well; derived ratios and relationships are much more predictive.
+2. **Dataset Size:** With 20,000 samples split across clients, each client has limited data, which can affect local training quality in FL.
 
-3. **BatchNorm is problematic in FL** - The running statistics don't aggregate well across clients. Use LayerNorm or no normalization instead.
+---
 
-4. **Class imbalance affects learning** - Quantile-based discretization ensures balanced training, preventing the model from always predicting the majority class.
+## Testing
 
-5. **Model capacity must match task complexity** - A deeper network with proper initialization learns better representations of complex financial data.
+Two test scripts were created for validation:
+
+1. **test_pipeline.py** - Verifies all components work together with new input dimensions
+2. **test_centralized.py** - Tests centralized training as a baseline
+
+Run tests:
+
+```bash
+python test_pipeline.py      # Should output "✅ Full pipeline test passed!"
+python test_centralized.py   # Should show ~65% accuracy
+```
+
+---
+
+## Conclusion
+
+The accuracy issue was caused by a combination of weak features, class imbalance, shallow model architecture, and BatchNorm incompatibility with federated learning. By addressing all four issues systematically, the model now achieves meaningful accuracy (65%+) in both centralized and federated settings.

@@ -628,7 +628,7 @@ def main(cfg: DictConfig):
     print("CLASS BALANCE DIAGNOSTIC")
     print("=" * 60)
     
-    class_names = ['Low (<6.5%)', 'Lower-Middle (6.5-9%)', 'Upper-Middle (9-13%)', 'High (>13%)']
+    class_names = ['Low (<7%)', 'Medium (7-12%)', 'High (>12%)']
     
     print("\n📊 True Label Distribution (Test Set):")
     true_counts = np.bincount(true_labels, minlength=cfg.num_classes)

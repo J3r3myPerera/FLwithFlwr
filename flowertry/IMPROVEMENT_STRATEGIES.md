@@ -21,6 +21,7 @@ When FedAvg outperforms FedProx and SCAFFOLD, it typically indicates one of thes
 ### Before Trying Solutions, Check:
 
 1. **Verify SCAFFOLD fixes are actually applied**:
+
    ```bash
    # Check model.py line 174
    grep -n "param.grad.data += (ci - cg)" flowertry/model.py
@@ -36,9 +37,11 @@ When FedAvg outperforms FedProx and SCAFFOLD, it typically indicates one of thes
    ```
 
 2. **Check c_global_norm values**:
+
    ```bash
    python test_scaffold_fixes.py
    ```
+
    - If c_global_norm > 50: Gradient sign still wrong
    - If c_global_norm < 1: Control variates not updating
    - If c_global_norm 1-20: ✅ Correct range
@@ -68,6 +71,7 @@ When FedAvg outperforms FedProx and SCAFFOLD, it typically indicates one of thes
 **Issue**: Client may not be using SCAFFOLD correctly
 
 **Check**:
+
 ```python
 # In model.py train_scaffold function
 # Verify c_global and c_i are being passed correctly
@@ -75,6 +79,7 @@ When FedAvg outperforms FedProx and SCAFFOLD, it typically indicates one of thes
 ```
 
 **Potential Bug**: Gradient correction applied AFTER clipping
+
 - Current order: backward() → SCAFFOLD correction → clip → step()
 - This is CORRECT
 - If clipping happens before SCAFFOLD correction, it would hurt performance
@@ -88,12 +93,14 @@ When FedAvg outperforms FedProx and SCAFFOLD, it typically indicates one of thes
 **Issue**: Control variates might be on wrong device (CPU vs GPU)
 
 **Symptom**:
+
 - SCAFFOLD slower than FedAvg
 - Inconsistent performance across rounds
 
 **Fix**: Ensure c_global and c_i tensors are on same device as model
 
 **Check in model.py**:
+
 ```python
 # Lines 159-161
 c_global_tensors = [torch.tensor(cg, dtype=torch.float32, device=device)
@@ -111,12 +118,14 @@ c_i_tensors = [torch.tensor(ci, dtype=torch.float32, device=device)
 **Issue**: Proximal term might not be applied correctly
 
 **Check in model.py** (train_fedprox function):
+
 ```python
 # Proximal term should be: mu/2 * ||w - w_global||^2
 # Gradient should be: mu * (w - w_global)
 ```
 
 **Common bugs**:
+
 - Wrong sign: `mu * (w_global - w)` instead of `mu * (w - w_global)`
 - Applied after optimizer step instead of during loss
 - Not scaled by mu properly
@@ -132,6 +141,7 @@ c_i_tensors = [torch.tensor(ci, dtype=torch.float32, device=device)
 **Current**: You have `get_initial_parameters()` ✅
 
 **But verify**:
+
 - All three strategies use the SAME initial parameters
 - Not random seed differences causing variance
 
@@ -144,6 +154,7 @@ c_i_tensors = [torch.tensor(ci, dtype=torch.float32, device=device)
 **Current**: `lr: 0.01`
 
 **Problem**:
+
 - FedProx and SCAFFOLD add additional gradient corrections
 - This can amplify gradient updates
 - With lr=0.01, updates might be too large, causing instability
@@ -170,6 +181,7 @@ scaffold_lr: 0.01
 ```
 
 **Why this helps**:
+
 - FedProx proximal term adds `mu * (w - w_global)` to gradients
 - SCAFFOLD adds `(c_i - c_global)` to gradients
 - Both increase effective gradient magnitude
@@ -182,6 +194,7 @@ scaffold_lr: 0.01
 **Current**: `local_epochs: 10`
 
 **Problem**:
+
 - 10 local epochs is VERY aggressive for FL
 - Can cause severe client drift
 - FedProx/SCAFFOLD designed to handle drift, but 10 epochs might be too much
@@ -207,6 +220,7 @@ scaffold_epochs: 5  # Better drift handling
 ```
 
 **Why this helps**:
+
 - Fewer local epochs = less client drift
 - FedAvg might be doing "accidentally well" because drift is catastrophic
 - FedProx/SCAFFOLD corrections might be overshooting with 10 epochs
@@ -219,6 +233,7 @@ scaffold_epochs: 5  # Better drift handling
 **Current**: `proximal_mu: 0.01` (fixed), `base_mu: 0.001` (adaptive)
 
 **Problem**:
+
 - mu=0.01 is VERY small for alpha=0.1 heterogeneity
 - Proximal term has negligible effect
 - FedProx behaves almost like FedAvg
@@ -247,6 +262,7 @@ multi_signal_mu:
 ```
 
 **Why this helps**:
+
 - Stronger proximal term → stronger regularization
 - With alpha=0.1, you have VERY heterogeneous data
 - Need strong mu to prevent drift
@@ -259,6 +275,7 @@ multi_signal_mu:
 **Current**: `max_grad_norm: 1.0`
 
 **Problem**:
+
 - Might clip SCAFFOLD/FedProx corrections too aggressively
 - FedAvg gradients naturally smaller, not clipped as much
 
@@ -289,6 +306,7 @@ scaffold_clip: 2.0  # Allow larger gradients
 **Current**: `alpha: 0.1` (very heterogeneous)
 
 **Problem**:
+
 - alpha=0.1 is EXTREME heterogeneity
 - Might be too extreme for current mu values
 - OR data might not actually partition this heterogeneously
@@ -313,6 +331,7 @@ alpha: 100.0  # Effectively IID
 ```
 
 **Why this helps**:
+
 - FedProx/SCAFFOLD show most benefit at alpha=0.3-0.7
 - alpha=0.1 might be pathological (too heterogeneous)
 - alpha=0.5 is the "sweet spot" in most papers
@@ -359,7 +378,7 @@ lr_schedule:
 **Solution**: Use FedAvg for first few rounds, then switch to SCAFFOLD
 
 ```yaml
-scaffold_warmup_rounds: 5  # Use FedAvg for first 5 rounds
+scaffold_warmup_rounds: 5 # Use FedAvg for first 5 rounds
 ```
 
 **Implementation**: Disable SCAFFOLD corrections in first N rounds
@@ -442,6 +461,7 @@ scaffold_momentum: 0.0  # SCAFFOLD has implicit momentum via control variates
 **Purpose**: Check if gradients are exploding/vanishing
 
 **Implementation**:
+
 ```python
 # In training loop
 grad_norms = []
@@ -460,6 +480,7 @@ avg_grad_norm = sum(grad_norms) / len(grad_norms)
 **Purpose**: Check if updates are too large/small
 
 **Implementation**:
+
 ```python
 # Before training
 params_before = [p.clone() for p in model.parameters()]
@@ -478,31 +499,39 @@ weight_change = sum((p1 - p2).norm()
 ### Phase 1: Quick Wins (Test These First)
 
 **Priority 1** - Reduce local epochs:
+
 ```yaml
-local_epochs: 3  # Down from 10
+local_epochs: 3 # Down from 10
 ```
+
 **Expected impact**: +10-15% for FedProx/SCAFFOLD
 
 **Priority 2** - Increase proximal mu:
+
 ```yaml
-proximal_mu: 0.1  # Up from 0.01
+proximal_mu: 0.1 # Up from 0.01
 multi_signal_mu:
-  base_mu: 0.1    # Up from 0.001
-  mu_max: 1.0     # Up from 0.3
+  base_mu: 0.1 # Up from 0.001
+  mu_max: 1.0 # Up from 0.3
 ```
+
 **Expected impact**: +5-10% for FedProx
 
 **Priority 3** - Reduce learning rate for FedProx/SCAFFOLD:
+
 ```yaml
 # Create separate configs or modify on_fit_config_fn
-lr: 0.005  # Down from 0.01 for FedProx/SCAFFOLD
+lr: 0.005 # Down from 0.01 for FedProx/SCAFFOLD
 ```
+
 **Expected impact**: +5-10% for both
 
 **Priority 4** - Increase gradient clipping threshold:
+
 ```yaml
-max_grad_norm: 2.0  # Up from 1.0
+max_grad_norm: 2.0 # Up from 1.0
 ```
+
 **Expected impact**: +3-5% for FedProx/SCAFFOLD
 
 ---
@@ -511,24 +540,26 @@ max_grad_norm: 2.0  # Up from 1.0
 
 Test combinations:
 
-| Config | local_epochs | lr | proximal_mu | alpha | Expected Best |
-|--------|--------------|----|-----------  |-------|---------------|
-| 1      | 1            | 0.01 | 0.1       | 0.5   | FedProx       |
-| 2      | 3            | 0.005 | 0.5      | 0.5   | FedProx       |
-| 3      | 3            | 0.005 | 0.1      | 0.1   | SCAFFOLD      |
-| 4      | 5            | 0.01 | 0.3       | 0.3   | Balanced      |
-| 5      | 1            | 0.02 | 0.5       | 0.7   | FedProx       |
+| Config | local_epochs | lr    | proximal_mu | alpha | Expected Best |
+| ------ | ------------ | ----- | ----------- | ----- | ------------- | ------------------------------------ |
+| 1      | 1            | 0.01  | 0.1         | 0.5   | FedProx       | FedAvg - SCAFFOLD worse              |
+| 2      | 3            | 0.005 | 0.5         | 0.5   | FedProx       | FedAvg - SCAFFOLD worse              |
+| 3      | 3            | 0.005 | 0.1         | 0.1   | SCAFFOLD      | FedProx - SCAFFOLD performing better |
+| 4      | 5            | 0.01  | 0.3         | 0.3   | Balanced      | FedProx                              |
+| 5      | 1            | 0.02  | 0.5         | 0.7   | FedProx       | FedAvg                               |
 
 ---
 
 ### Phase 3: If Still Not Working
 
 1. **Check for implementation bugs**:
+
    - Add extensive logging
    - Compare gradient norms across strategies
    - Verify proximal term is actually applied
 
 2. **Try different alpha values**:
+
    - Test alpha ∈ {0.3, 0.5, 0.7, 1.0}
    - Find sweet spot for your dataset
 
@@ -545,23 +576,23 @@ Test combinations:
 
 ```yaml
 num_rounds: 50
-local_epochs: 3        # ← REDUCED
+local_epochs: 3 # ← REDUCED
 lr: 0.01
 momentum: 0.9
-max_grad_norm: 2.0     # ← INCREASED
-alpha: 0.5             # ← MODERATE
+max_grad_norm: 2.0 # ← INCREASED
+alpha: 0.5 # ← MODERATE
 
 # FedProx
-proximal_mu: 0.1       # ← INCREASED
+proximal_mu: 0.1 # ← INCREASED
 
 # SCAFFOLD
 scaffold_server_lr: 1.0
 
 # Multi-signal adaptive
 multi_signal_mu:
-  base_mu: 0.1         # ← INCREASED
+  base_mu: 0.1 # ← INCREASED
   mu_min: 0.01
-  mu_max: 1.0          # ← INCREASED
+  mu_max: 1.0 # ← INCREASED
 ```
 
 ---
@@ -570,17 +601,17 @@ multi_signal_mu:
 
 ```yaml
 num_rounds: 50
-local_epochs: 1        # ← VERY LOW
-lr: 0.005              # ← REDUCED
-momentum: 0.5          # ← REDUCED
-max_grad_norm: 0.0     # ← DISABLED
-alpha: 0.3             # ← MODERATE
+local_epochs: 1 # ← VERY LOW
+lr: 0.005 # ← REDUCED
+momentum: 0.5 # ← REDUCED
+max_grad_norm: 0.0 # ← DISABLED
+alpha: 0.3 # ← MODERATE
 
 # FedProx
-proximal_mu: 0.5       # ← HIGH
+proximal_mu: 0.5 # ← HIGH
 
 # SCAFFOLD
-scaffold_server_lr: 0.5  # ← REDUCED
+scaffold_server_lr: 0.5 # ← REDUCED
 
 # Multi-signal adaptive
 multi_signal_mu:
@@ -596,14 +627,14 @@ multi_signal_mu:
 ```yaml
 # Based on typical FL papers
 num_rounds: 50
-local_epochs: 1        # ← Standard
+local_epochs: 1 # ← Standard
 lr: 0.01
-momentum: 0.0          # ← No momentum
+momentum: 0.0 # ← No momentum
 max_grad_norm: 1.0
 alpha: 0.5
 
 # FedProx (Sahu et al., 2018)
-proximal_mu: 0.01      # For alpha=0.5
+proximal_mu: 0.01 # For alpha=0.5
 
 # SCAFFOLD (Karimireddy et al., 2020)
 scaffold_server_lr: 1.0
@@ -663,6 +694,7 @@ multi_signal_mu:
 ```
 
 **Run**:
+
 ```bash
 python compare_strategies.py --config-name=tuned
 ```

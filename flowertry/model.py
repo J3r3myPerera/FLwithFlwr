@@ -11,22 +11,21 @@ class Net(nn.Module):
     """
     Improved Multi-Layer Perceptron (MLP) for Savings Potential Classification.
     
-    Task: Classify users into 4 savings potential categories:
-    - Low savers (< 5%)
-    - Lower-Middle savers (5-10%)
-    - Upper-Middle savers (10-15%)
-    - High savers (> 15%)
+    Task: Classify users into 3 savings potential categories:
+    - Low savings
+    - Medium savings
+    - High savings
     
     Architecture: Wider and deeper network without batch normalization (better for FL)
-    - Input: Variable features → 256 → 128 → 128 → 64 → 32 → 4 classes
+    - Input: Variable features → 256 → 128 → 128 → 64 → 32 → 3 classes
     - Uses LayerNorm instead of BatchNorm for FL compatibility
     - Reduced dropout to prevent underfitting with small client data
     
     Input: Features from Indian Personal Finance dataset (default: 25 with engineering)
-    Output: 4 classes
+    Output: 3 classes
     """
     
-    def __init__(self, num_classes: int = 4, input_dim: int = DEFAULT_INPUT_DIM) -> None:
+    def __init__(self, num_classes: int = 3, input_dim: int = DEFAULT_INPUT_DIM) -> None:
         super(Net, self).__init__()
         
         self.input_dim = input_dim
@@ -42,7 +41,7 @@ class Net(nn.Module):
         
         self.fc5 = nn.Linear(64, 32)           # Hidden layer: 64 → 32
         
-        self.fc6 = nn.Linear(32, num_classes)  # Output layer: 32 → 4
+        self.fc6 = nn.Linear(32, num_classes)  # Output layer: 32 → 3
         
         # Lighter dropout to prevent underfitting
         self.dropout = nn.Dropout(0.2)
@@ -221,10 +220,11 @@ def train_scaffold(model, trainloader, optimizer, epochs, device: str,
     # Store initial parameters for control variate update
     params_before = [p.detach().clone() for p in model.parameters()]
 
-    # Count total steps for control variate calculation
+    # Count total gradient steps for proper scaling
     total_steps = 0
+    lr = optimizer.param_groups[0]['lr']
 
-    # Training loop
+    # Training loop with SCAFFOLD correction
     for _ in range(epochs):
         for features, labels in trainloader:
             features, labels = features.to(device), labels.to(device)
@@ -237,13 +237,14 @@ def train_scaffold(model, trainloader, optimizer, epochs, device: str,
             # Backward pass
             loss.backward()
 
-            # SCAFFOLD correction: add (c_i - c_global) to gradients
-            # This corrects the local gradient to align with the global objective
+            # SCAFFOLD correction: subtract (c_i - c_global) from gradients
+            # Corrected gradient: g_corrected = g + c_global - c_i
+            # This pushes local updates toward the global objective
             with torch.no_grad():
                 for param, cg, ci in zip(model.parameters(), c_global_tensors, c_i_tensors):
                     if param.grad is not None:
-                        param.grad.data += (ci - cg)  # FIXED: c_i - c_global
-                        # OLD (WRONG): param.grad.data += (cg - ci)
+                        # FIXED: Add (c_global - c_i) to correct client drift
+                        param.grad.data += (cg - ci)
 
             # Clip gradients
             if max_grad_norm > 0:
@@ -252,22 +253,19 @@ def train_scaffold(model, trainloader, optimizer, epochs, device: str,
             optimizer.step()
             total_steps += 1
 
-    # Compute updated client control variate
-    # c_i_new = c_i - c_global + (1/(K*η)) * (x_before - x_after)
-    # where K = epochs, η = learning rate
-    # Simplified: c_i_new = c_global - (x_after - x_before) / (K * η)
-
-    lr = optimizer.param_groups[0]['lr']
+    # Compute updated client control variate using Option II
+    # c_i_new = c_i - c_global + (x_before - x_after) / (K * lr)
+    # where K = number of local gradient steps (total_steps)
 
     c_i_new = []
-    delta_c = []
 
     with torch.no_grad():
         for p_before, p_after, cg, ci in zip(params_before, model.parameters(),
                                               c_global_tensors, c_i_tensors):
-            # Option II update: c_i_new = c_i - c_global + (x_before - x_after) / (K * η)
-            # CRITICAL FIX: Use epochs, not total_steps!
-            param_diff = (p_before - p_after) / (epochs * lr) if (epochs * lr) > 0 else (p_before - p_after)
+            # Option II update formula
+            # Use total_steps for accurate scaling
+            step_size = total_steps * lr if total_steps * lr > 0 else 1.0
+            param_diff = (p_before - p_after) / step_size
             c_new = ci - cg + param_diff
 
             c_i_new.append(c_new.cpu().numpy())
