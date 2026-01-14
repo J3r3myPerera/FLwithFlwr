@@ -3,7 +3,7 @@
 # Dataset: Indian Personal Finance and Spending Habits
 # Task: 3-class classification (Low/Medium/High savings potential)
 
-num_rounds: 30 # Reduced for quick testing
+num_rounds: 100 
 num_clients: 20
 batch_size: 8
 num_classes: 3
@@ -50,11 +50,35 @@ multi_signal_mu:
     label_entropy: 0.2 # Weight for label distribution skewness
     feature_variance: 0.1 # Weight for feature distribution heterogeneity
 
-# Strategies to run in comparison (fedavg, fedprox, fedscaffold)
+# Hybrid FedProx-SCAFFOLD parameters
+# Combines FedProx (magnitude leash) with SCAFFOLD (direction correction)
+hybrid:
+  # Sequential Activation Strategy
+  warmup_rounds: 10  # Phase 1: Pure SCAFFOLD for first N rounds (mu=0)
+  mu_annealing_interval: 5  # Phase 2: Increase mu every N rounds
+  mu_annealing_factor: 1.5  # Multiply mu by this factor each interval
+  initial_mu: 0.001  # Starting mu after warmup (Phase 2 begins)
+  max_mu: 0.3  # Maximum mu value
+  
+  # Dual-μ Architecture (separate μ for raw vs corrected components)
+  use_dual_mu: true  # Enable separate μ for raw and SCAFFOLD-corrected components
+  mu_raw: 0.1  # μ for uncorrected gradient component (stronger regularization)
+  mu_corrected: 0.001  # μ for SCAFFOLD-corrected component (10-100x smaller)
+  
+  # Conditional Activation Based on Drift Type
+  use_drift_detection: true  # Enable per-client drift-based activation
+  direction_drift_threshold: 0.3  # Cosine distance threshold for direction drift
+  magnitude_drift_threshold: 2.0  # L2 norm ratio threshold for magnitude drift
+  
+  # Legacy fixed mu (used if sequential/dual-mu disabled)
+  proximal_mu: 0.1 # FedProx proximal term - controls "leash" strength (0.05-0.3 typical)
+
+# Strategies to run in comparison (fedavg, fedprox, fedscaffold, hybrid)
 strategies:
   - fedavg
   - fedprox
   - fedscaffold
+  - hybrid
 
 # Global training configuration (used as defaults for all strategies)
 config_fit:
@@ -83,3 +107,9 @@ strategy_configs:
     momentum: 0.0 # No momentum for SCAFFOLD (control variates replace momentum's role)
     local_epochs: 5 # More local epochs to benefit from variance reduction
     max_grad_norm: 2.0 # Higher threshold for SCAFFOLD corrections
+
+  hybrid:
+    lr: 0.01 # Higher LR now that we have better drift control
+    momentum: 0.0 # No momentum - control variates handle correction (like SCAFFOLD)
+    local_epochs: 5 # More local epochs to benefit from variance reduction
+    max_grad_norm: 2.0 # Higher threshold for combined corrections

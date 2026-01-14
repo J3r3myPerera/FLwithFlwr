@@ -5,7 +5,7 @@ import numpy as np
 import flwr as fl
 from flwr.common.typing import Scalar, NDArrays
 
-from model import Net, train, train_fedprox, train_scaffold, test, DEFAULT_INPUT_DIM
+from model import Net, train, train_fedprox, train_scaffold, train_hybrid_fedprox_scaffold, test, DEFAULT_INPUT_DIM
 
 
 class FlowerClient(fl.client.NumPyClient):
@@ -131,6 +131,71 @@ class FlowerClient(fl.client.NumPyClient):
 
             metrics = {
                 "delta_c": delta_c
+            }
+
+            return self.get_parameters({}), len(self.trainloader.dataset), metrics
+
+        elif config.get("hybrid", False):
+            # Enhanced Hybrid FedProx-SCAFFOLD training
+            # Supports: Sequential Activation, Conditional Activation, Dual-μ Architecture
+            c_global = config["c_global"]
+            c_i = config["c_local"]
+            proximal_mu = config.get("proximal_mu", 0.0)
+            use_scaffold = config.get("use_scaffold", True)
+            use_dual_mu = config.get("use_dual_mu", False)
+            mu_raw = config.get("mu_raw", 0.1)
+            mu_corrected = config.get("mu_corrected", 0.001)
+            activation_mode = config.get("activation_mode", "hybrid")
+
+            # Defensive init (first participation)
+            if self.c_client is None:
+                self.c_client = [ci.copy() for ci in c_i]
+
+            # Snapshot before training
+            c_i_old = [ci.copy() for ci in self.c_client]
+
+            # Store global parameters for FedProx proximal term
+            global_params = [p.copy() for p in parameters]
+
+            optimizer = torch.optim.SGD(
+                self.model.parameters(),
+                lr=lr,
+                momentum=momentum
+            )
+
+            # Perform Enhanced Hybrid FedProx-SCAFFOLD local training
+            c_i_new = train_hybrid_fedprox_scaffold(
+                model=self.model,
+                trainloader=self.trainloader,
+                optimizer=optimizer,
+                epochs=epochs,
+                device=self.device,
+                global_params=global_params,
+                proximal_mu=proximal_mu,
+                c_global=c_global,
+                c_i=self.c_client,
+                max_grad_norm=max_grad_norm,
+                class_weights=self.class_weights,
+                use_scaffold=use_scaffold,
+                use_dual_mu=use_dual_mu,
+                mu_raw=mu_raw,
+                mu_corrected=mu_corrected
+            )
+
+            # Compute delta_c explicitly (REQUIRED for SCAFFOLD component)
+            delta_c = [
+                c_i_new[j] - c_i_old[j]
+                for j in range(len(c_i_old))
+            ]
+
+            # Update local cache
+            self.c_client = c_i_new
+
+            metrics = {
+                "delta_c": delta_c,
+                "proximal_mu": proximal_mu,
+                "use_dual_mu": int(use_dual_mu),
+                "activation_mode": activation_mode
             }
 
             return self.get_parameters({}), len(self.trainloader.dataset), metrics

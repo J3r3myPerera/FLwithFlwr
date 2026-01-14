@@ -322,6 +322,165 @@ def run_fedscaffold(cfg: DictConfig, trainloaders, validationloaders, testloader
     return history, elapsed_time, {'c_global_norm_history': c_global_norm_history}
 
 
+def run_hybrid_fedprox_scaffold(cfg: DictConfig, trainloaders, validationloaders, testloader, initial_parameters, class_weights=None, input_dim=None):
+    """
+    Run Enhanced Hybrid FedProx-SCAFFOLD strategy.
+    
+    This enhanced version implements:
+    1. Sequential Activation: Pure SCAFFOLD warm-up (Phase 1), then gradual FedProx (Phase 2)
+    2. Conditional Activation: Per-client drift detection to apply appropriate mechanism
+    3. Dual-μ Architecture: Separate μ for raw vs SCAFFOLD-corrected gradient components
+    
+    The key insight is that SCAFFOLD needs time to calibrate control variates before
+    FedProx can effectively constrain updates without interfering.
+    """
+    print("\n" + "=" * 60)
+    print("RUNNING ENHANCED HYBRID FedProx-SCAFFOLD")
+    print("=" * 60)
+    print("  Features: Sequential Activation + Drift Detection + Dual-μ Architecture")
+
+    # Import custom hybrid strategy
+    from hybrid_strategy import HybridFedProxScaffoldStrategy
+    from cleint import generate_client_fn
+
+    # Get strategy-specific config (fall back to scaffold config if hybrid not specified)
+    if hasattr(cfg, 'strategy_configs') and 'hybrid' in cfg.strategy_configs:
+        hybrid_config = get_strategy_config(cfg, 'hybrid')
+    else:
+        # Use scaffold config as base for hybrid
+        hybrid_config = get_strategy_config(cfg, 'fedscaffold')
+
+    # Get hybrid-specific parameters
+    hybrid_cfg = cfg.get('hybrid', {})
+    
+    # Sequential Activation parameters
+    warmup_rounds = hybrid_cfg.get('warmup_rounds', 10)
+    initial_mu = hybrid_cfg.get('initial_mu', 0.001)
+    mu_annealing_interval = hybrid_cfg.get('mu_annealing_interval', 5)
+    mu_annealing_factor = hybrid_cfg.get('mu_annealing_factor', 1.5)
+    max_mu = hybrid_cfg.get('max_mu', 0.3)
+    
+    # Dual-μ Architecture parameters
+    use_dual_mu = hybrid_cfg.get('use_dual_mu', True)
+    mu_raw = hybrid_cfg.get('mu_raw', 0.1)
+    mu_corrected = hybrid_cfg.get('mu_corrected', 0.001)
+    
+    # Conditional Activation parameters
+    use_drift_detection = hybrid_cfg.get('use_drift_detection', True)
+    direction_drift_threshold = hybrid_cfg.get('direction_drift_threshold', 0.3)
+    magnitude_drift_threshold = hybrid_cfg.get('magnitude_drift_threshold', 2.0)
+    
+    # Legacy fixed mu (fallback)
+    proximal_mu = hybrid_cfg.get('proximal_mu', 0.1)
+    
+    print(f"  Sequential Activation:")
+    print(f"    Phase 1 (SCAFFOLD warm-up): rounds 1-{warmup_rounds}")
+    print(f"    Phase 2 (Hybrid): starting μ={initial_mu}, annealing ×{mu_annealing_factor} every {mu_annealing_interval} rounds")
+    print(f"    Max μ: {max_mu}")
+    
+    if use_dual_mu:
+        print(f"  Dual-μ Architecture: ENABLED")
+        print(f"    μ_raw (uncorrected): {mu_raw}")
+        print(f"    μ_corrected (SCAFFOLD-corrected): {mu_corrected}")
+    else:
+        print(f"  Dual-μ Architecture: DISABLED (using single μ)")
+    
+    if use_drift_detection:
+        print(f"  Drift Detection: ENABLED")
+        print(f"    Direction threshold: {direction_drift_threshold}")
+        print(f"    Magnitude threshold: {magnitude_drift_threshold}")
+    else:
+        print(f"  Drift Detection: DISABLED")
+
+    # Create enhanced hybrid strategy
+    strategy = HybridFedProxScaffoldStrategy(
+        min_fit_clients=cfg.num_clients_per_round_fit,
+        min_evaluate_clients=cfg.num_clients_per_round_eval,
+        min_available_clients=cfg.num_clients,
+        total_clients=cfg.num_clients,
+        # Sequential Activation
+        warmup_rounds=warmup_rounds,
+        initial_mu=initial_mu,
+        mu_annealing_interval=mu_annealing_interval,
+        mu_annealing_factor=mu_annealing_factor,
+        max_mu=max_mu,
+        # Dual-μ Architecture
+        use_dual_mu=use_dual_mu,
+        mu_raw=mu_raw,
+        mu_corrected=mu_corrected,
+        # Conditional Activation
+        use_drift_detection=use_drift_detection,
+        direction_drift_threshold=direction_drift_threshold,
+        magnitude_drift_threshold=magnitude_drift_threshold,
+        # Legacy
+        proximal_mu=proximal_mu,
+        on_fit_config_fn=get_on_fit_config(hybrid_config),
+        evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader, class_weights, input_dim=input_dim),
+        initial_parameters=initial_parameters
+    )
+
+    # Create client function with strategy reference (for hybrid training)
+    client_fn = generate_client_fn(
+        trainloaders,
+        validationloaders,
+        cfg.num_classes,
+        strategy=strategy,
+        class_weights=class_weights,
+        input_dim=input_dim
+    )
+
+    start_time = time.time()
+    history = fl.simulation.start_simulation(
+        client_fn=client_fn,
+        num_clients=cfg.num_clients,
+        config=fl.server.ServerConfig(num_rounds=cfg.num_rounds),
+        strategy=strategy,
+        client_resources={'num_cpus': 1.0, 'num_gpus': 0}
+    )
+    elapsed_time = time.time() - start_time
+
+    print(f"\n  [Hybrid] Training completed in {elapsed_time:.2f}s")
+
+    # Extract metrics from history
+    c_global_norm_history = []
+    current_mu_history = []
+    if hasattr(history, 'metrics_distributed_fit') and history.metrics_distributed_fit:
+        c_global_norm_history = history.metrics_distributed_fit.get('c_global_norm', [])
+        current_mu_history = history.metrics_distributed_fit.get('current_mu', [])
+
+        # Print c_global_norm evolution
+        if c_global_norm_history:
+            print(f"\n  [Hybrid] Control Variate Norm Evolution:")
+            print(f"    Initial: {c_global_norm_history[0][1]:.4f}")
+            print(f"    Final:   {c_global_norm_history[-1][1]:.4f}")
+            print(f"    Max:     {max(norm for _, norm in c_global_norm_history):.4f}")
+        
+        # Print μ evolution (sequential activation)
+        if current_mu_history:
+            print(f"\n  [Hybrid] Sequential μ Evolution:")
+            warmup_mu = [m for r, m in current_mu_history if r <= warmup_rounds]
+            phase2_mu = [(r, m) for r, m in current_mu_history if r > warmup_rounds]
+            if warmup_mu:
+                print(f"    Phase 1 (warmup): μ = 0 for {len(warmup_mu)} rounds")
+            if phase2_mu:
+                print(f"    Phase 2 start: μ = {phase2_mu[0][1]:.4f}")
+                print(f"    Phase 2 final: μ = {phase2_mu[-1][1]:.4f}")
+
+    # Get mu history from strategy
+    mu_history = strategy.get_mu_history()
+    phase_history = strategy.get_phase_history()
+
+    return history, elapsed_time, {
+        'c_global_norm_history': c_global_norm_history,
+        'current_mu_history': current_mu_history,
+        'mu_history': mu_history,
+        'phase_history': phase_history,
+        'warmup_rounds': warmup_rounds,
+        'use_dual_mu': use_dual_mu,
+        'use_drift_detection': use_drift_detection
+    }
+
+
 def extract_metrics(history, strategy_name: str) -> Dict:
     """Extract key metrics from history."""
     metrics = {
@@ -539,6 +698,31 @@ def main(cfg: DictConfig):
             all_results.append(metrics)
         except Exception as e:
             print(f"Error running FedSCAFFOLD: {e}")
+            import traceback
+            traceback.print_exc()
+
+    if 'hybrid' in strategies_to_run:
+        try:
+            # Hybrid FedProx-SCAFFOLD creates its own client function with strategy reference
+            result = run_hybrid_fedprox_scaffold(cfg, trainloaders, validationloaders, testloader, initial_parameters, class_weights, input_dim=input_dim)
+            history, elapsed_time = result[0], result[1]
+            hybrid_info = result[2] if len(result) > 2 else None
+
+            metrics = extract_metrics(history, 'Hybrid (FedProx+SCAFFOLD)')
+            metrics['elapsed_time'] = elapsed_time
+
+            # Store hybrid-specific info if available
+            if hybrid_info:
+                if 'c_global_norm_history' in hybrid_info:
+                    metrics['c_global_norm_history'] = hybrid_info['c_global_norm_history']
+                if 'proximal_mu' in hybrid_info:
+                    metrics['final_mu'] = hybrid_info['proximal_mu']
+                if 'mu_history' in hybrid_info:
+                    metrics['mu_history'] = hybrid_info['mu_history']
+
+            all_results.append(metrics)
+        except Exception as e:
+            print(f"Error running Hybrid FedProx-SCAFFOLD: {e}")
             import traceback
             traceback.print_exc()
 
