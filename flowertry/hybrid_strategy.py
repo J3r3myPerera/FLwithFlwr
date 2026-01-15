@@ -70,6 +70,12 @@ class HybridFedProxScaffoldStrategy(fl.server.strategy.Strategy):
         use_drift_detection: bool = True,
         direction_drift_threshold: float = 0.3,
         magnitude_drift_threshold: float = 2.0,
+        # Client Selection Strategy Parameters
+        use_quality_selection: bool = True,
+        quality_alpha: float = 0.5,  # EMA smoothing factor for accuracy contribution
+        quality_loss_weight: float = 0.3,
+        quality_grad_weight: float = 0.4,
+        quality_acc_weight: float = 0.3,
         # Legacy fixed mu
         proximal_mu: float = 0.1,
         # Standard parameters
@@ -103,6 +109,13 @@ class HybridFedProxScaffoldStrategy(fl.server.strategy.Strategy):
             direction_drift_threshold: Cosine distance threshold (default: 0.3)
             magnitude_drift_threshold: L2 norm ratio threshold (default: 2.0)
             
+            # Client Selection Strategy (Section 4)
+            use_quality_selection: Enable quality-based client selection (default: True)
+            quality_alpha: EMA smoothing factor for accuracy contribution (default: 0.5)
+            quality_loss_weight: Weight for local loss quality metric (default: 0.3)
+            quality_grad_weight: Weight for gradient utility score (default: 0.4)
+            quality_acc_weight: Weight for historical accuracy contribution (default: 0.3)
+            
             # Legacy
             proximal_mu: Fixed FedProx coefficient if sequential disabled (default: 0.1)
             
@@ -132,6 +145,13 @@ class HybridFedProxScaffoldStrategy(fl.server.strategy.Strategy):
         self.direction_drift_threshold = direction_drift_threshold
         self.magnitude_drift_threshold = magnitude_drift_threshold
         
+        # Client Selection Strategy parameters
+        self.use_quality_selection = use_quality_selection
+        self.quality_alpha = quality_alpha
+        self.quality_loss_weight = quality_loss_weight
+        self.quality_grad_weight = quality_grad_weight
+        self.quality_acc_weight = quality_acc_weight
+        
         # Legacy fixed mu (fallback)
         self.proximal_mu = proximal_mu
         self.current_mu = 0.0  # Will be updated per round
@@ -154,6 +174,14 @@ class HybridFedProxScaffoldStrategy(fl.server.strategy.Strategy):
         # Track mu adaptation history
         self.mu_history: List[Tuple[int, float]] = []
         self.phase_history: List[Tuple[int, str]] = []  # Track which phase we're in
+        
+        # Client Quality Metrics Tracking
+        self.client_loss_history: Dict[str, List[float]] = {}  # Track local loss per client
+        self.client_gradient_quality: Dict[str, float] = {}  # Gradient utility scores
+        self.client_accuracy_contribution: Dict[str, float] = {}  # Historical accuracy EMA
+        self.client_quality_scores: Dict[str, float] = {}  # Combined quality score
+        self.last_round_accuracy: Optional[float] = None  # For computing accuracy delta
+        self.round_loss_stats: Dict[str, float] = {}  # Per-round loss statistics
     
     def _compute_current_mu(self, server_round: int) -> float:
         """
@@ -238,6 +266,218 @@ class HybridFedProxScaffoldStrategy(fl.server.strategy.Strategy):
         else:
             return "fedavg"
     
+    def _compute_loss_quality(self, cid: str, client_loss: float) -> float:
+        """
+        Compute Local Loss Quality score (Q_loss).
+        
+        Formula: Q_loss(i) = 1 / (1 + exp(loss_i - loss_median))
+        
+        Clients with lower loss relative to data difficulty provide higher-quality updates.
+        Uses sigmoid normalization so scores are in (0, 1) with higher being better.
+        
+        Args:
+            cid: Client ID
+            client_loss: Local training loss achieved by this client
+            
+        Returns:
+            Loss quality score between 0 and 1 (higher is better)
+        """
+        # Track this client's loss
+        if cid not in self.client_loss_history:
+            self.client_loss_history[cid] = []
+        self.client_loss_history[cid].append(client_loss)
+        
+        # Compute median loss across all clients in this round
+        if len(self.round_loss_stats) == 0:
+            # First client, no comparison yet
+            return 0.5
+        
+        all_losses = list(self.round_loss_stats.values())
+        loss_median = np.median(all_losses)
+        
+        # Sigmoid-normalized score
+        q_loss = 1.0 / (1.0 + np.exp(client_loss - loss_median))
+        return float(q_loss)
+    
+    def _compute_gradient_utility(self, cid: str, client_gradient: List[np.ndarray]) -> float:
+        """
+        Compute Gradient Utility Score (Q_grad).
+        
+        Formula: Q_grad(i) = max(0, cos(g_i, g_global))
+        
+        Measures how much the client's gradient contributes to global model improvement.
+        Uses cosine similarity between client gradient and global update direction.
+        
+        Args:
+            cid: Client ID
+            client_gradient: Client's model update (gradient)
+            
+        Returns:
+            Gradient utility score between 0 and 1 (higher means more aligned)
+        """
+        if self.global_update_direction is None:
+            # No global direction yet in first round
+            return 0.5
+        
+        # Flatten gradients
+        client_flat = np.concatenate([g.flatten() for g in client_gradient])
+        global_flat = np.concatenate([g.flatten() for g in self.global_update_direction])
+        
+        # Compute norms
+        client_norm = np.linalg.norm(client_flat)
+        global_norm = np.linalg.norm(global_flat)
+        
+        if client_norm < 1e-10 or global_norm < 1e-10:
+            return 0.0
+        
+        # Cosine similarity
+        cos_sim = np.dot(client_flat, global_flat) / (client_norm * global_norm)
+        # Take max with 0 to filter out negatively aligned gradients
+        q_grad = max(0.0, float(cos_sim))
+        
+        self.client_gradient_quality[cid] = q_grad
+        return q_grad
+    
+    def _update_accuracy_contribution(self, cid: str, current_accuracy: float) -> float:
+        """
+        Update Historical Accuracy Contribution score (Q_acc).
+        
+        Formula: Q_acc(i) = EMA(Δacc | client i participated)
+        
+        Tracks each client's contribution to global test accuracy over previous rounds.
+        Uses exponential moving average of accuracy delta when this client participates.
+        
+        Args:
+            cid: Client ID
+            current_accuracy: Current global test accuracy
+            
+        Returns:
+            Historical accuracy contribution score (can be negative if hurting accuracy)
+        """
+        if self.last_round_accuracy is None:
+            # First round, no delta yet
+            q_acc = 0.0
+        else:
+            # Compute accuracy delta
+            acc_delta = current_accuracy - self.last_round_accuracy
+            
+            # Update EMA
+            if cid not in self.client_accuracy_contribution:
+                self.client_accuracy_contribution[cid] = acc_delta
+            else:
+                # Exponential moving average
+                old_contribution = self.client_accuracy_contribution[cid]
+                self.client_accuracy_contribution[cid] = (
+                    self.quality_alpha * acc_delta + 
+                    (1 - self.quality_alpha) * old_contribution
+                )
+            
+            q_acc = self.client_accuracy_contribution[cid]
+        
+        return float(q_acc)
+    
+    def _compute_client_quality(self, cid: str, client_loss: float, 
+                                client_gradient: List[np.ndarray],
+                                current_accuracy: Optional[float] = None) -> float:
+        """
+        Compute overall client quality score as weighted combination of metrics.
+        
+        Q_total(i) = w1·Q_loss(i) + w2·Q_grad(i) + w3·Q_acc(i)
+        
+        Args:
+            cid: Client ID
+            client_loss: Local training loss
+            client_gradient: Client's model update
+            current_accuracy: Current global test accuracy (if available)
+            
+        Returns:
+            Combined quality score (higher is better)
+        """
+        q_loss = self._compute_loss_quality(cid, client_loss)
+        q_grad = self._compute_gradient_utility(cid, client_gradient)
+        
+        if current_accuracy is not None:
+            q_acc = self._update_accuracy_contribution(cid, current_accuracy)
+            # Normalize q_acc to [0, 1] for combination (shift from [-1, 1] range)
+            q_acc_normalized = (q_acc + 1.0) / 2.0
+        else:
+            q_acc_normalized = 0.5  # Neutral if no accuracy available
+        
+        # Weighted combination
+        q_total = (
+            self.quality_loss_weight * q_loss +
+            self.quality_grad_weight * q_grad +
+            self.quality_acc_weight * q_acc_normalized
+        )
+        
+        self.client_quality_scores[cid] = q_total
+        return float(q_total)
+    
+    def _select_clients_by_quality(self, client_manager: fl.server.client_manager.ClientManager,
+                                   num_clients: int) -> List[ClientProxy]:
+        """
+        Select clients based on quality scores instead of random sampling.
+        
+        Uses a probability distribution weighted by quality scores:
+        - Higher quality clients have higher probability of selection
+        - Still maintains some randomness to avoid overfitting to few clients
+        
+        Args:
+            client_manager: Flower client manager
+            num_clients: Number of clients to select
+            
+        Returns:
+            List of selected client proxies
+        """
+        all_clients = list(client_manager.all().values())
+        
+        if len(self.client_quality_scores) == 0:
+            # No quality info yet, random sample
+            return client_manager.sample(num_clients=num_clients, min_num_clients=num_clients)
+        
+        # Get quality scores for available clients
+        client_qualities = []
+        for client in all_clients:
+            cid = client.cid
+            if cid in self.client_quality_scores:
+                quality = self.client_quality_scores[cid]
+            else:
+                # New client, assign median quality
+                quality = 0.5
+            client_qualities.append((client, quality))
+        
+        # Sort by quality (descending)
+        client_qualities.sort(key=lambda x: x[1], reverse=True)
+        
+        # Use top-k selection with some probability-based sampling
+        # Take top 50% deterministically, sample rest from remaining
+        top_k = min(num_clients // 2, len(client_qualities))
+        selected = [c for c, _ in client_qualities[:top_k]]
+        
+        # Sample remaining from the rest
+        remaining_clients = [c for c, _ in client_qualities[top_k:]]
+        remaining_qualities = [q for _, q in client_qualities[top_k:]]
+        
+        if remaining_clients and len(selected) < num_clients:
+            # Normalize qualities to probabilities
+            remaining_qualities = np.array(remaining_qualities)
+            if remaining_qualities.sum() > 0:
+                probs = remaining_qualities / remaining_qualities.sum()
+            else:
+                probs = np.ones(len(remaining_clients)) / len(remaining_clients)
+            
+            # Sample rest
+            num_to_sample = min(num_clients - len(selected), len(remaining_clients))
+            sampled_indices = np.random.choice(
+                len(remaining_clients), 
+                size=num_to_sample, 
+                replace=False,
+                p=probs
+            )
+            selected.extend([remaining_clients[i] for i in sampled_indices])
+        
+        return selected
+    
     def initialize_parameters(
         self, client_manager: fl.server.client_manager.ClientManager
     ) -> Optional[Parameters]:
@@ -272,14 +512,20 @@ class HybridFedProxScaffoldStrategy(fl.server.strategy.Strategy):
             phase = f"Phase2_Hybrid_mu={self.current_mu:.4f}"
         self.phase_history.append((server_round, phase))
         
-        # Sample clients
+        # Sample clients using quality-based selection if enabled
         sample_size, min_num_clients = self.num_fit_clients(
             client_manager.num_available()
         )
-        clients = client_manager.sample(
-            num_clients=sample_size,
-            min_num_clients=min_num_clients,
-        )
+        
+        if self.use_quality_selection and len(self.client_quality_scores) > 0:
+            # Use quality-based selection
+            clients = self._select_clients_by_quality(client_manager, sample_size)
+        else:
+            # Default random sampling
+            clients = client_manager.sample(
+                num_clients=sample_size,
+                min_num_clients=min_num_clients,
+            )
         
         fit_instructions = []
         
@@ -356,10 +602,19 @@ class HybridFedProxScaffoldStrategy(fl.server.strategy.Strategy):
         results: List[Tuple[ClientProxy, FitRes]],
         failures,
     ) -> Tuple[Optional[Parameters], Dict[str, Scalar]]:
-        """Aggregate model updates and control variates with drift tracking."""
+        """Aggregate model updates and control variates with drift tracking and quality scoring."""
         
         if not results:
             return None, {}
+        
+        # Reset per-round loss statistics
+        self.round_loss_stats = {}
+        
+        # First pass: collect loss statistics for all clients
+        for client, fit_res in results:
+            cid = client.cid
+            if "loss" in fit_res.metrics:
+                self.round_loss_stats[cid] = fit_res.metrics["loss"]
         
         deltas_w = []
         delta_cs = []
@@ -378,6 +633,14 @@ class HybridFedProxScaffoldStrategy(fl.server.strategy.Strategy):
             
             # Store client update for drift detection in next round
             self.client_last_update[cid] = delta_w
+            
+            # Compute client quality score if enabled
+            if self.use_quality_selection:
+                client_loss = fit_res.metrics.get("loss", 0.0)
+                # Quality will be updated after we get evaluation accuracy
+                # For now, compute loss and gradient quality
+                self._compute_loss_quality(cid, client_loss)
+                self._compute_gradient_utility(cid, delta_w)
             
             # Control variate delta from client
             if "delta_c" not in fit_res.metrics:
@@ -465,10 +728,29 @@ class HybridFedProxScaffoldStrategy(fl.server.strategy.Strategy):
         return None, {}
     
     def evaluate(self, server_round: int, parameters: Parameters):
-        """Server-side evaluation."""
+        """Server-side evaluation with accuracy tracking for quality scoring."""
         if self.user_evaluate_fn is not None:
             parameters_ndarrays = parameters_to_ndarrays(parameters)
-            return self.user_evaluate_fn(server_round, parameters_ndarrays, {})
+            eval_result = self.user_evaluate_fn(server_round, parameters_ndarrays, {})
+            
+            # Update client quality scores with accuracy contribution if enabled
+            if self.use_quality_selection and eval_result is not None:
+                loss, metrics = eval_result
+                if "accuracy" in metrics:
+                    current_accuracy = metrics["accuracy"]
+                    
+                    # Update accuracy contribution for clients that participated in last round
+                    for cid in self.client_last_update.keys():
+                        if cid in self.round_loss_stats:  # Client participated this round
+                            client_loss = self.round_loss_stats[cid]
+                            client_gradient = self.client_last_update[cid]
+                            # Compute full quality score with accuracy
+                            self._compute_client_quality(cid, client_loss, client_gradient, current_accuracy)
+                    
+                    # Update last round accuracy for next delta computation
+                    self.last_round_accuracy = current_accuracy
+            
+            return eval_result
         return None
     
     def num_fit_clients(self, num_available_clients: int) -> Tuple[int, int]:
@@ -506,4 +788,8 @@ class HybridFedProxScaffoldStrategy(fl.server.strategy.Strategy):
             "use_drift_detection": self.use_drift_detection,
             "direction_drift_threshold": self.direction_drift_threshold if self.use_drift_detection else None,
             "magnitude_drift_threshold": self.magnitude_drift_threshold if self.use_drift_detection else None,
+            "use_quality_selection": self.use_quality_selection,
+            "quality_loss_weight": self.quality_loss_weight if self.use_quality_selection else None,
+            "quality_grad_weight": self.quality_grad_weight if self.use_quality_selection else None,
+            "quality_acc_weight": self.quality_acc_weight if self.use_quality_selection else None,
         }

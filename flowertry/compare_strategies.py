@@ -370,6 +370,13 @@ def run_hybrid_fedprox_scaffold(cfg: DictConfig, trainloaders, validationloaders
     direction_drift_threshold = hybrid_cfg.get('direction_drift_threshold', 0.3)
     magnitude_drift_threshold = hybrid_cfg.get('magnitude_drift_threshold', 2.0)
     
+    # Client Selection Strategy parameters
+    use_quality_selection = hybrid_cfg.get('use_quality_selection', True)
+    quality_alpha = hybrid_cfg.get('quality_alpha', 0.5)
+    quality_loss_weight = hybrid_cfg.get('quality_loss_weight', 0.3)
+    quality_grad_weight = hybrid_cfg.get('quality_grad_weight', 0.4)
+    quality_acc_weight = hybrid_cfg.get('quality_acc_weight', 0.3)
+    
     # Legacy fixed mu (fallback)
     proximal_mu = hybrid_cfg.get('proximal_mu', 0.1)
     
@@ -391,6 +398,14 @@ def run_hybrid_fedprox_scaffold(cfg: DictConfig, trainloaders, validationloaders
         print(f"    Magnitude threshold: {magnitude_drift_threshold}")
     else:
         print(f"  Drift Detection: DISABLED")
+    
+    if use_quality_selection:
+        print(f"  Client Selection: QUALITY-BASED")
+        print(f"    Loss weight: {quality_loss_weight}")
+        print(f"    Gradient weight: {quality_grad_weight}")
+        print(f"    Accuracy weight: {quality_acc_weight}")
+    else:
+        print(f"  Client Selection: RANDOM")
 
     # Create enhanced hybrid strategy
     strategy = HybridFedProxScaffoldStrategy(
@@ -412,6 +427,12 @@ def run_hybrid_fedprox_scaffold(cfg: DictConfig, trainloaders, validationloaders
         use_drift_detection=use_drift_detection,
         direction_drift_threshold=direction_drift_threshold,
         magnitude_drift_threshold=magnitude_drift_threshold,
+        # Client Selection Strategy
+        use_quality_selection=use_quality_selection,
+        quality_alpha=quality_alpha,
+        quality_loss_weight=quality_loss_weight,
+        quality_grad_weight=quality_grad_weight,
+        quality_acc_weight=quality_acc_weight,
         # Legacy
         proximal_mu=proximal_mu,
         on_fit_config_fn=get_on_fit_config(hybrid_config),
