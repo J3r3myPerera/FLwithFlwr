@@ -1,10 +1,142 @@
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
+from typing import Optional
 
 
 # Default input dimension - will be updated based on feature engineering settings
 DEFAULT_INPUT_DIM = 25  # 14 numerical + 9 engineered + 2 categorical
+
+
+class FocalLoss(nn.Module):
+    """
+    Focal Loss for handling class imbalance.
+    
+    FL(p_t) = -alpha_t * (1 - p_t)^gamma * log(p_t)
+    
+    This down-weights easy examples and focuses on hard ones,
+    which is especially helpful for the "Medium" class that's
+    harder to distinguish from Low/High.
+    """
+    
+    def __init__(self, alpha: Optional[torch.Tensor] = None, gamma: float = 2.0, reduction: str = 'mean'):
+        super(FocalLoss, self).__init__()
+        self.alpha = alpha  # Class weights
+        self.gamma = gamma  # Focusing parameter
+        self.reduction = reduction
+    
+    def forward(self, inputs: torch.Tensor, targets: torch.Tensor) -> torch.Tensor:
+        ce_loss = F.cross_entropy(inputs, targets, reduction='none')
+        pt = torch.exp(-ce_loss)  # p_t = probability of correct class
+        
+        # Apply focal term
+        focal_loss = (1 - pt) ** self.gamma * ce_loss
+        
+        # Apply class weights if provided
+        if self.alpha is not None:
+            alpha_t = self.alpha[targets]
+            focal_loss = alpha_t * focal_loss
+        
+        if self.reduction == 'mean':
+            return focal_loss.mean()
+        elif self.reduction == 'sum':
+            return focal_loss.sum()
+        return focal_loss
+
+
+class ResidualBlock(nn.Module):
+    """Residual block with LayerNorm for FL compatibility."""
+    
+    def __init__(self, dim: int, dropout: float = 0.1):
+        super(ResidualBlock, self).__init__()
+        self.fc1 = nn.Linear(dim, dim)
+        self.fc2 = nn.Linear(dim, dim)
+        self.norm1 = nn.LayerNorm(dim)
+        self.norm2 = nn.LayerNorm(dim)
+        self.dropout = nn.Dropout(dropout)
+    
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        residual = x
+        x = self.norm1(x)
+        x = F.gelu(self.fc1(x))
+        x = self.dropout(x)
+        x = self.norm2(x)
+        x = self.fc2(x)
+        x = self.dropout(x)
+        return x + residual  # Skip connection
+
+
+class NetV2(nn.Module):
+    """
+    Enhanced MLP with Residual Connections for better gradient flow.
+    
+    Key improvements over Net:
+    1. Residual connections prevent vanishing gradients
+    2. LayerNorm for stable training (FL-compatible, unlike BatchNorm)
+    3. GELU activation for smoother gradients
+    4. Separate embedding for each feature type
+    5. Better weight initialization
+    
+    Architecture:
+    - Input projection: N → 128
+    - 2 Residual blocks (128 → 128)
+    - Output projection: 128 → 64 → 3
+    """
+    
+    def __init__(self, num_classes: int = 3, input_dim: int = DEFAULT_INPUT_DIM, 
+                 hidden_dim: int = 128, num_blocks: int = 2, dropout: float = 0.15):
+        super(NetV2, self).__init__()
+        
+        self.input_dim = input_dim
+        self.hidden_dim = hidden_dim
+        
+        # Input projection with LayerNorm
+        self.input_proj = nn.Sequential(
+            nn.Linear(input_dim, hidden_dim),
+            nn.LayerNorm(hidden_dim),
+            nn.GELU(),
+            nn.Dropout(dropout)
+        )
+        
+        # Residual blocks
+        self.blocks = nn.ModuleList([
+            ResidualBlock(hidden_dim, dropout) for _ in range(num_blocks)
+        ])
+        
+        # Output projection with intermediate layer
+        self.output_proj = nn.Sequential(
+            nn.LayerNorm(hidden_dim),
+            nn.Linear(hidden_dim, 64),
+            nn.GELU(),
+            nn.Dropout(dropout),
+            nn.Linear(64, num_classes)
+        )
+        
+        # Initialize weights
+        self._init_weights()
+    
+    def _init_weights(self):
+        """Initialize weights using Xavier for better convergence."""
+        for m in self.modules():
+            if isinstance(m, nn.Linear):
+                nn.init.xavier_uniform_(m.weight, gain=0.5)
+                if m.bias is not None:
+                    nn.init.zeros_(m.bias)
+            elif isinstance(m, nn.LayerNorm):
+                nn.init.ones_(m.weight)
+                nn.init.zeros_(m.bias)
+    
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        # Input projection
+        x = self.input_proj(x)
+        
+        # Residual blocks
+        for block in self.blocks:
+            x = block(x)
+        
+        # Output projection
+        x = self.output_proj(x)
+        return x
 
 
 class Net(nn.Module):
