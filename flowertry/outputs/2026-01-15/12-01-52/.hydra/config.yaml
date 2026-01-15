@@ -1,0 +1,80 @@
+num_rounds: 100
+num_clients: 20
+batch_size: 8
+num_classes: 3
+num_clients_per_round_fit: 5
+num_clients_per_round_eval: 5
+iid: false
+alpha: 0.3
+use_class_weights: true
+class_weight_method: balanced
+proximal_mu: 0.5
+scaffold_server_lr: 1.0
+adaptive_mu:
+  enabled: true
+  mode: simple
+  initial_mu: 0.1
+  mu_min: 0.01
+  mu_max: 0.5
+  increase_factor: 1.2
+  decrease_factor: 0.95
+  loss_threshold: 0.01
+  warmup_rounds: 5
+multi_signal_mu:
+  base_mu: 0.1
+  mu_min: 0.01
+  mu_max: 0.5
+  smoothing_factor: 0.8
+  warmup_rounds: 5
+  weights:
+    gradient_divergence: 0.4
+    loss_variance: 0.3
+    label_entropy: 0.2
+    feature_variance: 0.1
+hybrid:
+  warmup_rounds: 10
+  mu_annealing_interval: 5
+  mu_annealing_factor: 1.5
+  initial_mu: 0.001
+  max_mu: 0.3
+  use_dual_mu: true
+  mu_raw: 0.1
+  mu_corrected: 0.001
+  use_drift_detection: true
+  direction_drift_threshold: 0.3
+  magnitude_drift_threshold: 2.0
+  use_quality_selection: true
+  quality_alpha: 0.5
+  quality_loss_weight: 0.3
+  quality_grad_weight: 0.4
+  quality_acc_weight: 0.3
+  proximal_mu: 0.1
+strategies:
+- fedavg
+- hybrid
+config_fit:
+  lr: 0.005
+  momentum: 0.9
+  local_epochs: 3
+  max_grad_norm: 1.0
+strategy_configs:
+  fedavg:
+    lr: 0.01
+    momentum: 0.5
+    local_epochs: 3
+    max_grad_norm: 1.0
+  fedprox:
+    lr: 0.005
+    momentum: 0.5
+    local_epochs: 3
+    max_grad_norm: 1.0
+  fedscaffold:
+    lr: 0.01
+    momentum: 0.0
+    local_epochs: 5
+    max_grad_norm: 2.0
+  hybrid:
+    lr: 0.01
+    momentum: 0.0
+    local_epochs: 5
+    max_grad_norm: 2.0
