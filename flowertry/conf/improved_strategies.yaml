@@ -1,0 +1,60 @@
+# =============================================================================
+# IMPROVED STRATEGIES CONFIGURATION
+# =============================================================================
+# Test configuration for improved FedProx, SCAFFOLD, and Hybrid strategies
+# with AdamW optimizer, better control variate handling, and optimized hyperparameters
+
+# Base training parameters (inherited from base.yaml)
+defaults:
+  - base
+
+# Override to compare all strategies
+compare_all: true
+
+# Override strategy list to test all improved strategies
+strategies:
+  - fedavg
+  - fedprox
+  - scaffold
+  - hybrid
+
+# Optimized FedProx parameters (lower mu with AdamW)
+fedprox:
+  mu: 0.05
+
+# Optimized Hybrid strategy (balanced approach)
+hybrid:
+  fedprox_weight: 0.3 # Moderate FedProx influence
+  scaffold_weight: 0.5 # Stronger SCAFFOLD for variance reduction
+  mu: 0.03 # Lower mu with AdamW
+
+  # Warmup strategy
+  warmup_rounds: 5
+  warmup_type: "cosine"
+  warmup_start_factor: 0.1
+
+  # Adaptive mu
+  adaptive_mu: true
+  mu_decay: 0.98
+  mu_min: 0.005
+
+  # Simplified for clear comparison
+  dynamic_weights: false
+  use_momentum: false
+  use_lr_scheduler: false
+  per_client_adaptation: false
+
+# Training configuration
+num_rounds: 30
+local_epochs: 8
+learning_rate: 0.001
+
+# Model architecture (FL-optimized)
+model:
+  hidden_layers: [128, 64, 32]
+  dropout: 0.15
+  activation: "gelu" # FL-friendly activation
+  normalization: "layernorm" # FL-safe normalization
+
+# Output directory for comparison results
+output_dir: "./outputs/improved_strategies_${now:%Y-%m-%d_%H-%M-%S}"

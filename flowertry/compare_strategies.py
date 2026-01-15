@@ -1,934 +1,208 @@
-import hydra
-from hydra.core.hydra_config import HydraConfig
-import pickle
-from pathlib import Path
-from omegaconf import DictConfig, OmegaConf
-from dataset import prepare_dataset
-from cleint import generate_client_fn
-from server import get_on_fit_config, get_evaluate_fn
-import flwr as fl
-import time
-from typing import Dict, List, Tuple
-import torch
+"""
+Strategy Comparison Script for Federated Disposable Income Regression.
+
+Compares FedAvg, FedProx, SCAFFOLD, and Hybrid strategies on Non-IID data.
+
+Usage:
+    python compare_strategies.py
+    python compare_strategies.py --rounds 100 --iid
+    python compare_strategies.py --fedprox-weight 0.5 --scaffold-weight 0.8
+"""
+
+import argparse
+import json
+import os
+from datetime import datetime
+from typing import Dict, List
+
 import numpy as np
-from diagnostics import (
-    analyze_class_distribution,
-    collect_predictions,
-    full_diagnostic_report
-)
+import matplotlib.pyplot as plt
+
+from main import run_simulation, compare_strategies
+from visualize_metrics import ComparisonPlotter, save_metrics_to_csv
 
 
-def get_strategy_config(cfg: DictConfig, strategy_name: str) -> DictConfig:
+def plot_comparison(results: Dict, output_dir: str = "."):
     """
-    Get strategy-specific configuration, falling back to global config_fit if not specified.
+    Plot comparison of strategies.
     
     Args:
-        cfg: Global configuration
-        strategy_name: Name of strategy ('fedavg', 'fedprox', 'fedscaffold')
-    
-    Returns:
-        Strategy-specific configuration
+        results: Dictionary with results for each strategy
+        output_dir: Directory to save plots
     """
-    # Check if strategy_configs exists and has this strategy
-    if hasattr(cfg, 'strategy_configs') and strategy_name in cfg.strategy_configs:
-        strategy_cfg = cfg.strategy_configs[strategy_name]
-        print(f"  Using strategy-specific config for {strategy_name}")
-        print(f"    lr: {strategy_cfg.get('lr', cfg.config_fit.lr)}")
-        print(f"    local_epochs: {strategy_cfg.get('local_epochs', cfg.config_fit.local_epochs)}")
-        print(f"    momentum: {strategy_cfg.get('momentum', cfg.config_fit.momentum)}")
-        print(f"    max_grad_norm: {strategy_cfg.get('max_grad_norm', cfg.config_fit.max_grad_norm)}")
-        return strategy_cfg
-    else:
-        print(f"  Using global config_fit for {strategy_name}")
-        return cfg.config_fit
-
-
-def run_fedavg(cfg: DictConfig, trainloaders, validationloaders, testloader, client_fn, initial_parameters, class_weights=None, input_dim=None):
-    """Run FedAvg strategy."""
-    print("\n" + "=" * 60)
-    print("RUNNING FedAvg")
-    print("=" * 60)
-
-    # Get strategy-specific config
-    fedavg_config = get_strategy_config(cfg, 'fedavg')
-
-    strategy = fl.server.strategy.FedAvg(
-        # fraction_fit=0.00001,  # Use min_fit_clients instead
-        min_fit_clients=cfg.num_clients_per_round_fit,
-        min_evaluate_clients=cfg.num_clients_per_round_eval,
-        min_available_clients=cfg.num_clients,
-        on_fit_config_fn=get_on_fit_config(fedavg_config),
-        evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader, class_weights, input_dim=input_dim),
-        initial_parameters=initial_parameters
-    )
-
+    strategies = list(results.keys())
     
-    start_time = time.time()
-    history = fl.simulation.start_simulation(
-        client_fn=client_fn,
-        num_clients=cfg.num_clients,
-        config=fl.server.ServerConfig(num_rounds=cfg.num_rounds),
-        strategy=strategy,
-        client_resources={'num_cpus': 1.0, 'num_gpus': 0}
-    )
-    elapsed_time = time.time() - start_time
+    # Extract final metrics
+    rmse_values = [results[s]["final_metrics"]["rmse"] for s in strategies]
+    mae_values = [results[s]["final_metrics"]["mae"] for s in strategies]
+    r2_values = [results[s]["final_metrics"]["r2"] for s in strategies]
     
-    return history, elapsed_time
-
-
-def run_fedprox(cfg: DictConfig, trainloaders, validationloaders, testloader, client_fn, initial_parameters, class_weights=None, input_dim=None):
-    """Run FedProx strategy (fixed mu, simple adaptive mu, or multi-signal adaptive mu)."""
+    # Create figure with subplots
+    fig, axes = plt.subplots(1, 3, figsize=(15, 5))
     
-    # Check if adaptive mu is enabled
-    adaptive_cfg = cfg.get('adaptive_mu', {})
-    use_adaptive = adaptive_cfg.get('enabled', False) if adaptive_cfg else False
-    adaptive_mode = adaptive_cfg.get('mode', 'simple') if adaptive_cfg else 'simple'
+    # RMSE comparison
+    colors = ['#3498db', '#e74c3c', '#2ecc71', '#9b59b6']
+    axes[0].bar(strategies, rmse_values, color=colors)
+    axes[0].set_ylabel('RMSE ($)')
+    axes[0].set_title('RMSE Comparison')
+    axes[0].tick_params(axis='x', rotation=45)
+    for i, v in enumerate(rmse_values):
+        axes[0].text(i, v + 50, f'${v:,.0f}', ha='center', va='bottom', fontsize=9)
     
-    if use_adaptive and adaptive_mode == 'multi_signal':
-        # Multi-signal adaptive mu (HAPI-based)
-        print("\n" + "=" * 60)
-        print("RUNNING FedProx with MULTI-SIGNAL ADAPTIVE MU")
-        print("=" * 60)
-
-        from adaptive_fedprox import MultiSignalAdaptiveFedProx
-
-        # Get strategy-specific config
-        fedprox_config = get_strategy_config(cfg, 'fedprox')
-
-        # Get multi-signal mu parameters
-        multi_cfg = cfg.get('multi_signal_mu', {})
-        base_mu = multi_cfg.get('base_mu', 0.1)
-        mu_min = multi_cfg.get('mu_min', 0.001)
-        mu_max = multi_cfg.get('mu_max', 2.0)
-        smoothing_factor = multi_cfg.get('smoothing_factor', 0.7)
-        warmup_rounds = multi_cfg.get('warmup_rounds', 3)
-
-        # Get signal weights
-        weights_cfg = multi_cfg.get('weights', {})
-        signal_weights = {
-            'gradient_divergence': weights_cfg.get('gradient_divergence', 0.35),
-            'loss_variance': weights_cfg.get('loss_variance', 0.25),
-            'label_entropy': weights_cfg.get('label_entropy', 0.25),
-            'feature_variance': weights_cfg.get('feature_variance', 0.15)
-        }
-
-        print(f"  Base mu: {base_mu}")
-        print(f"  Mu range: [{mu_min}, {mu_max}]")
-        print(f"  Smoothing factor: {smoothing_factor}")
-        print(f"  Warmup rounds: {warmup_rounds}")
-        print(f"  Signal weights: {signal_weights}")
-
-        strategy = MultiSignalAdaptiveFedProx(
-            base_mu=base_mu,
-            mu_min=mu_min,
-            mu_max=mu_max,
-            signal_weights=signal_weights,
-            smoothing_factor=smoothing_factor,
-            warmup_rounds=warmup_rounds,
-            # fraction_fit=0.00001,
-            min_fit_clients=cfg.num_clients_per_round_fit,
-            min_evaluate_clients=cfg.num_clients_per_round_eval,
-            min_available_clients=cfg.num_clients,
-            on_fit_config_fn=get_on_fit_config(fedprox_config),
-            evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader, class_weights, input_dim=input_dim),
-            initial_parameters=initial_parameters
-        )
-        
-        start_time = time.time()
-        history = fl.simulation.start_simulation(
-            client_fn=client_fn,
-            num_clients=cfg.num_clients,
-            config=fl.server.ServerConfig(num_rounds=cfg.num_rounds),
-            strategy=strategy,
-            client_resources={'num_cpus': 1.0, 'num_gpus': 0}
-        )
-        elapsed_time = time.time() - start_time
-        
-        # Store adaptation history
-        mu_history = strategy.get_mu_history()
-        final_mu = strategy.get_final_mu()
-        adaptation_history = strategy.get_adaptation_history()
-        
-        print(f"\n  [MultiSignalAdaptiveFedProx] Final mu: {final_mu:.4f}")
-        print(f"  [MultiSignalAdaptiveFedProx] Mu evolution: {[(r, f'{m:.4f}') for r, m in mu_history[-5:]]}")
-        
-        return history, elapsed_time, {
-            'mu_history': mu_history, 
-            'final_mu': final_mu,
-            'adaptation_history': adaptation_history
-        }
+    # MAE comparison
+    axes[1].bar(strategies, mae_values, color=colors)
+    axes[1].set_ylabel('MAE ($)')
+    axes[1].set_title('MAE Comparison')
+    axes[1].tick_params(axis='x', rotation=45)
+    for i, v in enumerate(mae_values):
+        axes[1].text(i, v + 50, f'${v:,.0f}', ha='center', va='bottom', fontsize=9)
     
-    elif use_adaptive:
-        # Simple loss-based adaptive mu
-        print("\n" + "=" * 60)
-        print("RUNNING FedProx with SIMPLE ADAPTIVE MU")
-        print("=" * 60)
-
-        from adaptive_fedprox import AdaptiveFedProx
-
-        # Get strategy-specific config
-        fedprox_config = get_strategy_config(cfg, 'fedprox')
-
-        # Get adaptive mu parameters with defaults
-        initial_mu = adaptive_cfg.get('initial_mu', 0.1)
-        mu_min = adaptive_cfg.get('mu_min', 0.001)
-        mu_max = adaptive_cfg.get('mu_max', 1.0)
-        increase_factor = adaptive_cfg.get('increase_factor', 1.5)
-        decrease_factor = adaptive_cfg.get('decrease_factor', 0.9)
-        loss_threshold = adaptive_cfg.get('loss_threshold', 0.0)
-        warmup_rounds = adaptive_cfg.get('warmup_rounds', 3)
-
-        print(f"  Initial mu: {initial_mu}")
-        print(f"  Mu range: [{mu_min}, {mu_max}]")
-        print(f"  Increase/Decrease factors: {increase_factor}/{decrease_factor}")
-        print(f"  Warmup rounds: {warmup_rounds}")
-
-        strategy = AdaptiveFedProx(
-            initial_mu=initial_mu,
-            mu_min=mu_min,
-            mu_max=mu_max,
-            mu_increase_factor=increase_factor,
-            mu_decrease_factor=decrease_factor,
-            loss_threshold=loss_threshold,
-            warmup_rounds=warmup_rounds,
-            # fraction_fit=0.00001,  # Use min_fit_clients instead
-            min_fit_clients=cfg.num_clients_per_round_fit,
-            min_evaluate_clients=cfg.num_clients_per_round_eval,
-            min_available_clients=cfg.num_clients,
-            on_fit_config_fn=get_on_fit_config(fedprox_config),
-            evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader, class_weights, input_dim=input_dim),
-            initial_parameters=initial_parameters
-        )
-        
-        start_time = time.time()
-        history = fl.simulation.start_simulation(
-            client_fn=client_fn,
-            num_clients=cfg.num_clients,
-            config=fl.server.ServerConfig(num_rounds=cfg.num_rounds),
-            strategy=strategy,
-            client_resources={'num_cpus': 1.0, 'num_gpus': 0}
-        )
-        elapsed_time = time.time() - start_time
-        
-        # Store mu history in the history object for later analysis
-        mu_history = strategy.get_mu_history()
-        final_mu = strategy.get_final_mu()
-        print(f"\n  [AdaptiveFedProx] Final mu: {final_mu:.4f}")
-        print(f"  [AdaptiveFedProx] Mu evolution: {[(r, f'{m:.4f}') for r, m in mu_history[-5:]]}")
-        
-        return history, elapsed_time, {'mu_history': mu_history, 'final_mu': final_mu}
+    # R² comparison
+    axes[2].bar(strategies, r2_values, color=colors)
+    axes[2].set_ylabel('R²')
+    axes[2].set_title('R² Comparison')
+    axes[2].tick_params(axis='x', rotation=45)
+    axes[2].set_ylim(0, 1)
+    for i, v in enumerate(r2_values):
+        axes[2].text(i, v + 0.02, f'{v:.4f}', ha='center', va='bottom', fontsize=9)
     
-    else:
-        # Fixed mu
-        print("\n" + "=" * 60)
-        print("RUNNING FedProx (fixed mu)")
-        print("=" * 60)
-
-        # Get strategy-specific config
-        fedprox_config = get_strategy_config(cfg, 'fedprox')
-
-        fixed_mu = cfg.get('proximal_mu', 0.1)
-        print(f"  Fixed mu: {fixed_mu}")
-
-        strategy = fl.server.strategy.FedProx(
-            # fraction_fit=0.00001,  # Use min_fit_clients instead
-            min_fit_clients=cfg.num_clients_per_round_fit,
-            min_evaluate_clients=cfg.num_clients_per_round_eval,
-            min_available_clients=cfg.num_clients,
-            # IMPORTANT: Pass proximal_mu to config so client applies the proximal term
-            on_fit_config_fn=get_on_fit_config(fedprox_config, proximal_mu=fixed_mu),
-            evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader, class_weights, input_dim=input_dim),
-            proximal_mu=fixed_mu,
-            initial_parameters=initial_parameters
-        )
-        
-        start_time = time.time()
-        history = fl.simulation.start_simulation(
-            client_fn=client_fn,
-            num_clients=cfg.num_clients,
-            config=fl.server.ServerConfig(num_rounds=cfg.num_rounds),
-            strategy=strategy,
-            client_resources={'num_cpus': 1.0, 'num_gpus': 0}
-        )
-        elapsed_time = time.time() - start_time
-        
-        return history, elapsed_time, {'final_mu': fixed_mu}
-
-
-def run_fedscaffold(cfg: DictConfig, trainloaders, validationloaders, testloader, initial_parameters, class_weights=None, input_dim=None):
-    """Run FedSCAFFOLD strategy with improved implementation."""
-    print("\n" + "=" * 60)
-    print("RUNNING FedSCAFFOLD (Improved)")
-    print("=" * 60)
-
-    # Import custom FedSCAFFOLD strategy
-    from scaffold_strategy import FedScaffoldStrategy
-    from cleint import generate_client_fn
-
-    # Get strategy-specific config
-    scaffold_config = get_strategy_config(cfg, 'fedscaffold')
-
-    # Get SCAFFOLD parameters
-    server_lr = cfg.get('scaffold_server_lr', 1.0)
-    print(f"  Server learning rate: {server_lr}")
-
-    # Create strategy
-    strategy = FedScaffoldStrategy(
-        # fraction_fit=0.00001,  # Use min_fit_clients instead
-        min_fit_clients=cfg.num_clients_per_round_fit,
-        min_evaluate_clients=cfg.num_clients_per_round_eval,
-        min_available_clients=cfg.num_clients,
-        total_clients=cfg.num_clients,
-        on_fit_config_fn=get_on_fit_config(scaffold_config),
-        evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader, class_weights, input_dim=input_dim),
-        initial_parameters=initial_parameters
-        # server_learning_rate=server_lr
-    )
-
-    # Create SCAFFOLD-aware client function with strategy reference
-    client_fn = generate_client_fn(
-        trainloaders,
-        validationloaders,
-        cfg.num_classes,
-        strategy=strategy,
-        class_weights=class_weights,
-        input_dim=input_dim
-    )
-
-    start_time = time.time()
-    history = fl.simulation.start_simulation(
-        client_fn=client_fn,
-        num_clients=cfg.num_clients,
-        config=fl.server.ServerConfig(num_rounds=cfg.num_rounds),
-        strategy=strategy,
-        client_resources={'num_cpus': 1.0, 'num_gpus': 0}
-    )
-    elapsed_time = time.time() - start_time
-
-    print(f"\n  [SCAFFOLD] Training completed in {elapsed_time:.2f}s")
-
-    # Extract c_global_norm history from metrics
-    c_global_norm_history = []
-    if hasattr(history, 'metrics_distributed_fit') and history.metrics_distributed_fit:
-        c_global_norm_history = history.metrics_distributed_fit.get('c_global_norm', [])
-
-        # Print c_global_norm evolution
-        if c_global_norm_history:
-            print(f"\n  [SCAFFOLD] Control Variate Norm Evolution:")
-            print(f"    Initial: {c_global_norm_history[0][1]:.4f}")
-            print(f"    Final:   {c_global_norm_history[-1][1]:.4f}")
-            print(f"    Max:     {max(norm for _, norm in c_global_norm_history):.4f}")
-
-    return history, elapsed_time, {'c_global_norm_history': c_global_norm_history}
-
-
-def run_hybrid_fedprox_scaffold(cfg: DictConfig, trainloaders, validationloaders, testloader, initial_parameters, class_weights=None, input_dim=None):
-    """
-    Run Enhanced Hybrid FedProx-SCAFFOLD strategy.
+    plt.tight_layout()
+    plt.savefig(os.path.join(output_dir, 'strategy_comparison.png'), dpi=150)
+    plt.close()
     
-    This enhanced version implements:
-    1. Sequential Activation: Pure SCAFFOLD warm-up (Phase 1), then gradual FedProx (Phase 2)
-    2. Conditional Activation: Per-client drift detection to apply appropriate mechanism
-    3. Dual-μ Architecture: Separate μ for raw vs SCAFFOLD-corrected gradient components
+    print(f"Plot saved to: {os.path.join(output_dir, 'strategy_comparison.png')}")
+
+
+def main():
+    parser = argparse.ArgumentParser(description="Compare FL strategies for regression")
+    parser.add_argument("--rounds", type=int, default=50, help="Number of federated rounds")
+    parser.add_argument("--clients", type=int, default=3, help="Number of clients")
+    parser.add_argument("--epochs", type=int, default=5, help="Local epochs per round")
+    parser.add_argument("--batch-size", type=int, default=32, help="Batch size")
+    parser.add_argument("--lr", type=float, default=0.01, help="Learning rate")
+    parser.add_argument("--mu", type=float, default=0.1, help="FedProx mu parameter")
+    parser.add_argument("--scaffold-lr-correction", type=float, default=1.0, help="SCAFFOLD learning rate correction")
+    parser.add_argument("--fedprox-weight", type=float, default=1.0, help="FedProx weight in hybrid (0-1)")
+    parser.add_argument("--scaffold-weight", type=float, default=1.0, help="SCAFFOLD weight in hybrid (0-1)")
+    parser.add_argument("--iid", action="store_true", help="Use IID partitioning")
+    parser.add_argument("--seed", type=int, default=2023, help="Random seed")
+    parser.add_argument("--output-dir", type=str, default=".", help="Output directory")
+    parser.add_argument("--no-plot", action="store_true", help="Disable plotting")
     
-    The key insight is that SCAFFOLD needs time to calibrate control variates before
-    FedProx can effectively constrain updates without interfering.
-    """
-    print("\n" + "=" * 60)
-    print("RUNNING ENHANCED HYBRID FedProx-SCAFFOLD")
-    print("=" * 60)
-    print("  Features: Sequential Activation + Drift Detection + Dual-μ Architecture")
-
-    # Import custom hybrid strategy
-    from hybrid_strategy import HybridFedProxScaffoldStrategy
-    from cleint import generate_client_fn
-
-    # Get strategy-specific config (fall back to scaffold config if hybrid not specified)
-    if hasattr(cfg, 'strategy_configs') and 'hybrid' in cfg.strategy_configs:
-        hybrid_config = get_strategy_config(cfg, 'hybrid')
-    else:
-        # Use scaffold config as base for hybrid
-        hybrid_config = get_strategy_config(cfg, 'fedscaffold')
-
-    # Get hybrid-specific parameters
-    hybrid_cfg = cfg.get('hybrid', {})
+    args = parser.parse_args()
     
-    # Sequential Activation parameters
-    warmup_rounds = hybrid_cfg.get('warmup_rounds', 10)
-    initial_mu = hybrid_cfg.get('initial_mu', 0.001)
-    mu_annealing_interval = hybrid_cfg.get('mu_annealing_interval', 5)
-    mu_annealing_factor = hybrid_cfg.get('mu_annealing_factor', 1.5)
-    max_mu = hybrid_cfg.get('max_mu', 0.3)
+    print("\n" + "=" * 70)
+    print("FEDERATED STRATEGY COMPARISON")
+    print("Disposable Income Regression")
+    print("=" * 70)
+    print(f"\nSettings:")
+    print(f"  Rounds: {args.rounds}")
+    print(f"  Clients: {args.clients}")
+    print(f"  Local Epochs: {args.epochs}")
+    print(f"  Batch Size: {args.batch_size}")
+    print(f"  Learning Rate: {args.lr}")
+    print(f"  Mu (FedProx): {args.mu}")
+    print(f"  SCAFFOLD LR Correction: {args.scaffold_lr_correction}")
+    print(f"  FedProx Weight (Hybrid): {args.fedprox_weight}")
+    print(f"  SCAFFOLD Weight (Hybrid): {args.scaffold_weight}")
+    print(f"  IID: {args.iid}")
+    print(f"  Seed: {args.seed}")
     
-    # Dual-μ Architecture parameters
-    use_dual_mu = hybrid_cfg.get('use_dual_mu', True)
-    mu_raw = hybrid_cfg.get('mu_raw', 0.1)
-    mu_corrected = hybrid_cfg.get('mu_corrected', 0.001)
+    # Create output directory if needed
+    os.makedirs(args.output_dir, exist_ok=True)
     
-    # Conditional Activation parameters
-    use_drift_detection = hybrid_cfg.get('use_drift_detection', True)
-    direction_drift_threshold = hybrid_cfg.get('direction_drift_threshold', 0.3)
-    magnitude_drift_threshold = hybrid_cfg.get('magnitude_drift_threshold', 2.0)
-    
-    # Client Selection Strategy parameters
-    use_quality_selection = hybrid_cfg.get('use_quality_selection', True)
-    quality_alpha = hybrid_cfg.get('quality_alpha', 0.5)
-    quality_loss_weight = hybrid_cfg.get('quality_loss_weight', 0.3)
-    quality_grad_weight = hybrid_cfg.get('quality_grad_weight', 0.4)
-    quality_acc_weight = hybrid_cfg.get('quality_acc_weight', 0.3)
-    
-    # Legacy fixed mu (fallback)
-    proximal_mu = hybrid_cfg.get('proximal_mu', 0.1)
-    
-    print(f"  Sequential Activation:")
-    print(f"    Phase 1 (SCAFFOLD warm-up): rounds 1-{warmup_rounds}")
-    print(f"    Phase 2 (Hybrid): starting μ={initial_mu}, annealing ×{mu_annealing_factor} every {mu_annealing_interval} rounds")
-    print(f"    Max μ: {max_mu}")
-    
-    if use_dual_mu:
-        print(f"  Dual-μ Architecture: ENABLED")
-        print(f"    μ_raw (uncorrected): {mu_raw}")
-        print(f"    μ_corrected (SCAFFOLD-corrected): {mu_corrected}")
-    else:
-        print(f"  Dual-μ Architecture: DISABLED (using single μ)")
-    
-    if use_drift_detection:
-        print(f"  Drift Detection: ENABLED")
-        print(f"    Direction threshold: {direction_drift_threshold}")
-        print(f"    Magnitude threshold: {magnitude_drift_threshold}")
-    else:
-        print(f"  Drift Detection: DISABLED")
-    
-    if use_quality_selection:
-        print(f"  Client Selection: QUALITY-BASED")
-        print(f"    Loss weight: {quality_loss_weight}")
-        print(f"    Gradient weight: {quality_grad_weight}")
-        print(f"    Accuracy weight: {quality_acc_weight}")
-    else:
-        print(f"  Client Selection: RANDOM")
-
-    # Create enhanced hybrid strategy
-    strategy = HybridFedProxScaffoldStrategy(
-        min_fit_clients=cfg.num_clients_per_round_fit,
-        min_evaluate_clients=cfg.num_clients_per_round_eval,
-        min_available_clients=cfg.num_clients,
-        total_clients=cfg.num_clients,
-        # Sequential Activation
-        warmup_rounds=warmup_rounds,
-        initial_mu=initial_mu,
-        mu_annealing_interval=mu_annealing_interval,
-        mu_annealing_factor=mu_annealing_factor,
-        max_mu=max_mu,
-        # Dual-μ Architecture
-        use_dual_mu=use_dual_mu,
-        mu_raw=mu_raw,
-        mu_corrected=mu_corrected,
-        # Conditional Activation
-        use_drift_detection=use_drift_detection,
-        direction_drift_threshold=direction_drift_threshold,
-        magnitude_drift_threshold=magnitude_drift_threshold,
-        # Client Selection Strategy
-        use_quality_selection=use_quality_selection,
-        quality_alpha=quality_alpha,
-        quality_loss_weight=quality_loss_weight,
-        quality_grad_weight=quality_grad_weight,
-        quality_acc_weight=quality_acc_weight,
-        # Legacy
-        proximal_mu=proximal_mu,
-        on_fit_config_fn=get_on_fit_config(hybrid_config),
-        evaluate_fn=get_evaluate_fn(cfg.num_classes, testloader, class_weights, input_dim=input_dim),
-        initial_parameters=initial_parameters
-    )
-
-    # Create client function with strategy reference (for hybrid training)
-    client_fn = generate_client_fn(
-        trainloaders,
-        validationloaders,
-        cfg.num_classes,
-        strategy=strategy,
-        class_weights=class_weights,
-        input_dim=input_dim
-    )
-
-    start_time = time.time()
-    history = fl.simulation.start_simulation(
-        client_fn=client_fn,
-        num_clients=cfg.num_clients,
-        config=fl.server.ServerConfig(num_rounds=cfg.num_rounds),
-        strategy=strategy,
-        client_resources={'num_cpus': 1.0, 'num_gpus': 0}
-    )
-    elapsed_time = time.time() - start_time
-
-    print(f"\n  [Hybrid] Training completed in {elapsed_time:.2f}s")
-
-    # Extract metrics from history
-    c_global_norm_history = []
-    current_mu_history = []
-    if hasattr(history, 'metrics_distributed_fit') and history.metrics_distributed_fit:
-        c_global_norm_history = history.metrics_distributed_fit.get('c_global_norm', [])
-        current_mu_history = history.metrics_distributed_fit.get('current_mu', [])
-
-        # Print c_global_norm evolution
-        if c_global_norm_history:
-            print(f"\n  [Hybrid] Control Variate Norm Evolution:")
-            print(f"    Initial: {c_global_norm_history[0][1]:.4f}")
-            print(f"    Final:   {c_global_norm_history[-1][1]:.4f}")
-            print(f"    Max:     {max(norm for _, norm in c_global_norm_history):.4f}")
-        
-        # Print μ evolution (sequential activation)
-        if current_mu_history:
-            print(f"\n  [Hybrid] Sequential μ Evolution:")
-            warmup_mu = [m for r, m in current_mu_history if r <= warmup_rounds]
-            phase2_mu = [(r, m) for r, m in current_mu_history if r > warmup_rounds]
-            if warmup_mu:
-                print(f"    Phase 1 (warmup): μ = 0 for {len(warmup_mu)} rounds")
-            if phase2_mu:
-                print(f"    Phase 2 start: μ = {phase2_mu[0][1]:.4f}")
-                print(f"    Phase 2 final: μ = {phase2_mu[-1][1]:.4f}")
-
-    # Get mu history from strategy
-    mu_history = strategy.get_mu_history()
-    phase_history = strategy.get_phase_history()
-
-    return history, elapsed_time, {
-        'c_global_norm_history': c_global_norm_history,
-        'current_mu_history': current_mu_history,
-        'mu_history': mu_history,
-        'phase_history': phase_history,
-        'warmup_rounds': warmup_rounds,
-        'use_dual_mu': use_dual_mu,
-        'use_drift_detection': use_drift_detection
-    }
-
-
-def extract_metrics(history, strategy_name: str) -> Dict:
-    """Extract key metrics from history."""
-    metrics = {
-        'strategy': strategy_name,
-        'accuracies': [],
-        'losses': [],
-        'final_accuracy': None,
-        'final_loss': None
+    # Plotting configuration
+    plotting_config = {
+        "enabled": not args.no_plot,
+        "show_plot": not args.no_plot,
+        "save_plot": True,
+        "format": "png",
+        "figsize": [14, 10],
+        "update_interval": 1
     }
     
-    if history.metrics_centralized:
-        accuracies = history.metrics_centralized.get('accuracy', [])
-        losses = history.losses_centralized
-        
-        if accuracies:
-            metrics['accuracies'] = [(rnd, acc) for rnd, acc in accuracies]
-            metrics['final_accuracy'] = accuracies[-1][1] if accuracies else None
-        
-        if losses:
-            metrics['losses'] = [(rnd, loss) for rnd, loss in losses]
-            metrics['final_loss'] = losses[-1][1] if losses else None
-    
-    return metrics
-
-
-def print_comparison_summary(all_results: List[Dict]):
-    """Print comparison summary of all strategies."""
-    print("\n" + "=" * 80)
-    print("COMPARISON SUMMARY")
-    print("=" * 80)
-    
-    print(f"\n{'Strategy':<20} {'Final Accuracy':<18} {'Final Loss':<15} {'Time (s)':<12} {'Final Mu':<10}")
-    print("-" * 80)
-    
-    for result in all_results:
-        strategy = result['strategy']
-        final_acc = result['final_accuracy']
-        final_loss = result['final_loss']
-        elapsed_time = result['elapsed_time']
-        final_mu = result.get('final_mu', None)
-        
-        acc_str = f"{final_acc*100:.2f}%" if final_acc else "N/A"
-        loss_str = f"{final_loss:.4f}" if final_loss else "N/A"
-        time_str = f"{elapsed_time:.2f}"
-        mu_str = f"{final_mu:.4f}" if final_mu else "-"
-        
-        print(f"{strategy:<20} {acc_str:<18} {loss_str:<15} {time_str:<12} {mu_str:<10}")
-    
-    # Print mu evolution for adaptive strategies
-    for result in all_results:
-        if 'mu_history' in result and result['mu_history']:
-            print(f"\n  Mu evolution for {result['strategy']}:")
-            mu_history = result['mu_history']
-            # Show first 3, middle, and last 3 values
-            if len(mu_history) <= 7:
-                for rnd, mu in mu_history:
-                    print(f"    Round {rnd}: mu = {mu:.4f}")
-            else:
-                for rnd, mu in mu_history[:3]:
-                    print(f"    Round {rnd}: mu = {mu:.4f}")
-                print(f"    ...")
-                for rnd, mu in mu_history[-3:]:
-                    print(f"    Round {rnd}: mu = {mu:.4f}")
-        
-        # Print signal breakdown for multi-signal adaptive
-        if 'adaptation_history' in result and result['adaptation_history']:
-            print(f"\n  Signal breakdown for {result['strategy']} (final round):")
-            final_record = result['adaptation_history'][-1]
-            signals = final_record['signals']
-            score = final_record['heterogeneity_score']
-            print(f"    Gradient divergence:  {signals['gradient_divergence']:.3f}")
-            print(f"    Loss variance:        {signals['loss_variance']:.3f}")
-            print(f"    Label entropy:        {signals['label_entropy']:.3f}")
-            print(f"    Feature variance:     {signals['feature_variance']:.3f}")
-            print(f"    Heterogeneity score:  {score:.3f}")
-    
-    # Find best strategy
-    if all_results:
-        best_acc = max(
-            (r for r in all_results if r['final_accuracy'] is not None),
-            key=lambda x: x['final_accuracy'],
-            default=None
-        )
-        if best_acc:
-            print(f"\n{'='*80}")
-            print(f"BEST STRATEGY (by accuracy): {best_acc['strategy']} ({best_acc['final_accuracy']*100:.2f}%)")
-            print(f"{'='*80}")
-
-
-@hydra.main(config_path="conf", config_name="base", version_base=None)
-def main(cfg: DictConfig):
-    """
-    Compare FedAvg, FedProx, and FedSCAFFOLD strategies.
-    
-    Task: Classify users into savings potential categories:
-    - Low (<7% savings)
-    - Medium (7-12% savings)
-    - High (>12% savings)
-    """
-    
-    ## 1. Parse and display configuration
-    print("=" * 80)
-    print("FEDERATED LEARNING STRATEGY COMPARISON")
-    print("=" * 80)
-    print("\nConfiguration:")
-    print(OmegaConf.to_yaml(cfg))
-    print(f"\nComparing strategies: FedAvg, FedProx, FedSCAFFOLD")
-    
-    # Display data distribution settings
-    iid_setting = cfg.get('iid', True)
-    alpha_setting = cfg.get('alpha', 0.5)
-    print(f"\nData Distribution: {'IID' if iid_setting else 'Non-IID'}")
-    if not iid_setting:
-        print(f"  Non-IID alpha parameter: {alpha_setting}")
-
-    ## 2. Prepare the dataset (once for all strategies)
-    print("\n" + "=" * 80)
-    print("PREPARING DATASET")
-    print("=" * 80)
-    
-    # Check if class weights should be used
-    use_class_weights = cfg.get('use_class_weights', False)
-    class_weight_method = cfg.get('class_weight_method', 'balanced')
-    
-    # Feature engineering and discretization options
-    use_engineered_features = cfg.get('use_engineered_features', True)
-    discretization_method = cfg.get('discretization_method', 'quantile')
-    
-    trainloaders, validationloaders, testloader, class_weights, input_dim = prepare_dataset(
-        num_partitions=cfg.num_clients,
-        batch_size=cfg.batch_size,
-        iid=cfg.get('iid', True),
-        alpha=cfg.get('alpha', 0.5),
-        use_class_weights=use_class_weights,
-        class_weight_method=class_weight_method,
-        use_engineered_features=use_engineered_features,
-        discretization_method=discretization_method
+    # Run comparison
+    results = compare_strategies(
+        strategies=["fedavg", "fedprox", "scaffold", "hybrid"],
+        num_rounds=args.rounds,
+        num_clients=args.clients,
+        local_epochs=args.epochs,
+        batch_size=args.batch_size,
+        learning_rate=args.lr,
+        mu=args.mu,
+        scaffold_lr_correction=args.scaffold_lr_correction,
+        fedprox_weight=args.fedprox_weight,
+        scaffold_weight=args.scaffold_weight,
+        iid=args.iid,
+        seed=args.seed,
+        verbose=True,
+        output_dir=args.output_dir,
+        plotting_config=plotting_config
     )
     
-    print(f"\nNumber of clients: {len(trainloaders)}")
-    print(f"Samples in first client's training set: {len(trainloaders[0].dataset)}")
-    print(f"Input dimension: {input_dim}")
-
-    ## 3. Define the client function
-    client_fn = generate_client_fn(trainloaders, validationloaders, cfg.num_classes, class_weights=class_weights, input_dim=input_dim)
-
-    ## 4. Create shared initial parameters (ONCE for all strategies)
-    # This ensures fair comparison - all strategies start from the same weights
-    from server import get_initial_parameters
-    initial_parameters = get_initial_parameters(cfg.num_classes, input_dim=input_dim)
-    print("\n[INFO] Created shared initial parameters for all strategies")
-
-    ## 5. Run all strategies
-    all_results = []
+    # Save results
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+    output_file = os.path.join(args.output_dir, f"comparison_{timestamp}.json")
     
-    strategies_to_run = cfg.get('strategies', ['fedavg', 'fedprox', 'fedscaffold'])
+    def convert(obj):
+        if isinstance(obj, (np.integer, np.floating)):
+            return float(obj)
+        elif isinstance(obj, np.ndarray):
+            return obj.tolist()
+        elif isinstance(obj, dict):
+            return {k: convert(v) for k, v in obj.items()}
+        elif isinstance(obj, list):
+            return [convert(v) for v in obj]
+        return obj
     
-    if 'fedavg' in strategies_to_run:
+    with open(output_file, "w") as f:
+        json.dump(convert(results), f, indent=2)
+    
+    print(f"\nResults saved to: {output_file}")
+    
+    # Generate comparison plots using the new plotter
+    if not args.no_plot:
         try:
-            history, elapsed_time = run_fedavg(cfg, trainloaders, validationloaders, testloader, client_fn, initial_parameters, class_weights, input_dim=input_dim)
-            metrics = extract_metrics(history, 'FedAvg')
-            metrics['elapsed_time'] = elapsed_time
-            all_results.append(metrics)
+            comp_plotter = ComparisonPlotter(
+                output_dir=args.output_dir,
+                figsize=(16, 12),
+                plot_format="png"
+            )
+            comp_plotter.generate_all_plots(results)
+            
+            # Also generate the simple bar plot
+            plot_comparison(results, args.output_dir)
         except Exception as e:
-            print(f"Error running FedAvg: {e}")
+            print(f"Could not create plot: {e}")
     
-    if 'fedprox' in strategies_to_run:
-        try:
-            result = run_fedprox(cfg, trainloaders, validationloaders, testloader, client_fn, initial_parameters, class_weights, input_dim=input_dim)
-            history, elapsed_time = result[0], result[1]
-            adaptive_info = result[2] if len(result) > 2 else None
-            
-            # Use appropriate name based on adaptive mu mode
-            adaptive_cfg = cfg.get('adaptive_mu', {})
-            use_adaptive = adaptive_cfg.get('enabled', False) if adaptive_cfg else False
-            adaptive_mode = adaptive_cfg.get('mode', 'simple') if adaptive_cfg else 'simple'
-            
-            if use_adaptive and adaptive_mode == 'multi_signal':
-                strategy_name = 'FedProx (MultiSignal)'
-            elif use_adaptive:
-                strategy_name = 'FedProx (Adaptive)'
-            else:
-                strategy_name = 'FedProx'
-            
-            metrics = extract_metrics(history, strategy_name)
-            metrics['elapsed_time'] = elapsed_time
-            
-            # Store adaptive mu info if available
-            if adaptive_info:
-                metrics['mu_history'] = adaptive_info['mu_history']
-                metrics['final_mu'] = adaptive_info['final_mu']
-                if 'adaptation_history' in adaptive_info:
-                    metrics['adaptation_history'] = adaptive_info['adaptation_history']
-            
-            all_results.append(metrics)
-        except Exception as e:
-            print(f"Error running FedProx: {e}")
-            import traceback
-            traceback.print_exc()
+    # Save metrics to CSV
+    save_metrics_to_csv(results, args.output_dir)
     
-    if 'fedscaffold' in strategies_to_run:
-        try:
-            # SCAFFOLD creates its own client function with strategy reference
-            result = run_fedscaffold(cfg, trainloaders, validationloaders, testloader, initial_parameters, class_weights, input_dim=input_dim)
-            history, elapsed_time = result[0], result[1]
-            scaffold_info = result[2] if len(result) > 2 else None
-
-            metrics = extract_metrics(history, 'FedSCAFFOLD')
-            metrics['elapsed_time'] = elapsed_time
-
-            # Store c_global_norm history if available
-            if scaffold_info and 'c_global_norm_history' in scaffold_info:
-                metrics['c_global_norm_history'] = scaffold_info['c_global_norm_history']
-
-            all_results.append(metrics)
-        except Exception as e:
-            print(f"Error running FedSCAFFOLD: {e}")
-            import traceback
-            traceback.print_exc()
-
-    if 'hybrid' in strategies_to_run:
-        try:
-            # Hybrid FedProx-SCAFFOLD creates its own client function with strategy reference
-            result = run_hybrid_fedprox_scaffold(cfg, trainloaders, validationloaders, testloader, initial_parameters, class_weights, input_dim=input_dim)
-            history, elapsed_time = result[0], result[1]
-            hybrid_info = result[2] if len(result) > 2 else None
-
-            metrics = extract_metrics(history, 'Hybrid (FedProx+SCAFFOLD)')
-            metrics['elapsed_time'] = elapsed_time
-
-            # Store hybrid-specific info if available
-            if hybrid_info:
-                if 'c_global_norm_history' in hybrid_info:
-                    metrics['c_global_norm_history'] = hybrid_info['c_global_norm_history']
-                if 'proximal_mu' in hybrid_info:
-                    metrics['final_mu'] = hybrid_info['proximal_mu']
-                if 'mu_history' in hybrid_info:
-                    metrics['mu_history'] = hybrid_info['mu_history']
-
-            all_results.append(metrics)
-        except Exception as e:
-            print(f"Error running Hybrid FedProx-SCAFFOLD: {e}")
-            import traceback
-            traceback.print_exc()
-
-    ## 5. Run diagnostic analysis
-    print("\n" + "=" * 80)
-    print("RUNNING DIAGNOSTIC ANALYSIS")
-    print("=" * 80)
-
-    # Analyze true label distribution in test set
-    print("\n[Step 1/3] Analyzing test set class distribution...")
-    test_labels = []
-    for _, labels in testloader:
-        test_labels.extend(labels.numpy())
-    test_labels = np.array(test_labels)
-
-    true_dist = analyze_class_distribution(test_labels, "Test Set")
-
-    # Collect predictions from each strategy and run diagnostics
-    print("\n[Step 2/3] Collecting predictions from trained models...")
-
-    # We need to get the final trained models from each strategy
-    # For simplicity, we'll retrain a small model or use the server's evaluate_fn
-    # Actually, we can use the final global model from each strategy's history
-
-    # Import model for predictions
-    from model import Net
-    from flwr.common import parameters_to_ndarrays
-
-    diagnostic_results = {}
-
-    # Train a centralized model for diagnostic purposes
-    print("\n[Step 3/4] Training centralized model for diagnostic comparison...")
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    diagnostic_model = Net(cfg.num_classes).to(device)
+    # Print final summary
+    print("\n" + "=" * 70)
+    print("FINAL RANKINGS")
+    print("=" * 70)
     
-    # Use the same testloader to gather all train data for centralized training
-    # Create a simple dataloader from all client data
-    all_train_data = []
-    all_train_labels = []
-    for train_loader in trainloaders:
-        for X, y in train_loader:
-            all_train_data.append(X)
-            all_train_labels.append(y)
+    # Sort by RMSE (lower is better)
+    sorted_by_rmse = sorted(
+        results.items(),
+        key=lambda x: x[1]["final_metrics"]["rmse"]
+    )
     
-    full_train_X = torch.cat(all_train_data, dim=0)
-    full_train_y = torch.cat(all_train_labels, dim=0)
-    full_train_dataset = torch.utils.data.TensorDataset(full_train_X, full_train_y)
-    full_train_loader = torch.utils.data.DataLoader(full_train_dataset, batch_size=cfg.batch_size, shuffle=True)
+    print("\nBy RMSE (lower is better):")
+    for i, (strategy, result) in enumerate(sorted_by_rmse, 1):
+        metrics = result["final_metrics"]
+        print(f"  {i}. {strategy}: RMSE=${metrics['rmse']:,.2f}, R²={metrics['r2']:.4f}")
     
-    # Quick centralized training (30 epochs)
-    optimizer = torch.optim.Adam(diagnostic_model.parameters(), lr=0.001)
+    # Best strategy
+    best_strategy = sorted_by_rmse[0][0]
+    best_rmse = sorted_by_rmse[0][1]["final_metrics"]["rmse"]
+    best_r2 = sorted_by_rmse[0][1]["final_metrics"]["r2"]
     
-    # Use class weights if enabled
-    if class_weights is not None:
-        weight_tensor = torch.FloatTensor(class_weights).to(device)
-        criterion = torch.nn.CrossEntropyLoss(weight=weight_tensor)
-    else:
-        criterion = torch.nn.CrossEntropyLoss()
-    
-    diagnostic_model.train()
-    for epoch in range(30):
-        for X, y in full_train_loader:
-            X, y = X.to(device), y.to(device)
-            optimizer.zero_grad()
-            loss = criterion(diagnostic_model(X), y)
-            loss.backward()
-            optimizer.step()
-    
-    # Now check predictions vs true labels
-    print("\n[Step 4/4] Analyzing prediction distributions...")
-    diagnostic_model.eval()
-    predictions = []
-    true_labels = []
-    
-    with torch.no_grad():
-        for X, y in testloader:
-            X = X.to(device)
-            pred = diagnostic_model(X).argmax(dim=1)
-            predictions.extend(pred.cpu().numpy())
-            true_labels.extend(y.numpy())
-    
-    predictions = np.array(predictions)
-    true_labels = np.array(true_labels)
-    
-    # Print diagnostic results
-    print("\n" + "=" * 60)
-    print("CLASS BALANCE DIAGNOSTIC")
-    print("=" * 60)
-    
-    class_names = ['Low (<7%)', 'Medium (7-12%)', 'High (>12%)']
-    
-    print("\n📊 True Label Distribution (Test Set):")
-    true_counts = np.bincount(true_labels, minlength=cfg.num_classes)
-    for cls, count in enumerate(true_counts):
-        pct = 100 * count / len(true_labels)
-        print(f"  Class {cls} ({class_names[cls]}): {count} samples ({pct:.1f}%)")
-    
-    print("\n🎯 Model Prediction Distribution:")
-    pred_counts = np.bincount(predictions, minlength=cfg.num_classes)
-    for cls, count in enumerate(pred_counts):
-        pct = 100 * count / len(predictions)
-        print(f"  Class {cls} ({class_names[cls]}): {count} predictions ({pct:.1f}%)")
-    
-    # Calculate per-class accuracy
-    print("\n✅ Per-Class Accuracy:")
-    for cls in range(cfg.num_classes):
-        cls_mask = true_labels == cls
-        if cls_mask.sum() > 0:
-            cls_acc = (predictions[cls_mask] == true_labels[cls_mask]).sum() / cls_mask.sum()
-            print(f"  Class {cls} ({class_names[cls]}): {cls_acc*100:.1f}%")
-    
-    # Check for bias
-    print("\n⚠️  Bias Analysis:")
-    pred_entropy = -np.sum([(c/len(predictions)) * np.log(c/len(predictions) + 1e-10) for c in pred_counts])
-    max_entropy = np.log(cfg.num_classes)
-    pred_uniformity = pred_entropy / max_entropy
-    
-    if pred_uniformity < 0.7:
-        print(f"  🔴 HIGH BIAS DETECTED (uniformity={pred_uniformity:.2f})")
-        print(f"  → Model predictions are heavily skewed")
-        print(f"  → Likely predicting majority class most of the time")
-        print(f"  → Solution: Use class weights (use_class_weights=true)")
-    elif pred_uniformity < 0.85:
-        print(f"  🟡 MODERATE BIAS (uniformity={pred_uniformity:.2f})")
-        print(f"  → Some class imbalance in predictions")
-    else:
-        print(f"  🟢 BALANCED PREDICTIONS (uniformity={pred_uniformity:.2f})")
-    
-    print("=" * 60)
-
-    print("\n" + "=" * 80)
-    print("DIAGNOSTIC ANALYSIS COMPLETE")
-    print("=" * 80)
-    print("\nKey Findings:")
-    print(f"  • Class imbalance ratio: {true_dist['imbalance_ratio']:.2f}x")
-
-    if true_dist['imbalance_ratio'] > 3.0:
-        print(f"  • ⚠️  SEVERE CLASS IMBALANCE DETECTED")
-        print(f"  • This is likely limiting model performance to majority class baseline")
-        print(f"  • Recommendation: Add class weights to loss function")
-    elif true_dist['imbalance_ratio'] > 2.0:
-        print(f"  • ⚠️  Moderate class imbalance detected")
-        print(f"  • Consider using class weights for better performance")
-    else:
-        print(f"  • ✅ Classes are reasonably balanced")
-
-    ## 6. Save comparison results
-    save_path = HydraConfig.get().runtime.output_dir
-    comparison_path = Path(save_path) / "comparison_results.pkl"
-    
-    # Get adaptive mu config info
-    adaptive_cfg = cfg.get('adaptive_mu', {})
-    adaptive_mu_config = dict(adaptive_cfg) if adaptive_cfg else {}
-    
-    # Get multi-signal config info
-    multi_signal_cfg = cfg.get('multi_signal_mu', {})
-    multi_signal_config = dict(multi_signal_cfg) if multi_signal_cfg else {}
-    
-    comparison_data = {
-        'results': all_results,
-        'config': {
-            'num_rounds': cfg.num_rounds,
-            'num_clients': cfg.num_clients,
-            'batch_size': cfg.batch_size,
-            'num_classes': cfg.num_classes,
-            'lr': cfg.config_fit.lr,
-            'local_epochs': cfg.config_fit.local_epochs,
-            'max_grad_norm': cfg.config_fit.get('max_grad_norm', 1.0),
-            'strategies': strategies_to_run,
-            'proximal_mu_fixed': cfg.get('proximal_mu', 0.1),
-            'adaptive_mu_config': adaptive_mu_config,
-            'multi_signal_config': multi_signal_config,
-            'iid': cfg.get('iid', True),
-            'alpha': cfg.get('alpha', 0.5),
-            'task': 'Savings Potential Classification'
-        }
-    }
-
-    with open(str(comparison_path), "wb") as f:
-        pickle.dump(comparison_data, f, protocol=pickle.HIGHEST_PROTOCOL)
-
-    ## 6. Print comparison summary
-    print_comparison_summary(all_results)
-    
-    print(f"\nComparison results saved to: {comparison_path}")
+    print(f"\n🏆 BEST STRATEGY: {best_strategy.upper()}")
+    print(f"   RMSE: ${best_rmse:,.2f}")
+    print(f"   R²: {best_r2:.4f}")
+    print("=" * 70)
 
 
 if __name__ == "__main__":
