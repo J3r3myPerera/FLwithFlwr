@@ -369,6 +369,11 @@ def create_strategy(
     initial_parameters: Optional[Parameters] = None,
     on_fit_config_fn: Optional[Callable] = None,
     on_evaluate_config_fn: Optional[Callable] = None,
+    fraction_fit: float = 1.0,
+    fraction_evaluate: float = 1.0,
+    min_fit_clients: int = 2,
+    min_evaluate_clients: int = 2,
+    min_available_clients: int = 2,
 ) -> Strategy:
     """
     Factory function to create a federated learning strategy.
@@ -388,6 +393,11 @@ def create_strategy(
         initial_parameters: Initial model parameters
         on_fit_config_fn: Function to configure fit
         on_evaluate_config_fn: Function to configure evaluate
+        fraction_fit: Fraction of clients to sample for training (0.0-1.0)
+        fraction_evaluate: Fraction of clients to sample for evaluation (0.0-1.0)
+        min_fit_clients: Minimum number of clients for training
+        min_evaluate_clients: Minimum number of clients for evaluation
+        min_available_clients: Minimum available clients to start training
     
     Returns:
         Configured Strategy instance
@@ -398,11 +408,11 @@ def create_strategy(
         "target_mean": target_mean,
         "target_std": target_std,
         "log_transform": log_transform,
-        "fraction_fit": 1.0,
-        "fraction_evaluate": 1.0,
-        "min_fit_clients": num_clients,
-        "min_evaluate_clients": num_clients,
-        "min_available_clients": num_clients,
+        "fraction_fit": fraction_fit,
+        "fraction_evaluate": fraction_evaluate,
+        "min_fit_clients": min_fit_clients,
+        "min_evaluate_clients": min_evaluate_clients,
+        "min_available_clients": min_available_clients,
         "initial_parameters": initial_parameters,
         "on_fit_config_fn": on_fit_config_fn,
         "on_evaluate_config_fn": on_evaluate_config_fn,

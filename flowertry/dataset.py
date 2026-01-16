@@ -269,20 +269,22 @@ def prepare_dataset_federated(
     test_ratio: float = 0.1,
     seed: int = 2023,
     iid: bool = False,
+    partition_strategy: str = 'city_tier',
     normalize_target: bool = True,
     log_transform_target: bool = True,
     verbose: bool = True
 ) -> Tuple[List[DataLoader], List[DataLoader], DataLoader, int, float, float, Dict, bool]:
     """
-    Prepare the dataset for federated learning with Non-IID partitioning by City_Tier.
+    Prepare the dataset for federated learning with multiple partitioning strategies.
     
     Args:
-        num_partitions: Number of clients (3 for Non-IID by City_Tier)
+        num_partitions: Number of clients (3 for city_tier, 4 for occupation, 12 for hybrid)
         batch_size: Batch size for data loaders
         val_ratio: Validation ratio per client
         test_ratio: Test ratio (global test set)
         seed: Random seed
-        iid: If True, use IID random split. If False, partition by City_Tier
+        iid: If True, use IID random split (overrides partition_strategy)
+        partition_strategy: 'city_tier' (3 clients), 'occupation' (4 clients), or 'hybrid' (12 clients)
         normalize_target: Whether to normalize the target variable
         log_transform_target: Whether to apply log(1+y) transformation.
                               This often reduces MAPE by 30-50% for income data.
@@ -308,7 +310,7 @@ def prepare_dataset_federated(
     )
     
     input_dim = X.shape[1]
-    partition_info = {'type': 'iid' if iid else 'non-iid', 'log_transform': log_transform, 'clients': {}}
+    partition_info = {'type': 'iid' if iid else f'non-iid-{partition_strategy}', 'log_transform': log_transform, 'clients': {}}
     
     if iid:
         # IID: Random uniform partitioning
@@ -344,8 +346,8 @@ def prepare_dataset_federated(
                 'samples': partition_sizes[i]
             }
     
-    else:
-        # Non-IID: Partition by City_Tier
+    elif partition_strategy == 'city_tier':
+        # Non-IID: Partition by City_Tier (3 clients)
         if num_partitions != 3:
             print(f"[Warning] Non-IID by City_Tier requires 3 clients. Adjusting.")
             num_partitions = 3
@@ -355,7 +357,7 @@ def prepare_dataset_federated(
         test_X_list, test_y_list = [], []
         
         if verbose:
-            print(f"\n[Partitioning] Non-IID by City_Tier")
+            print(f"\n[Partitioning] Non-IID by City_Tier (3 clients)")
         
         for i, tier in enumerate(tier_names):
             mask = df['City_Tier'] == tier
@@ -399,6 +401,133 @@ def prepare_dataset_federated(
         test_X = np.vstack(test_X_list)
         test_y = np.concatenate(test_y_list)
         test_dataset = DisposableIncomeDataset(test_X, test_y)
+    
+    elif partition_strategy == 'occupation':
+        # Non-IID: Partition by Occupation (4 clients)
+        if num_partitions != 4:
+            print(f"[Warning] Non-IID by Occupation requires 4 clients. Adjusting.")
+            num_partitions = 4
+        
+        occupations = ['Retired', 'Professional', 'Student', 'Self_Employed']
+        client_datasets = []
+        test_X_list, test_y_list = [], []
+        
+        if verbose:
+            print(f"\n[Partitioning] Non-IID by Occupation (4 clients)")
+        
+        for i, occ in enumerate(occupations):
+            mask = df['Occupation'] == occ
+            X_occ = X[mask]
+            y_occ = y[mask]
+            
+            # Split into trainval and test
+            occ_size = len(y_occ)
+            occ_test_size = int(test_ratio * occ_size)
+            occ_trainval_size = occ_size - occ_test_size
+            
+            indices = np.random.permutation(occ_size)
+            trainval_indices = indices[:occ_trainval_size]
+            test_indices = indices[occ_trainval_size:]
+            
+            # Create client dataset
+            client_dataset = DisposableIncomeDataset(
+                X_occ[trainval_indices], y_occ[trainval_indices]
+            )
+            client_datasets.append(client_dataset)
+            
+            # Collect test data
+            test_X_list.append(X_occ[test_indices])
+            test_y_list.append(y_occ[test_indices])
+            
+            # Denormalize for statistics
+            y_occ_original = y_occ * target_std + target_mean
+            
+            partition_info['clients'][i] = {
+                'name': occ,
+                'samples': occ_trainval_size,
+                'mean_target': float(y_occ_original.mean()),
+                'std_target': float(y_occ_original.std())
+            }
+            
+            if verbose:
+                print(f"  {occ}: {occ_trainval_size} train samples, "
+                      f"Mean=${y_occ_original.mean():,.2f}, Std=${y_occ_original.std():,.2f}")
+        
+        # Create global test set
+        test_X = np.vstack(test_X_list)
+        test_y = np.concatenate(test_y_list)
+        test_dataset = DisposableIncomeDataset(test_X, test_y)
+    
+    elif partition_strategy == 'hybrid':
+        # Non-IID: Hybrid City_Tier × Occupation (12 clients)
+        if num_partitions != 12:
+            print(f"[Warning] Hybrid Non-IID requires 12 clients. Adjusting.")
+            num_partitions = 12
+        
+        tier_names = ['Tier_1', 'Tier_2', 'Tier_3']
+        occupations = ['Retired', 'Professional', 'Student', 'Self_Employed']
+        client_datasets = []
+        test_X_list, test_y_list = [], []
+        
+        if verbose:
+            print(f"\n[Partitioning] Hybrid Non-IID (City_Tier × Occupation = 12 clients)")
+            print(f"{'':4} {'Client':20} {'Train Samples':>15} {'Mean Target':>15} {'Std Target':>15}")
+            print('-' * 70)
+        
+        client_idx = 0
+        for tier in tier_names:
+            for occ in occupations:
+                # Filter by both City_Tier and Occupation
+                mask = (df['City_Tier'] == tier) & (df['Occupation'] == occ)
+                X_partition = X[mask]
+                y_partition = y[mask]
+                
+                # Split into trainval and test
+                partition_size = len(y_partition)
+                partition_test_size = int(test_ratio * partition_size)
+                partition_trainval_size = partition_size - partition_test_size
+                
+                indices = np.random.permutation(partition_size)
+                trainval_indices = indices[:partition_trainval_size]
+                test_indices = indices[partition_trainval_size:]
+                
+                # Create client dataset
+                client_dataset = DisposableIncomeDataset(
+                    X_partition[trainval_indices], y_partition[trainval_indices]
+                )
+                client_datasets.append(client_dataset)
+                
+                # Collect test data
+                test_X_list.append(X_partition[test_indices])
+                test_y_list.append(y_partition[test_indices])
+                
+                # Denormalize for statistics
+                y_partition_original = y_partition * target_std + target_mean
+                
+                client_name = f"{tier}+{occ}"
+                partition_info['clients'][client_idx] = {
+                    'name': client_name,
+                    'tier': tier,
+                    'occupation': occ,
+                    'samples': partition_trainval_size,
+                    'mean_target': float(y_partition_original.mean()),
+                    'std_target': float(y_partition_original.std())
+                }
+                
+                if verbose:
+                    print(f"  {client_idx+1:2d} {client_name:20} {partition_trainval_size:>15,} "
+                          f"${y_partition_original.mean():>14,.2f} ${y_partition_original.std():>14,.2f}")
+                
+                client_idx += 1
+        
+        # Create global test set
+        test_X = np.vstack(test_X_list)
+        test_y = np.concatenate(test_y_list)
+        test_dataset = DisposableIncomeDataset(test_X, test_y)
+    
+    else:
+        raise ValueError(f"Unknown partition_strategy: {partition_strategy}. "
+                        f"Must be 'city_tier', 'occupation', or 'hybrid'")
     
     # Create test loader
     testloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)

@@ -293,63 +293,7 @@ class ComparisonPlotter:
             'hybrid': 'D'
         }
     
-    def plot_training_history(
-        self,
-        results: Dict[str, Dict],
-        save_path: Optional[str] = None
-    ) -> plt.Figure:
-        """
-        Plot training history comparison for all strategies.
-        
-        Args:
-            results: Dictionary with results for each strategy
-            save_path: Optional path to save the plot
-        
-        Returns:
-            Matplotlib figure
-        """
-        fig, axes = plt.subplots(2, 2, figsize=self.figsize)
-        fig.suptitle('Strategy Comparison - Training History', fontsize=16, fontweight='bold')
-        
-        metric_configs = [
-            ('loss', 'Training Loss', 'Loss'),
-            ('rmse', 'RMSE Over Rounds', 'RMSE ($)'),
-            ('mae', 'MAE Over Rounds', 'MAE ($)'),
-            ('r2', 'R² Score Over Rounds', 'R²')
-        ]
-        
-        for ax, (key, title, ylabel) in zip(axes.flat, metric_configs):
-            for strategy, result in results.items():
-                history = result.get('history', {})
-                rounds = history.get('rounds', [])
-                values = history.get(key, [])
-                
-                if rounds and values:
-                    color = self.colors.get(strategy, 'gray')
-                    marker = self.markers.get(strategy, 'o')
-                    ax.plot(
-                        rounds, values,
-                        color=color,
-                        marker=marker,
-                        markersize=4,
-                        linewidth=2,
-                        label=strategy.upper(),
-                        alpha=0.8
-                    )
-            
-            ax.set_xlabel('Round', fontsize=10)
-            ax.set_ylabel(ylabel, fontsize=10)
-            ax.set_title(title, fontsize=12)
-            ax.grid(True, alpha=0.3)
-            ax.legend(loc='best')
-        
-        plt.tight_layout()
-        
-        if save_path:
-            fig.savefig(save_path, dpi=150, bbox_inches='tight')
-            print(f"[Plot] Training history saved to: {save_path}")
-        
-        return fig
+
     
     def plot_final_comparison(
         self,
@@ -426,105 +370,7 @@ class ComparisonPlotter:
         
         return fig
     
-    def plot_convergence_analysis(
-        self,
-        results: Dict[str, Dict],
-        save_path: Optional[str] = None
-    ) -> plt.Figure:
-        """
-        Plot convergence analysis showing rate and stability.
-        
-        Args:
-            results: Dictionary with results for each strategy
-            save_path: Optional path to save the plot
-        
-        Returns:
-            Matplotlib figure
-        """
-        fig, axes = plt.subplots(1, 3, figsize=(15, 5))
-        fig.suptitle('Convergence Analysis', fontsize=16, fontweight='bold')
-        
-        # Plot 1: Loss convergence (log scale)
-        ax1 = axes[0]
-        for strategy, result in results.items():
-            history = result.get('history', {})
-            rounds = history.get('rounds', [])
-            loss = history.get('loss', [])
-            
-            if rounds and loss:
-                color = self.colors.get(strategy, 'gray')
-                ax1.semilogy(rounds, loss, color=color, linewidth=2, label=strategy.upper())
-        
-        ax1.set_xlabel('Round')
-        ax1.set_ylabel('Loss (log scale)')
-        ax1.set_title('Loss Convergence')
-        ax1.grid(True, alpha=0.3)
-        ax1.legend()
-        
-        # Plot 2: R² improvement rate
-        ax2 = axes[1]
-        for strategy, result in results.items():
-            history = result.get('history', {})
-            rounds = history.get('rounds', [])
-            r2 = history.get('r2', [])
-            
-            if len(r2) > 1:
-                # Calculate improvement rate (diff between consecutive rounds)
-                r2_diff = np.diff(r2)
-                color = self.colors.get(strategy, 'gray')
-                ax2.plot(rounds[1:], r2_diff, color=color, linewidth=2, label=strategy.upper(), alpha=0.7)
-        
-        ax2.axhline(y=0, color='black', linestyle='--', alpha=0.3)
-        ax2.set_xlabel('Round')
-        ax2.set_ylabel('R² Improvement per Round')
-        ax2.set_title('R² Improvement Rate')
-        ax2.grid(True, alpha=0.3)
-        ax2.legend()
-        
-        # Plot 3: Final metrics radar chart (simplified as bar)
-        ax3 = axes[2]
-        
-        # Normalize metrics for comparison
-        metrics_to_compare = ['loss', 'rmse', 'mae']
-        strategies = list(results.keys())
-        
-        # Get min and max for normalization
-        all_values = {m: [] for m in metrics_to_compare}
-        for result in results.values():
-            for m in metrics_to_compare:
-                all_values[m].append(result.get('final_metrics', {}).get(m, 0))
-        
-        # Calculate normalized scores (lower is better, so invert)
-        scores = {}
-        for strategy, result in results.items():
-            final = result.get('final_metrics', {})
-            score = 0
-            for m in metrics_to_compare:
-                vals = all_values[m]
-                if max(vals) > min(vals):
-                    # Normalize and invert (higher normalized = better)
-                    normalized = 1 - (final.get(m, 0) - min(vals)) / (max(vals) - min(vals))
-                    score += normalized
-            # Add R² directly (higher is better)
-            score += final.get('r2', 0)
-            scores[strategy] = score / 4  # Average
-        
-        colors = [self.colors.get(s, 'gray') for s in strategies]
-        bars = ax3.bar(strategies, [scores[s] for s in strategies], color=colors, alpha=0.8, edgecolor='black')
-        
-        ax3.set_xlabel('Strategy')
-        ax3.set_ylabel('Composite Score')
-        ax3.set_title('Overall Performance Score')
-        ax3.set_xticklabels([s.upper() for s in strategies])
-        ax3.grid(True, axis='y', alpha=0.3)
-        
-        plt.tight_layout()
-        
-        if save_path:
-            fig.savefig(save_path, dpi=150, bbox_inches='tight')
-            print(f"[Plot] Convergence analysis saved to: {save_path}")
-        
-        return fig
+
     
     def generate_all_plots(
         self,
@@ -532,7 +378,7 @@ class ComparisonPlotter:
         prefix: str = ""
     ):
         """
-        Generate all comparison plots and save them.
+        Generate final comparison plot and save it.
         
         Args:
             results: Dictionary with results for each strategy
@@ -540,22 +386,10 @@ class ComparisonPlotter:
         """
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
         
-        # Training history
-        self.plot_training_history(
-            results,
-            os.path.join(self.output_dir, f"{prefix}training_history_{timestamp}.{self.plot_format}")
-        )
-        
-        # Final comparison
+        # Final comparison only
         self.plot_final_comparison(
             results,
             os.path.join(self.output_dir, f"{prefix}final_comparison_{timestamp}.{self.plot_format}")
-        )
-        
-        # Convergence analysis
-        self.plot_convergence_analysis(
-            results,
-            os.path.join(self.output_dir, f"{prefix}convergence_analysis_{timestamp}.{self.plot_format}")
         )
         
         plt.close('all')

@@ -33,7 +33,7 @@ from dataset import prepare_dataset_federated, reset_preprocessor
 from model import DisposableIncomeNet, get_parameters, set_parameters
 from client import RegressionClient, create_client
 from server import create_strategy, compute_regression_metrics
-from visualize_metrics import MetricsPlotter, ComparisonPlotter, save_metrics_to_csv
+from visualize_metrics import ComparisonPlotter, save_metrics_to_csv
 
 
 # Configure logging
@@ -53,11 +53,18 @@ def run_simulation(
     fedprox_weight: float = 1.0,
     scaffold_weight: float = 1.0,
     iid: bool = False,
+    partition_strategy: str = 'city_tier',
+    max_grad_norm: float = 1.0,
     seed: int = 2023,
     verbose: bool = True,
-    plotter: Optional[MetricsPlotter] = None,
     output_dir: str = ".",
-    hybrid_config: Optional[Dict] = None
+    hybrid_config: Optional[Dict] = None,
+    # Client sampling parameters for typical FL behavior
+    fraction_fit: float = 1.0,
+    fraction_evaluate: float = 1.0,
+    min_fit_clients: int = 2,
+    min_evaluate_clients: int = 2,
+    min_available_clients: int = 2,
 ) -> Dict:
     """
     Run federated learning simulation.
@@ -73,10 +80,16 @@ def run_simulation(
         scaffold_lr_correction: SCAFFOLD learning rate correction
         fedprox_weight: Weight for FedProx component in hybrid
         scaffold_weight: Weight for SCAFFOLD component in hybrid
-        iid: If True, use IID partitioning
+        iid: If True, use IID partitioning (overrides partition_strategy)
+        partition_strategy: 'city_tier' (3), 'occupation' (4), or 'hybrid' (12)
+        max_grad_norm: Maximum gradient norm for clipping
         seed: Random seed
+        fraction_fit: Fraction of clients to sample for training (0.0-1.0)
+        fraction_evaluate: Fraction of clients to sample for evaluation (0.0-1.0)
+        min_fit_clients: Minimum number of clients required for training
+        min_evaluate_clients: Minimum number of clients required for evaluation
+        min_available_clients: Minimum available clients before training starts
         verbose: Print progress
-        plotter: Optional MetricsPlotter for real-time visualization
         output_dir: Directory for saving outputs
         hybrid_config: Optional dict with hybrid-specific adaptive parameters
     
@@ -99,6 +112,7 @@ def run_simulation(
             num_partitions=num_clients,
             batch_size=batch_size,
             iid=iid,
+            partition_strategy=partition_strategy,
             log_transform_target=True,  # Enable log transformation for better MAPE
             seed=seed,
             verbose=verbose
@@ -139,6 +153,7 @@ def run_simulation(
             "scaffold_lr_correction": scaffold_lr_correction,
             "fedprox_weight": fedprox_weight,
             "scaffold_weight": scaffold_weight,
+            "max_grad_norm": max_grad_norm,
             "server_round": server_round
         }
         
@@ -202,8 +217,22 @@ def run_simulation(
         scaffold_weight=scaffold_weight,
         log_transform=log_transform,
         initial_parameters=initial_parameters,
-        on_fit_config_fn=fit_config
+        on_fit_config_fn=fit_config,
+        # Client sampling parameters
+        fraction_fit=fraction_fit,
+        fraction_evaluate=fraction_evaluate,
+        min_fit_clients=min_fit_clients,
+        min_evaluate_clients=min_evaluate_clients,
+        min_available_clients=min_available_clients,
     )
+    
+    # Log client sampling configuration
+    if verbose:
+        print(f"\n[Client Sampling]")
+        print(f"  Fraction Fit: {fraction_fit:.1%} ({int(num_clients * fraction_fit)} of {num_clients} clients per round)")
+        print(f"  Min Fit Clients: {min_fit_clients}")
+        print(f"  Fraction Evaluate: {fraction_evaluate:.1%}")
+        print(f"  Min Available Clients: {min_available_clients}")
     
     # Client function
     def client_fn(cid: str) -> fl.client.Client:
@@ -320,6 +349,7 @@ def compare_strategies(
     strategies: List[str] = ["fedavg", "fedprox", "scaffold", "hybrid"],
     output_dir: str = ".",
     plotting_config: Optional[Dict] = None,
+    strategy_configs: Optional[Dict] = None,
     **kwargs
 ) -> Dict:
     """
@@ -329,6 +359,7 @@ def compare_strategies(
         strategies: List of strategy names to compare
         output_dir: Directory for saving outputs
         plotting_config: Configuration for plotting
+        strategy_configs: Dict of strategy-specific configurations (lr, local_epochs, etc.)
         **kwargs: Additional arguments passed to run_simulation
     
     Returns:
@@ -340,32 +371,31 @@ def compare_strategies(
     print("STRATEGY COMPARISON - Disposable Income Regression")
     print("=" * 70)
     
-    # Initialize plotter for real-time visualization
-    plotter = None
-    if plotting_config and plotting_config.get("enabled", True):
-        plotter = MetricsPlotter(
-            output_dir=output_dir,
-            figsize=tuple(plotting_config.get("figsize", [14, 10])),
-            show_plot=plotting_config.get("show_plot", True),
-            save_plot=plotting_config.get("save_plot", True),
-            plot_format=plotting_config.get("format", "png"),
-            update_interval=plotting_config.get("update_interval", 1)
-        )
-    
     for strategy in strategies:
+        # Get strategy-specific config if available
+        strategy_kwargs = kwargs.copy()
+        if strategy_configs and strategy in strategy_configs:
+            config = strategy_configs[strategy]
+            print(f"\n[{strategy.upper()}] Using custom configuration:")
+            print(f"  Learning Rate: {config.get('lr', kwargs.get('learning_rate'))}")
+            print(f"  Local Epochs: {config.get('local_epochs', kwargs.get('local_epochs'))}")
+            print(f"  Max Grad Norm: {config.get('max_grad_norm', 1.0)}")
+            
+            # Override with strategy-specific values
+            if 'lr' in config:
+                strategy_kwargs['learning_rate'] = config['lr']
+            if 'local_epochs' in config:
+                strategy_kwargs['local_epochs'] = config['local_epochs']
+            if 'max_grad_norm' in config:
+                strategy_kwargs['max_grad_norm'] = config['max_grad_norm']
+        
         results[strategy] = run_simulation(
             strategy_name=strategy, 
-            plotter=plotter,
             output_dir=output_dir,
-            **kwargs
+            **strategy_kwargs
         )
     
-    # Save plotter state
-    if plotter is not None:
-        plotter.save("comparison_realtime_plot")
-        plotter.close()
-    
-    # Generate comparison plots
+    # Generate final comparison plot only
     comp_plotter = ComparisonPlotter(
         output_dir=output_dir,
         figsize=(16, 12),
@@ -408,6 +438,21 @@ def main(cfg: DictConfig) -> None:
     # Extract strategy-specific parameters
     strategy = cfg.strategy
     
+    # Get strategy-specific config if available
+    strategy_config = None
+    if "strategy_configs" in cfg and strategy in cfg.strategy_configs:
+        strategy_config = cfg.strategy_configs[strategy]
+        if cfg.get("verbose", True):
+            print(f"\n[Strategy Config] Using custom config for {strategy}:")
+            print(f"  Learning Rate: {strategy_config.lr}")
+            print(f"  Local Epochs: {strategy_config.local_epochs}")
+            print(f"  Max Grad Norm: {strategy_config.max_grad_norm}")
+    
+    # Use strategy-specific learning rate or default
+    learning_rate = strategy_config.lr if strategy_config else cfg.learning_rate
+    local_epochs = strategy_config.local_epochs if strategy_config else cfg.local_epochs
+    max_grad_norm = strategy_config.max_grad_norm if strategy_config else 1.0
+    
     # Get mu based on strategy
     if strategy == "fedprox":
         mu = cfg.fedprox.mu
@@ -429,10 +474,30 @@ def main(cfg: DictConfig) -> None:
     # Get plotting configuration
     plotting_config = OmegaConf.to_container(cfg.plotting) if "plotting" in cfg else None
     
+    # Get client sampling configuration (for typical FL behavior)
+    client_sampling = cfg.get("client_sampling", {})
+    fraction_fit = client_sampling.get("fraction_fit", 1.0)
+    fraction_evaluate = client_sampling.get("fraction_evaluate", 1.0)
+    min_fit_clients = client_sampling.get("min_fit_clients", 2)
+    min_evaluate_clients = client_sampling.get("min_evaluate_clients", 2)
+    min_available_clients = client_sampling.get("min_available_clients", 2)
+    
+    if cfg.get("verbose", True):
+        print(f"\n[Client Sampling Configuration]")
+        print(f"  Fraction Fit: {fraction_fit:.1%}")
+        print(f"  Min Fit Clients: {min_fit_clients}")
+        print(f"  Fraction Evaluate: {fraction_evaluate:.1%}")
+        print(f"  Min Evaluate Clients: {min_evaluate_clients}")
+        print(f"  Min Available Clients: {min_available_clients}")
+    
     # Run based on mode
     if cfg.get("compare_all", False):
         # Compare strategies (use configured list or default to all)
         strategies_to_compare = cfg.get("strategies", ["fedavg", "fedprox", "scaffold", "hybrid"])
+        
+        # Get strategy_configs if available
+        strategy_configs = OmegaConf.to_container(cfg.strategy_configs) if "strategy_configs" in cfg else None
+        
         results = compare_strategies(
             strategies=strategies_to_compare,
             num_rounds=cfg.num_rounds,
@@ -445,11 +510,19 @@ def main(cfg: DictConfig) -> None:
             fedprox_weight=fedprox_weight,
             scaffold_weight=scaffold_weight,
             iid=cfg.get("iid", False),
+            partition_strategy=cfg.get("partition_strategy", "city_tier"),
             seed=cfg.seed,
             verbose=cfg.get("verbose", True),
             output_dir=output_dir,
             plotting_config=plotting_config,
-            hybrid_config=hybrid_config
+            hybrid_config=hybrid_config,
+            strategy_configs=strategy_configs,
+            # Client sampling parameters
+            fraction_fit=fraction_fit,
+            fraction_evaluate=fraction_evaluate,
+            min_fit_clients=min_fit_clients,
+            min_evaluate_clients=min_evaluate_clients,
+            min_available_clients=min_available_clients,
         )
         
         # Save results
@@ -471,42 +544,32 @@ def main(cfg: DictConfig) -> None:
         print(f"\nResults saved to: {output_dir}")
     
     else:
-        # Initialize plotter for single strategy
-        plotter = None
-        if plotting_config and plotting_config.get("enabled", True):
-            plotter = MetricsPlotter(
-                output_dir=output_dir,
-                figsize=tuple(plotting_config.get("figsize", [14, 10])),
-                show_plot=plotting_config.get("show_plot", True),
-                save_plot=plotting_config.get("save_plot", True),
-                plot_format=plotting_config.get("format", "png"),
-                update_interval=plotting_config.get("update_interval", 1)
-            )
-        
         # Run single strategy
         result = run_simulation(
             strategy_name=strategy,
             num_rounds=cfg.num_rounds,
             num_clients=cfg.num_clients,
-            local_epochs=cfg.local_epochs,
+            local_epochs=local_epochs,  # Use strategy-specific or default
             batch_size=cfg.batch_size,
-            learning_rate=cfg.learning_rate,
+            learning_rate=learning_rate,  # Use strategy-specific or default
             mu=mu,
             scaffold_lr_correction=scaffold_lr_correction,
             fedprox_weight=fedprox_weight,
             scaffold_weight=scaffold_weight,
             iid=cfg.get("iid", False),
+            partition_strategy=cfg.get("partition_strategy", "city_tier"),
+            max_grad_norm=max_grad_norm,  # Use strategy-specific or default
             seed=cfg.seed,
             verbose=cfg.get("verbose", True),
-            plotter=plotter,
             output_dir=output_dir,
-            hybrid_config=hybrid_config
+            hybrid_config=hybrid_config,
+            # Client sampling parameters
+            fraction_fit=fraction_fit,
+            fraction_evaluate=fraction_evaluate,
+            min_fit_clients=min_fit_clients,
+            min_evaluate_clients=min_evaluate_clients,
+            min_available_clients=min_available_clients,
         )
-        
-        # Save plotter
-        if plotter is not None:
-            plotter.save(f"{strategy}_metrics_plot")
-            plotter.close()
         
         # Save results
         with open(os.path.join(output_dir, "results.json"), "w") as f:

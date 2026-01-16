@@ -13,9 +13,9 @@ compare_all: true
 
 # Override strategy list to test all improved strategies
 strategies:
-  - fedavg
-  - fedprox
-  - scaffold
+  # - fedavg
+  # - fedprox
+  # - scaffold
   - hybrid
 
 # Optimized FedProx parameters (lower mu with AdamW)
@@ -24,9 +24,9 @@ fedprox:
 
 # Optimized Hybrid strategy (balanced approach)
 hybrid:
-  fedprox_weight: 0.3 # Moderate FedProx influence
-  scaffold_weight: 0.5 # Stronger SCAFFOLD for variance reduction
-  mu: 0.03 # Lower mu with AdamW
+  fedprox_weight: 0.5 # Moderate FedProx influence
+  scaffold_weight: 0.2 # Stronger SCAFFOLD for variance reduction
+  mu: 0.06 # Lower mu with AdamW
 
   # Warmup strategy
   warmup_rounds: 5
@@ -39,7 +39,7 @@ hybrid:
   mu_min: 0.005
 
   # Simplified for clear comparison
-  dynamic_weights: false
+  dynamic_weights: true
   use_momentum: false
   use_lr_scheduler: false
   per_client_adaptation: false

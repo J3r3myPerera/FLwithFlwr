@@ -8,7 +8,7 @@ Improved FL-optimized architecture:
                 Discretionary_Expenses, Age_squared, Income_log
   * Categorical one-hot: Occupation (4 categories), City_Tier (3 categories)
 - LayerNorm for feature normalization (FL-safe, no global stats)
-- Wider layers: 128 -> 64 -> 32 neurons
+- Simpler 2-layer architecture: 128 -> 64 neurons
 - GELU activation (smoother than ReLU, better for client drift)
 - Dropout (0.15) for regularization (handles heterogeneity)
 - Output: 1 neuron (continuous regression output)
@@ -35,14 +35,13 @@ class DisposableIncomeNet(nn.Module):
     Architecture:
         Linear(25, 128) -> LayerNorm -> GELU -> Dropout ->
         Linear(128, 64) -> LayerNorm -> GELU -> Dropout ->
-        Linear(64, 32) -> LayerNorm -> GELU -> Dropout ->
-        Linear(32, 1)
+        Linear(64, 1)
     
     Features:
     - LayerNorm: Normalizes within each sample (FL-safe, no global preprocessing)
     - GELU: Smooth activation function (more robust to client drift than ReLU)
     - Dropout: Regularization for heterogeneous data
-    - Wider layers: Better capacity for complex patterns
+    - Simpler 2-layer architecture: Faster training, less overfitting risk
     """
     
     def __init__(
@@ -50,7 +49,6 @@ class DisposableIncomeNet(nn.Module):
         input_dim: int = 25,  # Updated: 12 base + 6 engineered + 7 one-hot
         hidden_dim1: int = 128, 
         hidden_dim2: int = 64,
-        hidden_dim3: int = 32,
         dropout: float = 0.15,
         use_layer_norm: bool = True
     ):
@@ -59,9 +57,8 @@ class DisposableIncomeNet(nn.Module):
         
         Args:
             input_dim: Number of input features (default 25: 12 base + 6 engineered + 7 one-hot)
-            hidden_dim1: First hidden layer size (default 128, wider than before)
+            hidden_dim1: First hidden layer size (default 128)
             hidden_dim2: Second hidden layer size (default 64)
-            hidden_dim3: Third hidden layer size (default 32)
             dropout: Dropout rate for regularization (default 0.15)
             use_layer_norm: Whether to use LayerNorm (default True, recommended for FL)
         """
@@ -81,14 +78,8 @@ class DisposableIncomeNet(nn.Module):
             self.ln2 = nn.LayerNorm(hidden_dim2)
         self.dropout2 = nn.Dropout(dropout)
         
-        # Layer 3
-        self.fc3 = nn.Linear(hidden_dim2, hidden_dim3)
-        if use_layer_norm:
-            self.ln3 = nn.LayerNorm(hidden_dim3)
-        self.dropout3 = nn.Dropout(dropout)
-        
         # Output layer
-        self.fc4 = nn.Linear(hidden_dim3, 1)
+        self.fc3 = nn.Linear(hidden_dim2, 1)
         
         # Initialize weights for better convergence with GELU
         self._init_weights()
@@ -126,15 +117,8 @@ class DisposableIncomeNet(nn.Module):
         x = F.gelu(x)
         x = self.dropout2(x)
         
-        # Layer 3: Linear -> LayerNorm -> GELU -> Dropout
-        x = self.fc3(x)
-        if self.use_layer_norm:
-            x = self.ln3(x)
-        x = F.gelu(x)
-        x = self.dropout3(x)
-        
         # Output layer (no activation for regression)
-        x = self.fc4(x)
+        x = self.fc3(x)
         return x
 
 
@@ -211,7 +195,7 @@ if __name__ == "__main__":
     model = DisposableIncomeNet(input_dim=19)
     print(f"Model: {model.__class__.__name__}")
     print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")
-    print(f"Architecture: 19 -> 128 -> 64 -> 32 -> 1")
+    print(f"Architecture: 19 -> 128 -> 64 -> 1")
     
     # Test forward pass
     x = torch.randn(8, 19)
@@ -250,5 +234,5 @@ if __name__ == "__main__":
     print("  ✓ LayerNorm: No reliance on global preprocessing")
     print("  ✓ GELU: Smoother activation, more robust to client drift")
     print("  ✓ Dropout: Better regularization for heterogeneous data")
-    print("  ✓ Wider network: More capacity (128->64->32 vs 64->32)")
+    print("  ✓ Simpler 2-layer: Faster training, less overfitting (128->64 vs 64->32)")
     print("=" * 70)

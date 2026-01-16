@@ -35,14 +35,33 @@
 strategy: fedavg
 
 # =============================================================================
-# TRAINING PARAMETERS
+# TRAINING PARAMETERS (DEFAULT)
 # =============================================================================
-num_rounds: 30 # Increased for better convergence with complex model
-num_clients: 3
-local_epochs: 8 # More local training per round (better for non-IID)
+num_rounds: 35 # Increased for better convergence with complex model
+num_clients: 12 # Hybrid Non-IID: 12 clients (City_Tier × Occupation)
+local_epochs: 3 # Default local training per round (can be overridden per strategy)
 batch_size: 32
 # AdamW optimizer: slightly higher LR than SGD, with cosine annealing
-learning_rate: 0.001 # AdamW typically uses lower LR than SGD
+learning_rate: 0.001 # Default learning rate (can be overridden per strategy)
+
+# =============================================================================
+# CLIENT SAMPLING (Typical FL Behavior)
+# =============================================================================
+# In typical FL, not all clients participate in each round.
+# The server samples a fraction of available clients for training and evaluation.
+client_sampling:
+  # Fraction of available clients to sample for training (0.0-1.0)
+  # e.g., 0.5 means 50% of clients participate per round
+  fraction_fit: 0.6
+  # Minimum number of clients required for training
+  # Training round will wait until at least this many clients are available
+  min_fit_clients: 4
+  # Fraction of available clients to sample for evaluation
+  fraction_evaluate: 0.5
+  # Minimum number of clients required for evaluation
+  min_evaluate_clients: 2
+  # Minimum number of clients that must be available before training starts
+  min_available_clients: 4
 
 # =============================================================================
 # FEDPROX PARAMETERS
@@ -59,35 +78,45 @@ fedprox:
 # SCAFFOLD uses control variates to reduce client drift in non-IID settings
 scaffold:
   # learning_rate_correction: Scale factor for control variate correction
-  # Higher values = stronger correction, can help with severe non-IID
-  learning_rate_correction: 1.0
+  # Lower value reduces SCAFFOLD's potentially destabilizing effect with partial clients
+  learning_rate_correction: 0.5
 
 # =============================================================================
-# HYBRID STRATEGY PARAMETERS (OPTIMIZED)
+# HYBRID STRATEGY PARAMETERS (OPTIMIZED FOR CLIENT SAMPLING)
 # =============================================================================
 # Hybrid combines FedProx proximal term with SCAFFOLD control variates
-# Optimized for AdamW + LayerNorm + GELU model
+# Optimized for AdamW + LayerNorm + GELU model with partial client participation
+#
+# KEY OPTIMIZATIONS FOR CLIENT SAMPLING:
+# 1. Higher fedprox_weight (0.7): Stronger proximal regularization to stabilize
+#    training when only 50% of clients participate per round
+# 2. Increased scaffold_weight (0.4): Better variance reduction across partial clients
+# 3. Lower mu (0.04): Gentler proximal term prevents over-regularization
+# 4. Extended warmup (7 rounds): Gradual adaptation with partial client sets
+# 5. Lower learning rate (0.0006): More stable with random client sampling
+# 6. Matched local_epochs (3): Prevents drift from excessive local updates
+#
 hybrid:
-  # Optimized regularization weights (balanced approach)
-  fedprox_weight: 0.3 # Moderate FedProx influence
-  scaffold_weight: 0.5 # Stronger SCAFFOLD for variance reduction
-  mu: 0.03 # Lower mu with AdamW (less aggressive)
+  # Optimized regularization weights (FedProx-dominant for stability)
+  fedprox_weight: 0.8 # Stronger FedProx dominance (since FedProx wins alone)
+  scaffold_weight: 0.1 # Reduced SCAFFOLD to supporting role
+  mu: 0.045 # Closer to FedProx's proven 0.05
 
-  # Dynamic weight adjustment (disabled for stable convergence)
+  # Dynamic weight adjustment (disabled for stability like FedProx)
   dynamic_weights: false
-  weight_increase_rate: 1.03
-  weight_max: 0.7
+  weight_increase_rate: 1.015 # Conservative increase for stability
+  weight_max: 0.85 # Allow weights to grow but cap them
 
-  # Adaptive mu (gentle decay)
-  adaptive_mu: true
-  mu_decay: 0.98 # Slower decay
-  mu_min: 0.005 # Higher minimum
-  mu_adaptation_rate: 1.05
+  # Adaptive mu (disabled for constant regularization like FedProx)
+  adaptive_mu: false
+  mu_decay: 0.99 # Very slow decay for stability
+  mu_min: 0.01 # Higher minimum to maintain regularization
+  mu_adaptation_rate: 1.03
 
-  # Warmup (shorter with better optimizer)
-  warmup_rounds: 5 # Reduced from 8
+  # Warmup (shorter for faster convergence)
+  warmup_rounds: 3 # Reduced to avoid wasting training rounds
   warmup_type: "cosine" # Smoother than exponential
-  warmup_start_factor: 0.1 # Less aggressive start
+  warmup_start_factor: 0.2 # Stronger start factor
 
   # Gradient clipping (handled in client training now)
   gradient_clip: true
@@ -109,11 +138,45 @@ hybrid:
   client_mu_range: [0.02, 0.08]
 
 # =============================================================================
+# STRATEGY-SPECIFIC CONFIGURATIONS
+# =============================================================================
+# Override default training parameters for each strategy
+# Allows fine-tuning each algorithm independently for optimal performance
+strategy_configs:
+  fedavg:
+    lr: 0.001
+    local_epochs: 3
+    max_grad_norm: 1.0
+    momentum: 0.0 # Not used with AdamW, but available for SGD
+
+  fedprox:
+    lr: 0.0005 # Slightly lower LR for stability with proximal term
+    local_epochs: 3
+    max_grad_norm: 1.0
+    momentum: 0.0
+
+  scaffold:
+    lr: 0.01 # Reduced for better stability with client sampling
+    local_epochs: 4 # Reduced to prevent drift
+    max_grad_norm: 1.5
+    momentum: 0.0
+
+  hybrid:
+    lr: 0.0005 # Match FedProx LR for comparable stability
+    local_epochs: 3 # Match FedProx to prevent drift with sampling
+    max_grad_norm: 1.0 # Match FedProx gradient clipping
+    momentum: 0.0
+
+# =============================================================================
 # DATA PARTITIONING
 # =============================================================================
 # IID partitioning: each client gets random uniform samples
-# Non-IID partitioning: each client gets data from specific City_Tier
+# Non-IID partitioning options:
+#   - city_tier: 3 clients partitioned by City_Tier
+#   - occupation: 4 clients partitioned by Occupation
+#   - hybrid: 12 clients partitioned by City_Tier × Occupation (most heterogeneous)
 iid: false
+partition_strategy: hybrid # Options: city_tier, occupation, hybrid
 
 # =============================================================================
 # VISUALIZATION & LOGGING

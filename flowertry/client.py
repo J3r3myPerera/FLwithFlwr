@@ -84,6 +84,7 @@ class RegressionClient(fl.client.NumPyClient):
         self.scaffold_lr_correction = scaffold_lr_correction
         self.fedprox_weight = fedprox_weight
         self.scaffold_weight = scaffold_weight
+        self.max_grad_norm = 1.0  # Default gradient clipping norm
         
         # Device selection
         if device is None:
@@ -160,7 +161,7 @@ class RegressionClient(fl.client.NumPyClient):
                 loss.backward()
                 
                 # Gradient clipping for stability
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.max_grad_norm)
                 
                 optimizer.step()
                 scheduler.step()
@@ -209,7 +210,7 @@ class RegressionClient(fl.client.NumPyClient):
                 loss.backward()
                 
                 # Gradient clipping
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.max_grad_norm)
                 
                 optimizer.step()
                 scheduler.step()
@@ -273,7 +274,7 @@ class RegressionClient(fl.client.NumPyClient):
                             param.grad.add_(c.to(self.device) - c_i.to(self.device))
                 
                 # Gradient clipping for stability
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.max_grad_norm)
                 
                 # Update with optimizer (handles momentum and adaptive LR)
                 optimizer.step()
@@ -374,7 +375,7 @@ class RegressionClient(fl.client.NumPyClient):
                                 param.grad.add_(correction)
                 
                 # Gradient clipping for stability
-                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.max_grad_norm)
                 
                 # Update with AdamW optimizer
                 optimizer.step()
@@ -427,6 +428,7 @@ class RegressionClient(fl.client.NumPyClient):
         self.scaffold_lr_correction = float(config.get("scaffold_lr_correction", self.scaffold_lr_correction))
         self.fedprox_weight = float(config.get("fedprox_weight", self.fedprox_weight))
         self.scaffold_weight = float(config.get("scaffold_weight", self.scaffold_weight))
+        self.max_grad_norm = float(config.get("max_grad_norm", self.max_grad_norm))
         
         # Advanced adaptive regularization (for hybrid)
         server_round = int(config.get("server_round", 1))
