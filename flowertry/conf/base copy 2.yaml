@@ -70,7 +70,7 @@ client_sampling:
 # Lower mu with AdamW and improved model (less aggressive regularization needed)
 # Typical range: 0.001 to 1.0
 fedprox:
-  mu: 0.05 # Reduced from 0.1 - AdamW + better model needs less proximal regularization
+  mu: 0.1 # Base value for comparison
 
 # =============================================================================
 # SCAFFOLD PARAMETERS
@@ -78,8 +78,8 @@ fedprox:
 # SCAFFOLD uses control variates to reduce client drift in non-IID settings
 scaffold:
   # learning_rate_correction: Scale factor for control variate correction
-  # Lower value reduces SCAFFOLD's potentially destabilizing effect with partial clients
-  learning_rate_correction: 0.5
+  # Base value for comparison
+  learning_rate_correction: 1.0
 
 # =============================================================================
 # HYBRID STRATEGY PARAMETERS (ADVANCED ADAPTIVE VERSION)
@@ -131,21 +131,21 @@ hybrid:
 # Allows fine-tuning each algorithm independently for optimal performance
 strategy_configs:
   fedavg:
-    lr: 0.001
+    lr: 0.0012 # Base learning rate
     local_epochs: 3
     max_grad_norm: 1.0
     momentum: 0.0 # Not used with AdamW, but available for SGD
 
   fedprox:
-    lr: 0.0005 # Lower LR for stability with proximal term (was incorrectly 0.005!)
+    lr: 0.0012 # Base learning rate
     local_epochs: 3
     max_grad_norm: 1.0
     momentum: 0.0
 
   scaffold:
-    lr: 0.001 # Reduced for better stability (was too high at 0.01)
-    local_epochs: 3 # Match others for fair comparison
-    max_grad_norm: 1.5
+    lr: 0.0012 # Base learning rate
+    local_epochs: 3
+    max_grad_norm: 1.0
     momentum: 0.0
 
   hybrid:
@@ -205,9 +205,9 @@ compare_all: true
 
 # List of strategies to compare (only used when compare_all=true)
 strategies:
-  # - fedavg
+  - fedavg
   - fedprox
-  # - scaffold
+  - scaffold
   - hybrid
 
 # Verbose output

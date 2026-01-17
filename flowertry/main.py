@@ -65,6 +65,7 @@ def run_simulation(
     min_fit_clients: int = 2,
     min_evaluate_clients: int = 2,
     min_available_clients: int = 2,
+    dirichlet_alpha: float = 0.5,
 ) -> Dict:
     """
     Run federated learning simulation.
@@ -115,7 +116,8 @@ def run_simulation(
             partition_strategy=partition_strategy,
             log_transform_target=True,  # Enable log transformation for better MAPE
             seed=seed,
-            verbose=verbose
+            verbose=verbose,
+            dirichlet_alpha=dirichlet_alpha  # Pass alpha parameter
         )
     
     # Device
@@ -523,6 +525,7 @@ def main(cfg: DictConfig) -> None:
             min_fit_clients=min_fit_clients,
             min_evaluate_clients=min_evaluate_clients,
             min_available_clients=min_available_clients,
+            dirichlet_alpha=cfg.get("dirichlet_alpha", 0.5),
         )
         
         # Save results
@@ -569,6 +572,7 @@ def main(cfg: DictConfig) -> None:
             min_fit_clients=min_fit_clients,
             min_evaluate_clients=min_evaluate_clients,
             min_available_clients=min_available_clients,
+            dirichlet_alpha=cfg.get("dirichlet_alpha", 0.5),
         )
         
         # Save results

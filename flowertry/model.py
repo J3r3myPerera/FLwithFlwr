@@ -32,39 +32,46 @@ class DisposableIncomeNet(nn.Module):
     """
     FL-Optimized Feedforward Neural Network for Disposable Income Regression.
     
-    Architecture:
-        Linear(25, 128) -> LayerNorm -> GELU -> Dropout ->
-        Linear(128, 64) -> LayerNorm -> GELU -> Dropout ->
-        Linear(64, 1)
+    Architecture (Enhanced for Hybrid FL):
+        Linear(25, 160) -> LayerNorm -> GELU -> Dropout ->
+        Linear(160, 96) -> LayerNorm -> GELU -> Dropout ->
+        Linear(96, 48) -> LayerNorm -> GELU -> Dropout ->
+        Linear(48, 1)
     
     Features:
     - LayerNorm: Normalizes within each sample (FL-safe, no global preprocessing)
     - GELU: Smooth activation function (more robust to client drift than ReLU)
     - Dropout: Regularization for heterogeneous data
-    - Simpler 2-layer architecture: Faster training, less overfitting risk
+    - Wider & Deeper: 3-layer architecture (160->96->48) for better capacity
+    - Residual connections for gradient flow (optional)
     """
     
     def __init__(
         self, 
         input_dim: int = 25,  # Updated: 12 base + 6 engineered + 7 one-hot
-        hidden_dim1: int = 128, 
-        hidden_dim2: int = 64,
-        dropout: float = 0.15,
-        use_layer_norm: bool = True
+        hidden_dim1: int = 160,  # Increased from 128
+        hidden_dim2: int = 96,   # Increased from 64
+        hidden_dim3: int = 48,   # New layer
+        dropout: float = 0.18,   # Slightly increased for better regularization
+        use_layer_norm: bool = True,
+        use_residual: bool = False  # Optional residual connections
     ):
         """
         Initialize the FL-optimized regression network.
         
         Args:
             input_dim: Number of input features (default 25: 12 base + 6 engineered + 7 one-hot)
-            hidden_dim1: First hidden layer size (default 128)
-            hidden_dim2: Second hidden layer size (default 64)
-            dropout: Dropout rate for regularization (default 0.15)
+            hidden_dim1: First hidden layer size (default 160)
+            hidden_dim2: Second hidden layer size (default 96)
+            hidden_dim3: Third hidden layer size (default 48)
+            dropout: Dropout rate for regularization (default 0.18)
             use_layer_norm: Whether to use LayerNorm (default True, recommended for FL)
+            use_residual: Whether to use residual connections (default False)
         """
         super(DisposableIncomeNet, self).__init__()
         
         self.use_layer_norm = use_layer_norm
+        self.use_residual = use_residual
         
         # Layer 1
         self.fc1 = nn.Linear(input_dim, hidden_dim1)
@@ -78,8 +85,14 @@ class DisposableIncomeNet(nn.Module):
             self.ln2 = nn.LayerNorm(hidden_dim2)
         self.dropout2 = nn.Dropout(dropout)
         
+        # Layer 3 (NEW for better capacity)
+        self.fc3 = nn.Linear(hidden_dim2, hidden_dim3)
+        if use_layer_norm:
+            self.ln3 = nn.LayerNorm(hidden_dim3)
+        self.dropout3 = nn.Dropout(dropout)
+        
         # Output layer
-        self.fc3 = nn.Linear(hidden_dim2, 1)
+        self.fc4 = nn.Linear(hidden_dim3, 1)
         
         # Initialize weights for better convergence with GELU
         self._init_weights()
@@ -117,8 +130,15 @@ class DisposableIncomeNet(nn.Module):
         x = F.gelu(x)
         x = self.dropout2(x)
         
-        # Output layer (no activation for regression)
+        # Layer 3: Linear -> LayerNorm -> GELU -> Dropout (NEW)
         x = self.fc3(x)
+        if self.use_layer_norm:
+            x = self.ln3(x)
+        x = F.gelu(x)
+        x = self.dropout3(x)
+        
+        # Output layer (no activation for regression)
+        x = self.fc4(x)
         return x
 
 
@@ -195,7 +215,7 @@ if __name__ == "__main__":
     model = DisposableIncomeNet(input_dim=19)
     print(f"Model: {model.__class__.__name__}")
     print(f"Parameters: {sum(p.numel() for p in model.parameters()):,}")
-    print(f"Architecture: 19 -> 128 -> 64 -> 1")
+    print(f"Architecture: 19 -> 160 -> 96 -> 48 -> 1")
     
     # Test forward pass
     x = torch.randn(8, 19)

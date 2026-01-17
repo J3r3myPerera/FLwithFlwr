@@ -253,11 +253,12 @@ def load_and_preprocess_data(
     X, y = preprocessor.fit_transform(df, normalize_target, log_transform_target)
     
     if verbose:
-        print(f"[Features] {X.shape[1]} features (12 base + 6 engineered + 7 one-hot = {X.shape[1]})")
+        print(f"[Features] {X.shape[1]} features (12 base + 5 engineered + 7 one-hot = 24)")
         if log_transform_target:
             print(f"[Target] Log-transformed with log(1+y)")
         if normalize_target:
             print(f"[Target] Normalized (mean=0, std=1)")
+            print(f"[Features] {X.shape[1]} features (12 base + 6 engineered + 7 one-hot = {X.shape[1]})")
     
     return df, X, y, preprocessor.target_mean, preprocessor.target_std, log_transform_target
 
@@ -272,7 +273,8 @@ def prepare_dataset_federated(
     partition_strategy: str = 'city_tier',
     normalize_target: bool = True,
     log_transform_target: bool = True,
-    verbose: bool = True
+    verbose: bool = True,
+    dirichlet_alpha: float = 0.5
 ) -> Tuple[List[DataLoader], List[DataLoader], DataLoader, int, float, float, Dict, bool]:
     """
     Prepare the dataset for federated learning with multiple partitioning strategies.
@@ -284,11 +286,13 @@ def prepare_dataset_federated(
         test_ratio: Test ratio (global test set)
         seed: Random seed
         iid: If True, use IID random split (overrides partition_strategy)
-        partition_strategy: 'city_tier' (3 clients), 'occupation' (4 clients), or 'hybrid' (12 clients)
+        partition_strategy: 'city_tier' (3 clients), 'occupation' (4 clients), 'hybrid' (12 clients), or 'dirichlet' (alpha-based)
         normalize_target: Whether to normalize the target variable
         log_transform_target: Whether to apply log(1+y) transformation.
                               This often reduces MAPE by 30-50% for income data.
         verbose: Print statistics
+        dirichlet_alpha: Alpha parameter for Dirichlet distribution (only used with partition_strategy='dirichlet')
+                        Lower alpha = higher heterogeneity (e.g., 0.1 = extreme non-IID, 10.0 = near IID)
     
     Returns:
         trainloaders: List of training DataLoaders (one per client)
@@ -311,6 +315,9 @@ def prepare_dataset_federated(
     
     input_dim = X.shape[1]
     partition_info = {'type': 'iid' if iid else f'non-iid-{partition_strategy}', 'log_transform': log_transform, 'clients': {}}
+    
+    if partition_strategy == 'dirichlet':
+        partition_info['dirichlet_alpha'] = dirichlet_alpha
     
     if iid:
         # IID: Random uniform partitioning
@@ -525,9 +532,104 @@ def prepare_dataset_federated(
         test_y = np.concatenate(test_y_list)
         test_dataset = DisposableIncomeDataset(test_X, test_y)
     
+    elif partition_strategy == 'dirichlet':
+        # Non-IID: Dirichlet distribution-based partitioning
+        # Alpha controls heterogeneity: lower = more heterogeneous
+        if verbose:
+            print(f"\n[Partitioning] Dirichlet Non-IID (alpha={dirichlet_alpha:.2f}, {num_partitions} clients)")
+            print(f"  Alpha interpretation: 0.1=extreme non-IID, 0.5=high non-IID, 1.0=moderate, 5.0=low, 10+=near IID")
+            print(f"{'':4} {'Client':20} {'Train Samples':>15} {'Mean Target':>15} {'Std Target':>15}")
+            print('-' * 70)
+        
+        # Reserve global test set first
+        total_size = len(y)
+        test_size = int(test_ratio * total_size)
+        trainval_size = total_size - test_size
+        
+        indices = np.random.permutation(total_size)
+        trainval_indices = indices[:trainval_size]
+        test_indices = indices[trainval_size:]
+        
+        # Apply Dirichlet distribution to trainval indices
+        # Sample proportions until all clients get at least min_samples
+        min_samples_per_client = 50  # Minimum samples to ensure each client has data
+        max_attempts = 100
+        
+        for attempt in range(max_attempts):
+            proportions = np.random.dirichlet([dirichlet_alpha] * num_partitions)
+            client_sample_counts = (proportions * trainval_size).astype(int)
+            
+            # Check if all clients have minimum samples
+            if all(count >= min_samples_per_client for count in client_sample_counts):
+                break
+        else:
+            # If can't satisfy minimum, use uniform distribution with noise
+            if verbose:
+                print(f"  [Warning] Could not satisfy minimum samples with alpha={dirichlet_alpha}")
+                print(f"  Falling back to nearly uniform distribution with small noise")
+            proportions = np.ones(num_partitions) / num_partitions
+            proportions += np.random.randn(num_partitions) * 0.05  # Add small noise
+            proportions = np.abs(proportions)
+            proportions /= proportions.sum()  # Normalize
+            client_sample_counts = (proportions * trainval_size).astype(int)
+        
+        # Adjust for rounding errors
+        diff = trainval_size - client_sample_counts.sum()
+        client_sample_counts[-1] += diff
+        
+        # Shuffle trainval indices and split according to proportions
+        shuffled_trainval_indices = np.random.permutation(trainval_indices)
+        
+        client_datasets = []
+        start_idx = 0
+        
+        for client_idx in range(num_partitions):
+            end_idx = start_idx + client_sample_counts[client_idx]
+            client_indices = shuffled_trainval_indices[start_idx:end_idx]
+            
+            # Create client dataset
+            X_client = X[client_indices]
+            y_client = y[client_indices]
+            client_dataset = DisposableIncomeDataset(X_client, y_client)
+            client_datasets.append(client_dataset)
+            
+            # Denormalize for statistics
+            y_client_original = y_client * target_std + target_mean
+            
+            client_name = f"Client_{client_idx+1}"
+            partition_info['clients'][client_idx] = {
+                'name': client_name,
+                'samples': len(y_client),
+                'proportion': float(proportions[client_idx]),
+                'mean_target': float(y_client_original.mean()),
+                'std_target': float(y_client_original.std())
+            }
+            
+            if verbose:
+                print(f"  {client_idx+1:2d} {client_name:20} {len(y_client):>15,} "
+                      f"${y_client_original.mean():>14,.2f} ${y_client_original.std():>14,.2f} "
+                      f"({proportions[client_idx]*100:5.1f}%)")
+            
+            start_idx = end_idx
+        
+        # Create global test set
+        test_X = X[test_indices]
+        test_y = y[test_indices]
+        test_dataset = DisposableIncomeDataset(test_X, test_y)
+        
+        if verbose:
+            # Calculate heterogeneity metrics
+            target_means = [partition_info['clients'][i]['mean_target'] for i in range(num_partitions)]
+            sample_counts = [partition_info['clients'][i]['samples'] for i in range(num_partitions)]
+            heterogeneity_cv = np.std(target_means) / np.mean(target_means)  # Coefficient of variation
+            sample_imbalance = max(sample_counts) / min(sample_counts)
+            print(f"\n  Heterogeneity Metrics:")
+            print(f"    Target CV: {heterogeneity_cv:.4f} (higher = more heterogeneous)")
+            print(f"    Sample Imbalance Ratio: {sample_imbalance:.2f}x (max/min clients)")
+    
     else:
         raise ValueError(f"Unknown partition_strategy: {partition_strategy}. "
-                        f"Must be 'city_tier', 'occupation', or 'hybrid'")
+                        f"Must be 'city_tier', 'occupation', 'hybrid', or 'dirichlet'")
     
     # Create test loader
     testloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
