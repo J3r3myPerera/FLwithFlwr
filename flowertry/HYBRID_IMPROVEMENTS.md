@@ -2,7 +2,32 @@
 
 ## 🎯 Objective
 
-Make the Hybrid FL strategy consistently and significantly outperform FedAvg and FedProx in all metrics (RMSE, MAE, R², MAPE).
+Make the Hybrid FL strategy consistently and significantly outperform FedAvg, FedProx, and SCAFFOLD in all metrics (RMSE, MAE, R², MAPE).
+
+---
+
+## 🆕 Latest Improvements (Phase-Based Strategy)
+
+### Problem Identified
+
+Hybrid was winning inconsistently (2 of 3 simulations), with very small margins (~0.5-1% R²). Random variance was determining the winner.
+
+### Solution: Phase-Based Adaptive Strategy
+
+| Phase | Progress | μ (FedProx) | SCAFFOLD | LR Boost | Purpose                |
+| ----- | -------- | ----------- | -------- | -------- | ---------------------- |
+| 1     | 0-33%    | 0.08        | 0.5      | **1.3x** | Aggressive exploration |
+| 2     | 33-66%   | 0.12        | 0.6      | **1.1x** | Balanced optimization  |
+| 3     | 66-100%  | 0.18        | 0.8      | **0.9x** | Refinement             |
+
+### Key Differentiators from Baselines
+
+1. **Dynamic LR Boost**: 30% higher learning rate in Phase 1 gives Hybrid a head start
+2. **Stronger Drift Adaptation**: `drift_factor = min(2.0, 1.0 + recent_drift / 500.0)` (2x cap, more sensitive)
+3. **First-Round Stability**: New clients start with 1.2x base μ
+4. **num_rounds Propagation**: Clients receive actual num_rounds for accurate phase calculation
+
+---
 
 ## ❌ Previous Issues
 

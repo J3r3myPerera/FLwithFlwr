@@ -1,0 +1,143 @@
+╔══════════════════════════════════════════════════════════════════════════╗
+║                    QUICK REFERENCE - FL PLOTTING                         ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🚀 QUICK START                                                          ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+# Test with mock data (no simulation needed)
+python test_plotting.py
+python plot_round_progression.py --output-dir outputs/test_plotting
+
+# Run simulation and plot
+python main.py --config-name "base copy 2"
+python plot_round_progression.py
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 📊 COMMAND OPTIONS                                                       ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+python plot_round_progression.py
+  --output-dir, -o <path>    Specific output directory (default: latest)
+  --detailed, -d              Generate detailed 3×2 metrics plot
+  --summary, -s               Print round-by-round summary table
+
+Examples:
+  python plot_round_progression.py
+  python plot_round_progression.py -o outputs/2026-01-19/21-52-59 -d -s
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 📁 FILES                                                                 ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+Modified:
+  main.py (lines 286-318)           Fixed history extraction from Flower
+
+Created:
+  plot_round_progression.py         Main plotting script ⭐
+  test_plotting.py                  Test data generator
+  README_PLOTTING.md                Detailed guide
+  SOLUTION.md                       Complete documentation
+  USAGE.py                          Interactive quick start
+  QUICKREF.txt                      This file
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🎨 OUTPUTS                                                               ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+training_progression.png           2×2 grid (like your example)
+  ├─ Training Loss                 Decreasing over rounds
+  ├─ R² Score                      Increasing over rounds
+  ├─ MAPE Progress                 With 15% target line
+  └─ Final Metrics                 Bar chart comparison
+
+detailed_metrics_progression.png   3×2 grid (with --detailed)
+  ├─ Loss, RMSE, MAE              Individual metric plots
+  └─ R², MAPE, Accuracy@10%       All strategies compared
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ ✅ VERIFY HISTORY COLLECTION                                             ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+cd outputs/2026-01-19/21-52-59
+cat comparison_results.json | python3 -c "
+import sys, json
+d = json.load(sys.stdin)
+for s, data in d.items():
+    rounds = len(data.get('history', {}).get('rounds', []))
+    print(f'{s}: {rounds} rounds')
+"
+
+Expected (NEW simulations):  fedavg: 30 rounds
+                             fedprox: 30 rounds
+                             scaffold: 30 rounds
+                             hybrid: 30 rounds
+
+Before fix (OLD):            All show 0 rounds
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🐛 TROUBLESHOOTING                                                       ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+Problem: "No history data found"
+  → Solution: Run NEW simulation (old ones don't have history)
+
+Problem: "No comparison_results.json found"
+  → Solution: Ensure compare_all: true in config
+
+Problem: Empty/flat plots
+  → Solution: Check server.py:compute_regression_metrics()
+
+Problem: Module not found
+  → Solution: pip install matplotlib numpy
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 📈 METRICS PLOTTED                                                       ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+  Loss         MSE loss (should decrease)
+  RMSE         Root Mean Square Error in $ (should decrease)
+  MAE          Mean Absolute Error in $ (should decrease)
+  R²           R-squared score (should increase to 1.0)
+  MAPE         Mean Absolute Percentage Error % (should decrease)
+  Acc@10%      % predictions within ±10% (should increase)
+  Acc@20%      % predictions within ±20% (should increase)
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 💡 TIPS                                                                  ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+• Always test with mock data first: python test_plotting.py
+• Use --summary to see round-by-round numbers
+• Use --detailed for comprehensive metric views
+• Plots are 300 DPI, perfect for presentations/papers
+• Check plot files with: open outputs/.../training_progression.png
+• Old simulations need to be re-run to have history data
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🎯 TYPICAL WORKFLOW                                                      ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+1. Edit config: conf/base copy 2.yaml
+2. Run simulation: python main.py --config-name "base copy 2"
+3. Wait for completion (~5-10 minutes for 30 rounds)
+4. Plot results: python plot_round_progression.py -d -s
+5. Check plots: open outputs/2026-XX-XX/XX-XX-XX/*.png
+6. Analyze: Compare strategies, identify winner
+7. Iterate: Adjust config, re-run, compare
+
+┏━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┓
+┃ 🎓 HELP & DOCUMENTATION                                                  ┃
+┗━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━┛
+
+  python USAGE.py               Interactive quick start guide
+  cat README_PLOTTING.md        Detailed plotting guide
+  cat SOLUTION.md               Complete solution documentation
+  cat QUICKREF.txt              This file
+
+  python plot_round_progression.py --help
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║                         END OF QUICK REFERENCE                           ║
+╚══════════════════════════════════════════════════════════════════════════╝

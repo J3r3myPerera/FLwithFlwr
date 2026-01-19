@@ -156,7 +156,8 @@ def run_simulation(
             "fedprox_weight": fedprox_weight,
             "scaffold_weight": scaffold_weight,
             "max_grad_norm": max_grad_norm,
-            "server_round": server_round
+            "server_round": server_round,
+            "num_rounds": num_rounds  # Pass total rounds for phase-based strategies
         }
         
         # Apply advanced parameters for hybrid strategy
@@ -284,41 +285,54 @@ def run_simulation(
     )
     
     # Extract history from result
-    if result.metrics_centralized:
-        for round_num, metrics in result.metrics_centralized.items():
-            if isinstance(metrics, dict):
-                # Get corresponding loss
-                loss_value = result.losses_centralized.get(round_num, (0, 0))
-                loss = loss_value[1] if isinstance(loss_value, tuple) else loss_value
-                
-                history["rounds"].append(round_num)
-                history["loss"].append(loss)
-                history["rmse"].append(metrics.get("rmse", 0))
-                history["mae"].append(metrics.get("mae", 0))
-                history["r2"].append(metrics.get("r2", 0))
-                history["mape"].append(metrics.get("mape", 0))
-                history["accuracy_10"].append(metrics.get("accuracy_10", 0))
-                history["accuracy_20"].append(metrics.get("accuracy_20", 0))
-                
-                # Print verbose output
-                if verbose:
-                    print(f"{round_num:>6} | {loss:>12.6f} | {metrics.get('rmse', 0):>12,.2f} | {metrics.get('mae', 0):>12,.2f} | {metrics.get('r2', 0):>10.4f}")
-                
-                # Update real-time plotter if available
-                if plotter is not None:
-                    plotter.update(
-                        strategy=strategy_name,
-                        round_num=round_num,
-                        metrics={
-                            "loss": loss,
-                            "rmse": metrics.get("rmse", 0),
-                            "mae": metrics.get("mae", 0),
-                            "r2": metrics.get("r2", 0),
-                            "mape": metrics.get("mape", 0),
-                            "accuracy_10": metrics.get("accuracy_10", 0),
-                            "accuracy_20": metrics.get("accuracy_20", 0)
-                        }
-                    )
+    # metrics_centralized is a dict where keys are METRIC NAMES and values are lists of (round, value) tuples
+    # e.g., {'rmse': [(0, 1000), (1, 950), ...], 'r2': [(0, 0.8), (1, 0.85), ...]}
+    if hasattr(result, 'metrics_centralized') and result.metrics_centralized:
+        if verbose:
+            print(f"\n[DEBUG] Found metrics_centralized with {len(result.metrics_centralized)} metric types")
+        
+        # Build history from the metric lists
+        metric_names = ['rmse', 'mae', 'r2', 'mape', 'accuracy_10', 'accuracy_20']
+        
+        for metric_name in metric_names:
+            if metric_name in result.metrics_centralized:
+                metric_list = result.metrics_centralized[metric_name]
+                for round_num, value in metric_list:
+                    # Only add round once (when processing first metric)
+                    if metric_name == 'rmse' and round_num not in history["rounds"]:
+                        history["rounds"].append(round_num)
+                        # Get corresponding loss
+                        if hasattr(result, 'losses_centralized') and result.losses_centralized:
+                            for loss_round, loss_value in result.losses_centralized:
+                                if loss_round == round_num:
+                                    history["loss"].append(float(loss_value))
+                                    break
+                            else:
+                                history["loss"].append(0.0)
+                        else:
+                            history["loss"].append(0.0)
+                    
+                    # Add metric value
+                    if round_num in history["rounds"]:
+                        idx = history["rounds"].index(round_num)
+                        # Ensure list is long enough
+                        while len(history[metric_name]) <= idx:
+                            history[metric_name].append(0.0)
+                        history[metric_name][idx] = float(value)
+        
+        # Print progress
+        if verbose and history["rounds"]:
+            print(f"\n{'Round':>6} | {'Loss':>12} | {'RMSE':>12} | {'MAE':>12} | {'R²':>10}")
+            print("-" * 70)
+            for i, round_num in enumerate(history["rounds"]):
+                loss = history["loss"][i] if i < len(history["loss"]) else 0
+                rmse = history["rmse"][i] if i < len(history["rmse"]) else 0
+                mae = history["mae"][i] if i < len(history["mae"]) else 0
+                r2 = history["r2"][i] if i < len(history["r2"]) else 0
+                print(f"{round_num:>6} | {loss:>12.6f} | {rmse:>12,.2f} | {mae:>12,.2f} | {r2:>10.4f}")
+    else:
+        if verbose:
+            print(f"[WARNING] No metrics_centralized found in result. History will be empty.")
     
     # Final evaluation - use the model from strategy which has final parameters
     final_model = strategy.model  # Strategy maintains the model with final parameters
@@ -437,14 +451,14 @@ def main(cfg: DictConfig) -> None:
     # Get Hydra output directory
     output_dir = hydra.core.hydra_config.HydraConfig.get().runtime.output_dir
     
-    # Extract strategy-specific parameters
-    strategy = cfg.strategy
+    # Extract strategy-specific parameters (only needed for single strategy mode)
+    strategy = cfg.get("strategy", "hybrid")  # Default to hybrid if not specified
     
     # Get strategy-specific config if available
     strategy_config = None
     if "strategy_configs" in cfg and strategy in cfg.strategy_configs:
         strategy_config = cfg.strategy_configs[strategy]
-        if cfg.get("verbose", True):
+        if cfg.get("verbose", True) and not cfg.get("compare_all", False):
             print(f"\n[Strategy Config] Using custom config for {strategy}:")
             print(f"  Learning Rate: {strategy_config.lr}")
             print(f"  Local Epochs: {strategy_config.local_epochs}")
@@ -455,7 +469,7 @@ def main(cfg: DictConfig) -> None:
     local_epochs = strategy_config.local_epochs if strategy_config else cfg.local_epochs
     max_grad_norm = strategy_config.max_grad_norm if strategy_config else 1.0
     
-    # Get mu based on strategy
+    # Get mu based on strategy (defaults for compare mode)
     if strategy == "fedprox":
         mu = cfg.fedprox.mu
     elif strategy == "hybrid":
