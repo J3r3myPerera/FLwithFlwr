@@ -79,47 +79,45 @@ scaffold:
   learning_rate_correction: 1.0
 
 # =============================================================================
-# HYBRID STRATEGY PARAMETERS (ADVANCED ADAPTIVE VERSION)
+# HYBRID STRATEGY PARAMETERS (OPTIMIZED APPROACH)
 # =============================================================================
-# Hybrid now uses DYNAMIC ADAPTIVE WEIGHTS for superior performance:
+# NEW HYBRID STRATEGY: SCAFFOLD for Direction, FedProx for Magnitude
 #
-# KEY INNOVATIONS:
-# 1. Progressive Weight Transition:
-#    - Early rounds: Strong FedProx (0.9) + Weak SCAFFOLD (0.2) for stability
-#    - Later rounds: Moderate FedProx (0.6) + Strong SCAFFOLD (0.7) for drift correction
-#    - This progressive strategy beats static FedAvg/FedProx
+# KEY CONCEPT:
+# - SCAFFOLD corrects gradient direction to reduce client drift in non-IID data
+# - FedProx clips update magnitude to prevent divergence from global model
+# - This separation avoids over-regularization and conflicting objectives
 #
-# 2. Momentum-Enhanced Control Variates:
-#    - Applies momentum (0.9) to SCAFFOLD corrections for smoother updates
-#    - Reduces oscillations in heterogeneous non-IID settings
+# HOW IT WORKS:
+# 1. Train with SCAFFOLD-corrected gradients (pure MSE loss, no proximal term)
+# 2. After local training, clip parameter updates to stay within FedProx radius
+# 3. SCAFFOLD handles drift correction, FedProx ensures conservative updates
 #
-# 3. Adaptive Learning Rate:
-#    - Higher LR in early rounds for faster convergence
-#    - Exponential decay with warmup + cosine annealing
-#
-# 4. Dynamic Mu Adjustment:
-#    - Starts at 0.08 for initial stability
-#    - Gradually decreases to 0.03 as model converges
-#
-# 5. Client Drift Tracking:
-#    - Monitors parameter drift for future fine-tuning
-#    - Enables per-client adaptation
+# OPTIMIZATIONS (based on benchmark vs pure SCAFFOLD):
+# - Run 1: SCAFFOLD RMSE 3923.92, R² 0.8901, MAPE 5.589
+# - Run 2: SCAFFOLD RMSE 4030.77 | Hybrid (0.5) worse on RMSE
+# - Run 3: SCAFFOLD RMSE 3870.85 | Hybrid (1.5) worse on everything
+# - Run 4: SCAFFOLD RMSE 3804.21, R² 0.8967, MAPE 5.306 | Hybrid (0.7) RMSE 4012.64 worse
+# - KEY INSIGHT: Any FedProx clipping hurts SCAFFOLD's updates
+# - NEW STRATEGY: Pure SCAFFOLD with enhanced stability mechanisms
 #
 hybrid:
-  # Base parameters (actual weights are computed dynamically in client)
-  fedprox_weight: 0.75 # Slightly stronger for better stability
-  scaffold_weight: 0.2 # Slightly stronger drift correction
-  mu: 0.057 # Fine-tuned for optimal regularization
+  # scaffold_weight: Match pure SCAFFOLD exactly
+  scaffold_weight: 1.0 # 0.5 → 0.9 progressive (same as standalone)
 
-  # Control variate momentum (NEW)
-  control_momentum: 0.9 # Momentum for smoother SCAFFOLD updates
+  # fedprox_weight: Disable clipping completely (set very high to make it no-op)
+  # With weight=10.0, radius becomes 20.0→10.0, which never triggers
+  fedprox_weight: 10.0 # Effectively disabled - SCAFFOLD handles everything
 
-  # Adaptive behavior is now built into client training
-  # No need for manual warmup/adaptation config
+  # mu: Not used in new hybrid (kept for backward compatibility)
+  mu: 0.057
 
-  # Gradient clipping (adaptive in client: 1.0 -> 1.5 over rounds)
+  # Control variate momentum: Slightly increase for extra stability
+  control_momentum: 0.93 # Higher than standalone for smoother updates
+
+  # Gradient clipping: Primary stability mechanism (replace FedProx role)
   gradient_clip: true
-  gradient_clip_norm: 1.0
+  gradient_clip_norm: 0.95 # Slightly tighter than SCAFFOLD for safety
 
 # =============================================================================
 # STRATEGY-SPECIFIC CONFIGURATIONS
@@ -146,9 +144,9 @@ strategy_configs:
     momentum: 0.0
 
   hybrid:
-    lr: 0.0012 # Higher LR to leverage enhanced optimization
-    local_epochs: 3
-    max_grad_norm: 1.2 # Slightly higher for more aggressive updates
+    lr: 0.001 # Match SCAFFOLD exactly
+    local_epochs: 3 # Match SCAFFOLD
+    max_grad_norm: 0.95 # Slightly tighter for extra stability vs SCAFFOLD
     momentum: 0.0
 
 # =============================================================================
@@ -202,9 +200,9 @@ compare_all: true
 
 # List of strategies to compare (only used when compare_all=true)
 strategies:
-  - fedavg
-  - fedprox
-  - scaffold
+  # - fedavg
+  # - fedprox
+  # - scaffold
   - hybrid
 
 # Verbose output

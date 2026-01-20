@@ -252,6 +252,31 @@ class SCAFFOLDStrategy(FedAvgStrategy):
             for i in range(num_clients)
         }
     
+    def configure_fit(
+        self, server_round: int, parameters: Parameters, client_manager
+    ) -> List[Tuple[ClientProxy, FitIns]]:
+        """Configure clients for training with server control variates."""
+        config = {}
+        if self.on_fit_config_fn is not None:
+            config = self.on_fit_config_fn(server_round)
+        
+        # Serialize server control variates for transmission to clients
+        # Convert numpy arrays to nested lists for JSON serialization
+        config["server_control"] = [c.tolist() for c in self.server_control]
+        config["server_round"] = server_round
+        
+        fit_ins = FitIns(parameters, config)
+        
+        # Sample clients
+        sample_size, min_num_clients = self.num_fit_clients(
+            client_manager.num_available()
+        )
+        clients = client_manager.sample(
+            num_clients=sample_size, min_num_clients=min_num_clients
+        )
+        
+        return [(client, fit_ins) for client in clients]
+    
     def aggregate_fit(
         self,
         server_round: int,
@@ -333,7 +358,7 @@ class HybridStrategy(SCAFFOLDStrategy):
     def configure_fit(
         self, server_round: int, parameters: Parameters, client_manager
     ) -> List[Tuple[ClientProxy, FitIns]]:
-        """Configure clients with mu parameter and combination weights for hybrid training."""
+        """Configure clients with mu parameter, combination weights, and server control for hybrid training."""
         config = {}
         if self.on_fit_config_fn is not None:
             config = self.on_fit_config_fn(server_round)
@@ -341,6 +366,10 @@ class HybridStrategy(SCAFFOLDStrategy):
         config["mu"] = self.mu
         config["fedprox_weight"] = self.fedprox_weight
         config["scaffold_weight"] = self.scaffold_weight
+        
+        # Include server control variates from parent SCAFFOLD strategy
+        config["server_control"] = [c.tolist() for c in self.server_control]
+        config["server_round"] = server_round
         
         fit_ins = FitIns(parameters, config)
         
