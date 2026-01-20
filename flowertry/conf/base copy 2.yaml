@@ -79,45 +79,41 @@ scaffold:
   learning_rate_correction: 1.0
 
 # =============================================================================
-# HYBRID STRATEGY PARAMETERS (OPTIMIZED APPROACH)
+# HYBRID STRATEGY PARAMETERS (PROPER INTEGRATION)
 # =============================================================================
-# NEW HYBRID STRATEGY: SCAFFOLD for Direction, FedProx for Magnitude
+# CORRECT HYBRID APPROACH: SCAFFOLD + FedProx working together in training
 #
-# KEY CONCEPT:
-# - SCAFFOLD corrects gradient direction to reduce client drift in non-IID data
-# - FedProx clips update magnitude to prevent divergence from global model
-# - This separation avoids over-regularization and conflicting objectives
+# KEY CONCEPT (FIXED):
+# - SCAFFOLD corrects gradient direction during training
+# - FedProx adds proximal regularization to the loss function
+# - Both work simultaneously during each gradient step (not sequential)
 #
-# HOW IT WORKS:
-# 1. Train with SCAFFOLD-corrected gradients (pure MSE loss, no proximal term)
-# 2. After local training, clip parameter updates to stay within FedProx radius
-# 3. SCAFFOLD handles drift correction, FedProx ensures conservative updates
+# HOW IT WORKS NOW:
+# 1. Loss = MSE + (mu/2) * ||w - w_global||^2  (FedProx proximal term)
+# 2. Gradient = ∇MSE + mu*(w - w_global) + (c_server - c_client)  (SCAFFOLD correction)
+# 3. Both mechanisms cooperate: FedProx regularizes magnitude, SCAFFOLD fixes direction
 #
-# OPTIMIZATIONS (based on benchmark vs pure SCAFFOLD):
-# - Run 1: SCAFFOLD RMSE 3923.92, R² 0.8901, MAPE 5.589
-# - Run 2: SCAFFOLD RMSE 4030.77 | Hybrid (0.5) worse on RMSE
-# - Run 3: SCAFFOLD RMSE 3870.85 | Hybrid (1.5) worse on everything
-# - Run 4: SCAFFOLD RMSE 3804.21, R² 0.8967, MAPE 5.306 | Hybrid (0.7) RMSE 4012.64 worse
-# - KEY INSIGHT: Any FedProx clipping hurts SCAFFOLD's updates
-# - NEW STRATEGY: Pure SCAFFOLD with enhanced stability mechanisms
+# This is the PROPER way to combine them - both during training, not post-hoc clipping
 #
 hybrid:
-  # scaffold_weight: Match pure SCAFFOLD exactly
-  scaffold_weight: 1.0 # 0.5 → 0.9 progressive (same as standalone)
+  # scaffold_weight: Controls SCAFFOLD gradient correction strength
+  # Multiplies the progressive strength (0.5 → 0.9 over training)
+  scaffold_weight: 1.0
 
-  # fedprox_weight: Disable clipping completely (set very high to make it no-op)
-  # With weight=10.0, radius becomes 20.0→10.0, which never triggers
-  fedprox_weight: 10.0 # Effectively disabled - SCAFFOLD handles everything
+  # fedprox_weight: Controls FedProx proximal term strength
+  # Multiplies adaptive mu (50% → 100% over training)
+  # Lower = less regularization, higher = more conservative updates
+  fedprox_weight: 0.8
 
-  # mu: Not used in new hybrid (kept for backward compatibility)
-  mu: 0.057
+  # mu: Base FedProx proximal term weight (will be scaled by fedprox_weight & progress)
+  mu: 0.1
 
-  # Control variate momentum: Slightly increase for extra stability
-  control_momentum: 0.93 # Higher than standalone for smoother updates
+  # Control variate momentum for smoother SCAFFOLD updates
+  control_momentum: 0.9
 
-  # Gradient clipping: Primary stability mechanism (replace FedProx role)
+  # Gradient clipping for numerical stability
   gradient_clip: true
-  gradient_clip_norm: 0.95 # Slightly tighter than SCAFFOLD for safety
+  gradient_clip_norm: 1.0
 
 # =============================================================================
 # STRATEGY-SPECIFIC CONFIGURATIONS
@@ -144,9 +140,9 @@ strategy_configs:
     momentum: 0.0
 
   hybrid:
-    lr: 0.001 # Match SCAFFOLD exactly
-    local_epochs: 3 # Match SCAFFOLD
-    max_grad_norm: 0.95 # Slightly tighter for extra stability vs SCAFFOLD
+    lr: 0.001
+    local_epochs: 3
+    max_grad_norm: 1.0
     momentum: 0.0
 
 # =============================================================================
@@ -202,7 +198,7 @@ compare_all: true
 strategies:
   # - fedavg
   # - fedprox
-  # - scaffold
+  - scaffold
   - hybrid
 
 # Verbose output

@@ -314,14 +314,18 @@ class RegressionClient(fl.client.NumPyClient):
     
     def _train_hybrid(self, config: Dict[str, Scalar] = None) -> Tuple[float, List[np.ndarray]]:
         """
-        Hybrid SCAFFOLD + FedProx training:
-        - SCAFFOLD provides gradient direction correction (reduces client drift)
-        - FedProx clips update magnitude (prevents divergence from global model)
+        Hybrid SCAFFOLD + FedProx training with proper integration:
         
-        Key Strategy:
-        1. Train with SCAFFOLD-corrected gradients (pure MSE loss, no proximal term)
-        2. After training, clip parameter updates to stay within FedProx radius
-        3. This combines SCAFFOLD's drift correction with FedProx's conservative updates
+        CORRECT APPROACH:
+        1. Apply SCAFFOLD gradient correction during training (direction fix)
+        2. Apply FedProx proximal term in loss function (magnitude regularization)
+        
+        Loss = MSE + (mu/2) * ||w - w_global||^2
+        Gradient = ∇MSE + mu*(w - w_global) + SCAFFOLD_correction
+        
+        This properly combines:
+        - SCAFFOLD: Corrects gradient direction to reduce client drift
+        - FedProx: Adds regularization to keep updates close to global model
         
         Args:
             config: Training configuration dict with server_round
@@ -333,13 +337,13 @@ class RegressionClient(fl.client.NumPyClient):
         if self.client_control is None or self.server_control is None:
             self._init_control_variates()
         
-        # Initialize momentum control variate
+        # Initialize momentum control variate for smoother SCAFFOLD updates
         if self.momentum_control is None:
             self.momentum_control = [torch.zeros_like(c) for c in self.client_control]
         
         self.model.train()
         
-        # Extract server round from config
+        # Extract configuration
         if config is None:
             config = {}
         server_round = int(config.get("server_round", 1))
@@ -366,20 +370,19 @@ class RegressionClient(fl.client.NumPyClient):
         initial_params = [p.clone().detach() for p in self.model.parameters()]
         
         # SCAFFOLD strength: progressive increase for better drift correction
-        # Early rounds: moderate correction, later rounds: stronger correction
+        # Early rounds: moderate, later rounds: stronger
         scaffold_strength = 0.5 + 0.4 * progress  # 0.5 -> 0.9
         scaffold_strength = scaffold_strength * self.scaffold_weight
         
-        # FedProx clipping radius: adaptive based on training progress
-        # Early rounds: allow more exploration, later rounds: enforce stability
-        clip_radius = 2.0 * (1.0 - 0.5 * progress)  # 2.0 -> 1.0
-        clip_radius = clip_radius * self.fedprox_weight
+        # FedProx mu: adaptive based on training progress
+        # Early rounds: lower mu (more exploration), later rounds: higher (stability)
+        adaptive_mu = self.mu * (0.5 + 0.5 * progress)  # 50% to 100% of configured mu
+        adaptive_mu = adaptive_mu * self.fedprox_weight
         
         total_loss = 0.0
         n_batches = 0
         total_steps = 0
         
-        # PHASE 1: Train with SCAFFOLD-corrected gradients (NO proximal term in loss)
         for epoch in range(self.local_epochs):
             for X_batch, y_batch in self.trainloader:
                 X_batch = X_batch.to(self.device)
@@ -387,13 +390,24 @@ class RegressionClient(fl.client.NumPyClient):
                 
                 # Forward pass
                 y_pred = self.model(X_batch)
-                loss = self.criterion(y_pred, y_batch)  # Pure MSE, no proximal term
+                mse_loss = self.criterion(y_pred, y_batch)
                 
-                # Backward pass
+                # STEP 1: Add FedProx proximal term to loss
+                # L = MSE + (mu/2) * ||w - w_global||^2
+                proximal_term = 0.0
+                if self.global_params is not None and adaptive_mu > 0:
+                    for local_p, global_p in zip(self.model.parameters(), self.global_params):
+                        proximal_term += torch.sum((local_p - global_p.to(self.device)) ** 2)
+                    proximal_term = (adaptive_mu / 2.0) * proximal_term
+                
+                loss = mse_loss + proximal_term
+                
+                # Backward pass - computes gradients including proximal term
                 optimizer.zero_grad()
                 loss.backward()
                 
-                # Apply SCAFFOLD gradient correction for better direction
+                # STEP 2: Apply SCAFFOLD gradient correction
+                # g_corrected = g + (c_server - c_client)
                 with torch.no_grad():
                     for param_idx, (param, c_i, c) in enumerate(zip(
                         self.model.parameters(),
@@ -401,7 +415,7 @@ class RegressionClient(fl.client.NumPyClient):
                         self.server_control
                     )):
                         if param.grad is not None:
-                            # SCAFFOLD correction: g_corrected = g + (c - c_i)
+                            # SCAFFOLD correction direction
                             base_correction = c.to(self.device) - c_i.to(self.device)
                             
                             # Apply momentum smoothing for stability
@@ -410,38 +424,20 @@ class RegressionClient(fl.client.NumPyClient):
                                 (1 - self.control_momentum) * base_correction
                             )
                             
-                            # Add correction to gradient
+                            # Add SCAFFOLD correction to gradient
                             correction = scaffold_strength * self.momentum_control[param_idx]
                             param.grad.add_(correction)
                 
-                # Gradient clipping for stability
+                # Gradient clipping for numerical stability
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.max_grad_norm)
                 
-                # Update parameters with SCAFFOLD-corrected gradients
+                # Update parameters with combined FedProx + SCAFFOLD gradients
                 optimizer.step()
                 scheduler.step()
                 
                 total_loss += loss.item()
                 n_batches += 1
                 total_steps += 1
-        
-        # PHASE 2: FedProx magnitude clipping (post-training)
-        # Clip parameter updates to stay within radius of global model
-        if self.global_params is not None and clip_radius > 0:
-            with torch.no_grad():
-                # Compute total update magnitude
-                total_update_norm = 0.0
-                for local_p, global_p in zip(self.model.parameters(), self.global_params):
-                    delta = local_p - global_p.to(self.device)
-                    total_update_norm += torch.sum(delta ** 2).item()
-                total_update_norm = np.sqrt(total_update_norm)
-                
-                # If update exceeds radius, scale it back
-                if total_update_norm > clip_radius:
-                    scale_factor = clip_radius / total_update_norm
-                    for local_p, global_p in zip(self.model.parameters(), self.global_params):
-                        delta = local_p - global_p.to(self.device)
-                        local_p.copy_(global_p.to(self.device) + scale_factor * delta)
         
         # Track client drift for monitoring
         param_drift = sum(
@@ -450,7 +446,8 @@ class RegressionClient(fl.client.NumPyClient):
         )
         self.client_drift_history.append(param_drift)
         
-        # Update client control variate (SCAFFOLD)
+        # Update client control variate (SCAFFOLD standard update)
+        # c_i_new = c_i - c + (x_0 - x_K) / (K * lr)
         old_client_control = [c.clone() for c in self.client_control]
         
         with torch.no_grad():
@@ -458,10 +455,10 @@ class RegressionClient(fl.client.NumPyClient):
                 self.client_control, self.server_control,
                 initial_params, self.model.parameters()
             )):
-                # Standard SCAFFOLD update: c_i_new = c_i - c + (x_0 - x_K) / (K * lr)
                 param_diff = (x_0.to(self.device) - x_K.to(self.device)) / (total_steps * self.learning_rate)
                 self.client_control[i] = c_i.to(self.device) - c.to(self.device) + param_diff
         
+        # Compute delta_control for server aggregation
         delta_control = [
             (new_c - old_c).cpu().numpy()
             for new_c, old_c in zip(self.client_control, old_client_control)
