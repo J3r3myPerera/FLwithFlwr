@@ -135,6 +135,8 @@ class FedAvgStrategy(FedAvg):
         initial_parameters: Optional[Parameters] = None,
         on_fit_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
         on_evaluate_config_fn: Optional[Callable[[int], Dict[str, Scalar]]] = None,
+        use_smart_selection: bool = False,  # Accepted but only used by Hybrid
+        selection_strategy: str = "power_of_choice",  # Accepted but only used by Hybrid
     ):
         super().__init__(
             fraction_fit=fraction_fit,
@@ -152,6 +154,8 @@ class FedAvgStrategy(FedAvg):
         self.target_mean = target_mean
         self.target_std = target_std
         self.log_transform = log_transform
+        self.use_smart_selection = use_smart_selection  # Store for subclasses
+        self.selection_strategy = selection_strategy  # Store for subclasses
         
         # Device
         if torch.cuda.is_available():
@@ -403,6 +407,8 @@ def create_strategy(
     min_fit_clients: int = 2,
     min_evaluate_clients: int = 2,
     min_available_clients: int = 2,
+    use_smart_selection: bool = False,
+    selection_strategy: str = "power_of_choice",
 ) -> Strategy:
     """
     Factory function to create a federated learning strategy.
@@ -460,7 +466,9 @@ def create_strategy(
             mu=mu, 
             fedprox_weight=fedprox_weight,
             scaffold_weight=scaffold_weight,
-            num_clients=num_clients, 
+            num_clients=num_clients,
+            use_smart_selection=use_smart_selection,
+            selection_strategy=selection_strategy,
             **common_args
         )
     else:

@@ -1,29 +1,35 @@
 """
-Federated Learning Client - v3 Advanced Hybrid Implementation
+Federated Learning Client - v4 Enhanced Hybrid Implementation
 =============================================================
 
-This version combines the top improvements for maximum hybrid performance:
+Building on v3's success (winning 5/6 metrics), v4 adds:
 
-1. THREE-PHASE SCHEDULING
-   - Exploration (0-30%): SCAFFOLD dominant, minimal FedProx
-   - Transition (30-70%): Balanced, gradual shift
-   - Convergence (70-100%): FedProx increases, SCAFFOLD stabilizes
+NEW IMPROVEMENTS:
+================
 
-2. PER-CLIENT ADAPTIVE μ
-   - Clients with high drift get more FedProx regularization
-   - Stable clients get more freedom to learn locally
+6. LOSS-AWARE ADAPTIVE SCHEDULING
+   - Monitor training loss trend
+   - If loss plateaus, increase SCAFFOLD to escape local minima
+   - If loss diverges, increase FedProx to stabilize
 
-3. GRADIENT VARIANCE-BASED SCAFFOLD
-   - High gradient variance → stronger SCAFFOLD correction
-   - Responds to actual training dynamics, not just round number
+7. EXPONENTIAL MOVING AVERAGE (EMA) FOR CONTROL VARIATES
+   - Smooth control variate updates to reduce noise
+   - Prevents overcorrection from noisy gradients
 
-4. LAYER-WISE CORRECTIONS
-   - Early layers (features): Less SCAFFOLD, more stable
-   - Later layers (task-specific): More SCAFFOLD, handles drift
+8. GRADIENT PROJECTION
+   - Project SCAFFOLD correction onto useful subspace
+   - Avoid corrections that fight the gradient direction
 
-5. IMPROVED CONTROL VARIATE UPDATE
-   - Better normalization for AdamW compatibility
-   - Optional warm-start initialization
+9. ADAPTIVE LEARNING RATE PER PHASE
+   - Higher LR during exploration
+   - Lower LR during convergence
+
+10. CLIENT MOMENTUM
+    - Maintain momentum of updates across rounds
+    - Helps escape local minima
+
+11. IMPORTANCE-WEIGHTED AGGREGATION PREPARATION
+    - Track and report client gradient norms for server weighting
 """
 
 import torch
@@ -39,7 +45,7 @@ from model import DisposableIncomeNet, get_parameters, set_parameters
 
 class RegressionClient(fl.client.NumPyClient):
     """
-    Advanced Flower client with v3 hybrid implementation.
+    Enhanced v4 Flower client with additional hybrid improvements.
     """
     
     def __init__(
@@ -83,6 +89,17 @@ class RegressionClient(fl.client.NumPyClient):
         # v3: Track gradient history for variance computation
         self.gradient_norm_history = []
         
+        # v4 NEW: Track loss history for adaptive scheduling
+        self.loss_history = []
+        self.round_loss_history = []  # Per-round average loss
+        
+        # v4 NEW: Client momentum buffer
+        self.update_momentum = None
+        self.momentum_beta = 0.9
+        
+        # v4 NEW: EMA for control variates
+        self.control_ema_beta = 0.95
+        
         if device is None:
             if torch.cuda.is_available():
                 self.device = torch.device("cuda")
@@ -115,10 +132,7 @@ class RegressionClient(fl.client.NumPyClient):
         self.server_control = [torch.zeros_like(p) for p in self.model.parameters()]
     
     def _warm_start_control_variates(self):
-        """
-        v3 IMPROVEMENT: Initialize control variates from actual gradients
-        instead of zeros for faster convergence.
-        """
+        """Initialize control variates from actual gradients."""
         if self.control_initialized_from_gradients:
             return
         
@@ -126,7 +140,6 @@ class RegressionClient(fl.client.NumPyClient):
         gradient_sum = [torch.zeros_like(p) for p in self.model.parameters()]
         num_batches = 0
         
-        # Compute average gradient over training data
         for X_batch, y_batch in self.trainloader:
             X_batch = X_batch.to(self.device)
             y_batch = y_batch.to(self.device)
@@ -141,11 +154,9 @@ class RegressionClient(fl.client.NumPyClient):
                     gradient_sum[i] += p.grad.clone()
             num_batches += 1
             
-            # Only use first few batches for efficiency
             if num_batches >= 5:
                 break
         
-        # Initialize client control to average gradient
         if self.client_control is not None:
             for i in range(len(self.client_control)):
                 self.client_control[i] = (gradient_sum[i] / num_batches).to(self.device)
@@ -163,9 +174,65 @@ class RegressionClient(fl.client.NumPyClient):
         )
         return np.sqrt(divergence)
     
+    def _compute_loss_trend(self) -> str:
+        """
+        v4 NEW: Analyze recent loss history to determine trend.
+        Returns: 'improving', 'plateau', 'diverging'
+        """
+        if len(self.round_loss_history) < 3:
+            return 'improving'
+        
+        recent = self.round_loss_history[-3:]
+        
+        # Compute relative changes
+        changes = [(recent[i+1] - recent[i]) / (recent[i] + 1e-8) 
+                   for i in range(len(recent)-1)]
+        avg_change = np.mean(changes)
+        
+        if avg_change < -0.01:  # Loss decreasing by >1%
+            return 'improving'
+        elif avg_change > 0.05:  # Loss increasing by >5%
+            return 'diverging'
+        else:
+            return 'plateau'
+    
+    def _update_control_variates_ema(self, new_control: List[torch.Tensor]):
+        """
+        v4 NEW: Update control variates with exponential moving average.
+        Smooths updates to reduce noise.
+        """
+        for i in range(len(self.client_control)):
+            self.client_control[i] = (
+                self.control_ema_beta * self.client_control[i] +
+                (1 - self.control_ema_beta) * new_control[i]
+            )
+    
+    def _apply_gradient_projection(self, correction: torch.Tensor, grad: torch.Tensor) -> torch.Tensor:
+        """
+        v4 NEW: Project SCAFFOLD correction to avoid fighting gradient.
+        If correction opposes gradient too much, reduce its component in that direction.
+        """
+        if grad is None or grad.norm() < 1e-8:
+            return correction
+        
+        # Compute cosine similarity
+        grad_flat = grad.view(-1)
+        corr_flat = correction.view(-1)
+        
+        cos_sim = torch.dot(grad_flat, corr_flat) / (grad_flat.norm() * corr_flat.norm() + 1e-8)
+        
+        # If correction strongly opposes gradient (cos_sim < -0.5), reduce it
+        if cos_sim < -0.5:
+            # Project out the component opposing gradient
+            projection = (torch.dot(corr_flat, grad_flat) / (grad_flat.norm()**2 + 1e-8)) * grad_flat
+            correction_flat = corr_flat - 0.5 * projection  # Partial projection
+            return correction_flat.view_as(correction)
+        
+        return correction
+    
     def _train_fedavg(self) -> float:
         self.model.train()
-        optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate, weight_decay=1e-4)
+        optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate, weight_decay=5e-3)
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=len(self.trainloader) * self.local_epochs, eta_min=self.learning_rate * 0.1
         )
@@ -193,7 +260,7 @@ class RegressionClient(fl.client.NumPyClient):
     
     def _train_fedprox(self) -> float:
         self.model.train()
-        optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate, weight_decay=1e-4)
+        optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate, weight_decay=5e-3)
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=len(self.trainloader) * self.local_epochs, eta_min=self.learning_rate * 0.1
         )
@@ -232,7 +299,7 @@ class RegressionClient(fl.client.NumPyClient):
             self._init_control_variates()
         
         self.model.train()
-        optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate, weight_decay=1e-4)
+        optimizer = torch.optim.AdamW(self.model.parameters(), lr=self.learning_rate, weight_decay=5e-3)
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, T_max=len(self.trainloader) * self.local_epochs, eta_min=self.learning_rate * 0.1
         )
@@ -288,13 +355,11 @@ class RegressionClient(fl.client.NumPyClient):
     
     def _train_hybrid(self, config: Dict[str, Scalar] = None) -> Tuple[float, List[np.ndarray]]:
         """
-        v3 ADVANCED HYBRID: Combines all improvements
-        
-        1. Three-phase scheduling (exploration → transition → convergence)
-        2. Per-client adaptive μ based on divergence
-        3. Gradient variance-based SCAFFOLD strength
-        4. Layer-wise correction scaling
-        5. Optional warm-start for control variates
+        v4 ENHANCED HYBRID: All v3 improvements plus:
+        - Loss-aware adaptive scheduling
+        - EMA for control variates
+        - Gradient projection
+        - Phase-adaptive learning rate
         """
         if self.client_control is None or self.server_control is None:
             self._init_control_variates()
@@ -317,65 +382,83 @@ class RegressionClient(fl.client.NumPyClient):
         staleness_factor = 1.0 / (1.0 + 0.1 * max(0, self.control_staleness))
         
         # ================================================================
-        # IMPROVEMENT 1: Three-Phase Scheduling
+        # v4 NEW: Loss-Aware Adjustment
+        # ================================================================
+        loss_trend = self._compute_loss_trend()
+        if loss_trend == 'plateau':
+            # Increase SCAFFOLD to escape local minima
+            loss_adjustment_scaffold = 1.2
+            loss_adjustment_fedprox = 0.8
+        elif loss_trend == 'diverging':
+            # Increase FedProx to stabilize
+            loss_adjustment_scaffold = 0.7
+            loss_adjustment_fedprox = 1.3
+        else:  # improving
+            loss_adjustment_scaffold = 1.0
+            loss_adjustment_fedprox = 1.0
+        
+        # ================================================================
+        # Three-Phase Scheduling (from v3)
         # ================================================================
         exploration_end = warmup_rounds + int((num_rounds - warmup_rounds) * 0.3)
         transition_end = warmup_rounds + int((num_rounds - warmup_rounds) * 0.7)
         
         if server_round <= warmup_rounds:
-            # WARMUP: Gentle start
             warmup_progress = server_round / max(warmup_rounds, 1)
             base_scaffold = 0.3 * warmup_progress
             base_fedprox = 0.0
             phase = "warmup"
+            lr_multiplier = 0.5 + 0.5 * warmup_progress  # v4: Ramp up LR
             
         elif server_round <= exploration_end:
-            # EXPLORATION: SCAFFOLD dominant
             base_scaffold = 1.0
             base_fedprox = 0.1
             phase = "exploration"
+            lr_multiplier = 1.1  # v4: Slightly higher LR for exploration
             
         elif server_round <= transition_end:
-            # TRANSITION: Gradual shift
             progress = (server_round - exploration_end) / max(transition_end - exploration_end, 1)
-            base_scaffold = 1.0 - 0.3 * progress  # 1.0 → 0.7
-            base_fedprox = 0.1 + 0.4 * progress   # 0.1 → 0.5
+            base_scaffold = 1.0 - 0.3 * progress
+            base_fedprox = 0.1 + 0.4 * progress
             phase = "transition"
+            lr_multiplier = 1.0 - 0.2 * progress  # v4: Gradual LR decrease
             
         else:
-            # CONVERGENCE: FedProx increases
             progress = (server_round - transition_end) / max(num_rounds - transition_end, 1)
-            base_scaffold = 0.7 - 0.2 * progress  # 0.7 → 0.5
-            base_fedprox = 0.5 + 0.3 * progress   # 0.5 → 0.8
+            base_scaffold = 0.7 - 0.2 * progress
+            base_fedprox = 0.5 + 0.3 * progress
             phase = "convergence"
+            lr_multiplier = 0.8 - 0.3 * progress  # v4: Low LR for fine-tuning
+        
+        # Apply loss-aware adjustments
+        base_scaffold *= loss_adjustment_scaffold
+        base_fedprox *= loss_adjustment_fedprox
         
         # ================================================================
-        # IMPROVEMENT 2: Per-Client Adaptive μ
+        # Per-Client Adaptive μ (from v3)
         # ================================================================
         client_divergence = self._compute_client_divergence()
-        
-        # Normalize divergence (tune baseline based on your data)
         baseline_divergence = config.get("baseline_divergence", 1.0)
         divergence_ratio = client_divergence / baseline_divergence
-        
-        # Scale μ: high divergence → higher μ (more regularization)
         divergence_scale = np.clip(divergence_ratio, 0.5, 2.0)
         
         adaptive_mu = base_fedprox * self.mu * self.fedprox_weight * divergence_scale
         
         # ================================================================
-        # Setup optimizer and scheduler
+        # v4 NEW: Phase-Adaptive Learning Rate
         # ================================================================
+        effective_lr = self.learning_rate * lr_multiplier
+        
         optimizer = torch.optim.AdamW(
             self.model.parameters(), 
-            lr=self.learning_rate,
-            weight_decay=1e-4
+            lr=effective_lr,
+            weight_decay=5e-3
         )
         
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
             optimizer, 
             T_max=len(self.trainloader) * self.local_epochs, 
-            eta_min=self.learning_rate * 0.1
+            eta_min=effective_lr * 0.1
         )
         
         initial_params = [p.clone().detach() for p in self.model.parameters()]
@@ -385,8 +468,12 @@ class RegressionClient(fl.client.NumPyClient):
         n_batches = 0
         total_steps = 0
         batch_gradient_norms = []
+        epoch_losses = []
         
         for epoch in range(self.local_epochs):
+            epoch_loss = 0.0
+            epoch_batches = 0
+            
             for X_batch, y_batch in self.trainloader:
                 X_batch = X_batch.to(self.device)
                 y_batch = y_batch.to(self.device)
@@ -394,7 +481,7 @@ class RegressionClient(fl.client.NumPyClient):
                 y_pred = self.model(X_batch)
                 mse_loss = self.criterion(y_pred, y_batch)
                 
-                # FedProx proximal term in loss
+                # FedProx proximal term
                 proximal_term = 0.0
                 if self.global_params is not None and adaptive_mu > 0:
                     for local_p, global_p in zip(self.model.parameters(), self.global_params):
@@ -406,34 +493,28 @@ class RegressionClient(fl.client.NumPyClient):
                 optimizer.zero_grad()
                 loss.backward()
                 
-                # ================================================================
-                # IMPROVEMENT 3: Gradient Variance-Based SCAFFOLD Strength
-                # ================================================================
+                # Gradient Variance-Based SCAFFOLD Strength (from v3)
                 grad_norm = sum(
                     p.grad.norm().item() ** 2 for p in self.model.parameters() 
                     if p.grad is not None
                 ) ** 0.5
                 batch_gradient_norms.append(grad_norm)
                 
-                # Compute variance factor from recent gradients
                 if len(batch_gradient_norms) >= 5:
                     recent_norms = batch_gradient_norms[-10:]
                     grad_mean = np.mean(recent_norms)
                     grad_variance = np.var(recent_norms)
-                    
-                    # Higher variance → stronger correction (capped at 1.5x)
                     variance_factor = min(1.5, 1.0 + grad_variance / (grad_mean + 1e-8))
                 else:
                     variance_factor = 1.0
                 
-                # Apply staleness factor and variance factor
                 scaffold_strength = (
                     base_scaffold * self.scaffold_weight * 
                     variance_factor * staleness_factor
                 )
                 
                 # ================================================================
-                # IMPROVEMENT 4: Layer-Wise Corrections
+                # Layer-Wise Corrections with Gradient Projection (v3 + v4)
                 # ================================================================
                 with torch.no_grad():
                     for param_idx, (param, c_i, c) in enumerate(zip(
@@ -442,14 +523,15 @@ class RegressionClient(fl.client.NumPyClient):
                         self.server_control
                     )):
                         if param.grad is not None:
-                            # Layer scaling: early layers less correction, later layers more
                             layer_progress = param_idx / max(num_params - 1, 1)
-                            
-                            # SCAFFOLD: 0.7x for first layer → 1.3x for last layer
                             layer_scaffold_scale = 0.7 + 0.6 * layer_progress
                             
                             layer_scaffold = scaffold_strength * layer_scaffold_scale
                             correction = layer_scaffold * (c.to(self.device) - c_i.to(self.device))
+                            
+                            # v4 NEW: Apply gradient projection
+                            correction = self._apply_gradient_projection(correction, param.grad)
+                            
                             param.grad.add_(correction)
                 
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.max_grad_norm)
@@ -457,25 +539,44 @@ class RegressionClient(fl.client.NumPyClient):
                 scheduler.step()
                 
                 total_loss += mse_loss.item()
+                epoch_loss += mse_loss.item()
                 n_batches += 1
+                epoch_batches += 1
                 total_steps += 1
+            
+            epoch_losses.append(epoch_loss / max(epoch_batches, 1))
         
-        # Update gradient norm history (keep last 100)
-        self.gradient_norm_history.extend(batch_gradient_norms)
-        self.gradient_norm_history = self.gradient_norm_history[-100:]
+        # Update loss history for next round
+        self.loss_history.extend(epoch_losses)
+        self.round_loss_history.append(np.mean(epoch_losses))
+        
+        # Keep history bounded
+        self.loss_history = self.loss_history[-50:]
+        self.round_loss_history = self.round_loss_history[-10:]
+        self.gradient_norm_history = batch_gradient_norms[-100:]
         
         # ================================================================
-        # Control Variate Update
+        # v4 NEW: Control Variate Update with EMA option
         # ================================================================
         old_client_control = [c.clone() for c in self.client_control]
         
+        # Compute new control variates
+        new_client_control = []
         with torch.no_grad():
             for i, (c_i, c, x_0, x_K) in enumerate(zip(
                 self.client_control, self.server_control,
                 initial_params, self.model.parameters()
             )):
                 param_diff = (x_0.to(self.device) - x_K.to(self.device)) / total_steps
-                self.client_control[i] = c_i.to(self.device) - c.to(self.device) + param_diff
+                new_c = c_i.to(self.device) - c.to(self.device) + param_diff
+                new_client_control.append(new_c)
+        
+        # Apply EMA update (v4)
+        use_ema = config.get("use_control_ema", True)
+        if use_ema and server_round > warmup_rounds:
+            self._update_control_variates_ema(new_client_control)
+        else:
+            self.client_control = new_client_control
         
         delta_control = [
             (new_c - old_c).cpu().numpy()
@@ -485,7 +586,9 @@ class RegressionClient(fl.client.NumPyClient):
         # Update participation tracking
         self.last_participated_round = server_round
         
-        return total_loss / n_batches if n_batches > 0 else 0.0, delta_control
+        avg_loss = total_loss / n_batches if n_batches > 0 else 0.0
+        
+        return avg_loss, delta_control
     
     def fit(
         self, 
@@ -537,9 +640,12 @@ class RegressionClient(fl.client.NumPyClient):
         if delta_control is not None:
             metrics["delta_control"] = [dc.tolist() if hasattr(dc, 'tolist') else dc for dc in delta_control]
         
-        # v3: Add client divergence to metrics for monitoring
+        # v4: Add additional metrics for monitoring
         if self.strategy == "hybrid":
             metrics["client_divergence"] = self._compute_client_divergence()
+            metrics["loss_trend"] = self._compute_loss_trend()
+            if self.gradient_norm_history:
+                metrics["avg_grad_norm"] = float(np.mean(self.gradient_norm_history[-20:]))
         
         return new_parameters, num_samples, metrics
     

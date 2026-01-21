@@ -49,10 +49,10 @@ class DisposableIncomeNet(nn.Module):
     def __init__(
         self, 
         input_dim: int = 25,  # Updated: 12 base + 6 engineered + 7 one-hot
-        hidden_dim1: int = 160,  # Increased from 128
-        hidden_dim2: int = 96,   # Increased from 64
-        hidden_dim3: int = 48,   # New layer
-        dropout: float = 0.18,   # Slightly increased for better regularization
+        hidden_dim1: int = 96,   # Reduced from 160 to prevent overfitting
+        hidden_dim2: int = 48,   # Reduced from 96 to prevent overfitting
+        hidden_dim3: int = 24,   # Reduced from 48 to prevent overfitting
+        dropout: float = 0.40,   # Significantly increased (0.18->0.40) for strong regularization
         use_layer_norm: bool = True,
         use_residual: bool = False  # Optional residual connections
     ):
@@ -61,10 +61,10 @@ class DisposableIncomeNet(nn.Module):
         
         Args:
             input_dim: Number of input features (default 25: 12 base + 6 engineered + 7 one-hot)
-            hidden_dim1: First hidden layer size (default 160)
-            hidden_dim2: Second hidden layer size (default 96)
-            hidden_dim3: Third hidden layer size (default 48)
-            dropout: Dropout rate for regularization (default 0.18)
+            hidden_dim1: First hidden layer size (default 96, reduced from 160)
+            hidden_dim2: Second hidden layer size (default 48, reduced from 96)
+            hidden_dim3: Third hidden layer size (default 24, reduced from 48)
+            dropout: Dropout rate for regularization (default 0.40, increased from 0.18)
             use_layer_norm: Whether to use LayerNorm (default True, recommended for FL)
             use_residual: Whether to use residual connections (default False)
         """

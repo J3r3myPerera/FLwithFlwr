@@ -1,0 +1,194 @@
+# Federated Disposable Income Regression Configuration
+# =============================================================================
+# DIRICHLET NON-IID PARTITIONING - Optimized for Hybrid Strategy
+# =============================================================================
+#
+# This configuration uses TRUE label-based Dirichlet partitioning which creates
+# genuine data heterogeneity by distributing samples based on target value bins.
+#
+# WHY DIRICHLET IS BETTER FOR HYBRID:
+# - Creates real label heterogeneity (not just sample count variation)
+# - SCAFFOLD's drift correction becomes essential
+# - FedProx's proximal term provides crucial stability
+# - Together, Hybrid should significantly outperform both
+#
+# KEY DIFFERENCE FROM HYBRID PARTITIONING:
+# - Hybrid partition: City_Tier × Occupation (categorical splits)
+# - Dirichlet partition: Target value distribution (continuous heterogeneity)
+#
+# The Dirichlet approach creates more challenging non-IID scenarios where
+# clients specialize in different income ranges, making it harder for
+# simple FedAvg to converge.
+
+# =============================================================================
+# DATASET MODULE
+# =============================================================================
+# Use dataset2.py for Dirichlet partitioning
+dataset_module: "dataset2"
+
+# =============================================================================
+# DIRICHLET PARTITIONING PARAMETERS
+# =============================================================================
+dirichlet:
+  # Alpha: Concentration parameter (MOST IMPORTANT)
+  # Lower = more heterogeneous
+  # - 0.1: Extreme non-IID (each client specializes in 1-2 income brackets)
+  # - 0.3: Very high non-IID (RECOMMENDED - best for Hybrid testing)
+  # - 0.5: High non-IID
+  # - 1.0: Moderate non-IID
+  # - 5.0: Low non-IID
+  # - 10.0: Near-IID
+  alpha: 0.5 # Recommended for Hybrid advantage
+
+  # Number of target bins (quantiles)
+  # More bins = finer-grained heterogeneity
+  num_bins: 10
+
+  # Minimum samples per client
+  # Prevents clients from having too few samples
+  min_samples_per_client: 30
+
+# =============================================================================
+# TRAINING PARAMETERS
+# =============================================================================
+num_rounds: 50 # Increased for slower, more realistic convergence
+num_clients: 10 # Flexible - can be any number
+local_epochs: 1 # Reduced to 1 to prevent severe overfitting
+batch_size: 32
+learning_rate: 0.0005 # Further reduced to slow down convergence
+
+# =============================================================================
+# CLIENT SAMPLING
+# =============================================================================
+client_sampling:
+  fraction_fit: 0.6 # 60% of clients per round
+  min_fit_clients: 4
+  fraction_evaluate: 0.5
+  min_evaluate_clients: 2
+  min_available_clients: 4
+
+# =============================================================================
+# FEDPROX PARAMETERS
+# =============================================================================
+fedprox:
+  mu: 0.1
+
+# =============================================================================
+# SCAFFOLD PARAMETERS
+# =============================================================================
+scaffold:
+  learning_rate_correction: 1.0
+
+# =============================================================================
+# HYBRID STRATEGY PARAMETERS (OPTIMIZED FOR DIRICHLET NON-IID)
+# =============================================================================
+# With high heterogeneity from Dirichlet, Hybrid should excel:
+# - SCAFFOLD corrects the larger client drift
+# - FedProx provides stability across very different distributions
+#
+hybrid:
+  # Higher scaffold_weight for more drift correction
+  scaffold_weight: 1.0
+
+  # Moderate FedProx to stabilize without over-regularizing
+  fedprox_weight: 0.8
+
+  # Base mu for proximal term
+  mu: 0.1
+
+  # Control variate momentum
+  control_momentum: 0.9
+
+  # Gradient clipping
+  gradient_clip: true
+  gradient_clip_norm: 1.0
+
+  # Smart client selection (enabled by default)
+  use_smart_selection: true
+  selection_strategy: "power_of_choice"
+
+# =============================================================================
+# STRATEGY-SPECIFIC CONFIGURATIONS
+# =============================================================================
+strategy_configs:
+  fedavg:
+    lr: 0.0005 # Further reduced to prevent overfitting
+    local_epochs: 1 # Reduced to 1 to prevent severe overfitting
+    max_grad_norm: 1.0
+    momentum: 0.0
+
+  fedprox:
+    lr: 0.0005 # Further reduced to prevent overfitting
+    local_epochs: 1 # Reduced to 1 to prevent severe overfitting
+    max_grad_norm: 1.0
+    momentum: 0.0
+
+  scaffold:
+    lr: 0.0005 # Further reduced to prevent overfitting
+    local_epochs: 1 # Reduced to 1 to prevent severe overfitting
+    max_grad_norm: 1.0
+    momentum: 0.0
+
+  hybrid:
+    lr: 0.0005 # Further reduced to prevent overfitting
+    local_epochs: 1 # Reduced to 1 to prevent severe overfitting
+    max_grad_norm: 1.0
+    momentum: 0.0
+
+# =============================================================================
+# VISUALIZATION
+# =============================================================================
+plotting:
+  enabled: true
+  save_plot: true
+  show_plot: false
+  plot_every_n_rounds: 1
+  metrics_to_plot:
+    - rmse
+    - r2
+    - mape
+
+  # Dirichlet-specific visualization
+  visualize_partition: true
+  save_partition_plot: true
+
+# =============================================================================
+# STRATEGY SELECTION
+# =============================================================================
+# Single strategy mode
+strategy: hybrid
+
+# Comparison mode (compare_all: true)
+compare_all: true
+strategies:
+  - fedavg
+  - fedprox
+  - scaffold
+  - hybrid
+
+# =============================================================================
+# OUTPUT AND LOGGING
+# =============================================================================
+seed: 2023
+verbose: true
+log_transform_target: true
+normalize_target: true
+
+# =============================================================================
+# EXPECTED RESULTS WITH DIRICHLET (α=0.3)
+# =============================================================================
+# Previous results with Hybrid partitioning:
+#   SCAFFOLD: RMSE ~3800-3940, R² ~0.89
+#   Hybrid:   RMSE ~3800-3850, R² ~0.89 (similar to SCAFFOLD)
+#
+# Expected results with Dirichlet (α=0.3):
+#   FedAvg:   RMSE ~4500-5000 (struggles with high heterogeneity)
+#   FedProx:  RMSE ~4200-4500 (better but still limited)
+#   SCAFFOLD: RMSE ~3800-4100 (handles drift well)
+#   Hybrid:   RMSE ~3500-3700 (should OUTPERFORM due to combined benefits)
+#
+# The Dirichlet partition should create enough heterogeneity that:
+# 1. FedAvg struggles significantly
+# 2. SCAFFOLD helps but isn't enough alone
+# 3. FedProx helps but isn't enough alone
+# 4. Hybrid combines both and outperforms
