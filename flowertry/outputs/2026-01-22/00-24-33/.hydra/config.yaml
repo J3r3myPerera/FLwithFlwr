@@ -1,0 +1,72 @@
+dataset_module: dataset2
+dirichlet:
+  alpha: 0.3
+  num_bins: 10
+  min_samples_per_client: 30
+num_rounds: 30
+num_clients: 10
+local_epochs: 3
+batch_size: 32
+learning_rate: 0.0012
+client_sampling:
+  fraction_fit: 0.6
+  min_fit_clients: 4
+  fraction_evaluate: 0.5
+  min_evaluate_clients: 2
+  min_available_clients: 4
+fedprox:
+  mu: 0.1
+scaffold:
+  learning_rate_correction: 1.0
+hybrid:
+  scaffold_weight: 1.0
+  fedprox_weight: 0.8
+  mu: 0.1
+  control_momentum: 0.9
+  gradient_clip: true
+  gradient_clip_norm: 1.0
+  use_smart_selection: true
+  selection_strategy: power_of_choice
+strategy_configs:
+  fedavg:
+    lr: 0.001
+    local_epochs: 3
+    max_grad_norm: 1.0
+    momentum: 0.0
+  fedprox:
+    lr: 0.001
+    local_epochs: 3
+    max_grad_norm: 1.0
+    momentum: 0.0
+  scaffold:
+    lr: 0.001
+    local_epochs: 3
+    max_grad_norm: 1.0
+    momentum: 0.0
+  hybrid:
+    lr: 0.001
+    local_epochs: 3
+    max_grad_norm: 1.0
+    momentum: 0.0
+plotting:
+  enabled: true
+  save_plot: true
+  show_plot: false
+  plot_every_n_rounds: 1
+  metrics_to_plot:
+  - rmse
+  - r2
+  - mape
+  visualize_partition: true
+  save_partition_plot: true
+strategy: hybrid
+compare_all: true
+strategies:
+- fedavg
+- fedprox
+- scaffold
+- hybrid
+seed: 2023
+verbose: true
+log_transform_target: true
+normalize_target: true

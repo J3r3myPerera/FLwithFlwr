@@ -1,0 +1,658 @@
+{
+  "fedavg": {
+    "strategy": "fedavg",
+    "final_metrics": {
+      "loss": 0.05874450531308964,
+      "rmse": 4524.669711702722,
+      "mae": 1799.5750732421875,
+      "r2": 0.8538326144258475,
+      "mape": 8.854918479919434,
+      "accuracy_10": 72.21664786338806,
+      "accuracy_20": 93.38014125823975
+    },
+    "history": {
+      "rounds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loss": [
+        1.4340404903996313,
+        0.18445939682760354,
+        0.08761358158728304,
+        0.05874450531308964
+      ],
+      "rmse": [
+        11782.010694274555,
+        6969.850500548774,
+        4902.575241645965,
+        4524.669711702722
+      ],
+      "mae": [
+        9149.193359375,
+        3611.342041015625,
+        2204.144775390625,
+        1799.5750732421875
+      ],
+      "r2": [
+        0.00890437044283554,
+        0.6531644287923739,
+        0.8283968525368298,
+        0.8538326144258475
+      ],
+      "mape": [
+        79.91940307617188,
+        18.636598587036133,
+        11.828840255737305,
+        8.854918479919434
+      ],
+      "accuracy_10": [
+        11.735205352306366,
+        36.76027953624725,
+        56.268805265426636,
+        72.21664786338806
+      ],
+      "accuracy_20": [
+        21.46439254283905,
+        75.025075674057,
+        89.4182562828064,
+        93.38014125823975
+      ]
+    },
+    "partition_info": {
+      "type": "non-iid-hybrid",
+      "log_transform": true,
+      "clients": {
+        "0": {
+          "name": "Tier_1+Retired",
+          "tier": "Tier_1",
+          "occupation": "Retired",
+          "samples": 1355,
+          "mean_target": 9.29214859008789,
+          "std_target": 0.46649301052093506
+        },
+        "1": {
+          "name": "Tier_1+Professional",
+          "tier": "Tier_1",
+          "occupation": "Professional",
+          "samples": 1341,
+          "mean_target": 9.306047439575195,
+          "std_target": 0.5224652290344238
+        },
+        "2": {
+          "name": "Tier_1+Student",
+          "tier": "Tier_1",
+          "occupation": "Student",
+          "samples": 1321,
+          "mean_target": 9.318131446838379,
+          "std_target": 0.5058950185775757
+        },
+        "3": {
+          "name": "Tier_1+Self_Employed",
+          "tier": "Tier_1",
+          "occupation": "Self_Employed",
+          "samples": 1326,
+          "mean_target": 9.308443069458008,
+          "std_target": 0.46945080161094666
+        },
+        "4": {
+          "name": "Tier_2+Retired",
+          "tier": "Tier_2",
+          "occupation": "Retired",
+          "samples": 2262,
+          "mean_target": 9.579275131225586,
+          "std_target": 0.50754714012146
+        },
+        "5": {
+          "name": "Tier_2+Professional",
+          "tier": "Tier_2",
+          "occupation": "Professional",
+          "samples": 2250,
+          "mean_target": 9.578229904174805,
+          "std_target": 0.5139051675796509
+        },
+        "6": {
+          "name": "Tier_2+Student",
+          "tier": "Tier_2",
+          "occupation": "Student",
+          "samples": 2287,
+          "mean_target": 9.576735496520996,
+          "std_target": 0.5213019847869873
+        },
+        "7": {
+          "name": "Tier_2+Self_Employed",
+          "tier": "Tier_2",
+          "occupation": "Self_Employed",
+          "samples": 2264,
+          "mean_target": 9.587143898010254,
+          "std_target": 0.5218434929847717
+        },
+        "8": {
+          "name": "Tier_3+Retired",
+          "tier": "Tier_3",
+          "occupation": "Retired",
+          "samples": 901,
+          "mean_target": 9.677876472473145,
+          "std_target": 0.535555362701416
+        },
+        "9": {
+          "name": "Tier_3+Professional",
+          "tier": "Tier_3",
+          "occupation": "Professional",
+          "samples": 921,
+          "mean_target": 9.71316146850586,
+          "std_target": 0.5619828701019287
+        },
+        "10": {
+          "name": "Tier_3+Student",
+          "tier": "Tier_3",
+          "occupation": "Student",
+          "samples": 896,
+          "mean_target": 9.694448471069336,
+          "std_target": 0.5366557240486145
+        },
+        "11": {
+          "name": "Tier_3+Self_Employed",
+          "tier": "Tier_3",
+          "occupation": "Self_Employed",
+          "samples": 882,
+          "mean_target": 9.680098533630371,
+          "std_target": 0.5241548418998718
+        }
+      }
+    }
+  },
+  "fedprox": {
+    "strategy": "fedprox",
+    "final_metrics": {
+      "loss": 0.06254622690686013,
+      "rmse": 4316.356102084257,
+      "mae": 1823.9219970703125,
+      "r2": 0.8669817489327263,
+      "mape": 9.504175186157227,
+      "accuracy_10": 66.85054898262024,
+      "accuracy_20": 92.0762300491333
+    },
+    "history": {
+      "rounds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loss": [
+        1.4340404903996313,
+        0.1451806366114822,
+        0.09051079193920405,
+        0.06254622690686013
+      ],
+      "rmse": [
+        11782.010694274555,
+        5597.5042652953825,
+        4787.116459832579,
+        4316.356102084257
+      ],
+      "mae": [
+        9149.193359375,
+        2991.571533203125,
+        2273.873779296875,
+        1823.9219970703125
+      ],
+      "r2": [
+        0.00890437044283554,
+        0.7763002049250052,
+        0.8363844076780352,
+        0.8669817489327263
+      ],
+      "mape": [
+        79.91940307617188,
+        16.200820922851562,
+        12.154794692993164,
+        9.504175186157227
+      ],
+      "accuracy_10": [
+        11.735205352306366,
+        36.058175563812256,
+        51.10331177711487,
+        66.85054898262024
+      ],
+      "accuracy_20": [
+        21.46439254283905,
+        75.82748532295227,
+        86.50952577590942,
+        92.0762300491333
+      ]
+    },
+    "partition_info": {
+      "type": "non-iid-hybrid",
+      "log_transform": true,
+      "clients": {
+        "0": {
+          "name": "Tier_1+Retired",
+          "tier": "Tier_1",
+          "occupation": "Retired",
+          "samples": 1355,
+          "mean_target": 9.29214859008789,
+          "std_target": 0.46649301052093506
+        },
+        "1": {
+          "name": "Tier_1+Professional",
+          "tier": "Tier_1",
+          "occupation": "Professional",
+          "samples": 1341,
+          "mean_target": 9.306047439575195,
+          "std_target": 0.5224652290344238
+        },
+        "2": {
+          "name": "Tier_1+Student",
+          "tier": "Tier_1",
+          "occupation": "Student",
+          "samples": 1321,
+          "mean_target": 9.318131446838379,
+          "std_target": 0.5058950185775757
+        },
+        "3": {
+          "name": "Tier_1+Self_Employed",
+          "tier": "Tier_1",
+          "occupation": "Self_Employed",
+          "samples": 1326,
+          "mean_target": 9.308443069458008,
+          "std_target": 0.46945080161094666
+        },
+        "4": {
+          "name": "Tier_2+Retired",
+          "tier": "Tier_2",
+          "occupation": "Retired",
+          "samples": 2262,
+          "mean_target": 9.579275131225586,
+          "std_target": 0.50754714012146
+        },
+        "5": {
+          "name": "Tier_2+Professional",
+          "tier": "Tier_2",
+          "occupation": "Professional",
+          "samples": 2250,
+          "mean_target": 9.578229904174805,
+          "std_target": 0.5139051675796509
+        },
+        "6": {
+          "name": "Tier_2+Student",
+          "tier": "Tier_2",
+          "occupation": "Student",
+          "samples": 2287,
+          "mean_target": 9.576735496520996,
+          "std_target": 0.5213019847869873
+        },
+        "7": {
+          "name": "Tier_2+Self_Employed",
+          "tier": "Tier_2",
+          "occupation": "Self_Employed",
+          "samples": 2264,
+          "mean_target": 9.587143898010254,
+          "std_target": 0.5218434929847717
+        },
+        "8": {
+          "name": "Tier_3+Retired",
+          "tier": "Tier_3",
+          "occupation": "Retired",
+          "samples": 901,
+          "mean_target": 9.677876472473145,
+          "std_target": 0.535555362701416
+        },
+        "9": {
+          "name": "Tier_3+Professional",
+          "tier": "Tier_3",
+          "occupation": "Professional",
+          "samples": 921,
+          "mean_target": 9.71316146850586,
+          "std_target": 0.5619828701019287
+        },
+        "10": {
+          "name": "Tier_3+Student",
+          "tier": "Tier_3",
+          "occupation": "Student",
+          "samples": 896,
+          "mean_target": 9.694448471069336,
+          "std_target": 0.5366557240486145
+        },
+        "11": {
+          "name": "Tier_3+Self_Employed",
+          "tier": "Tier_3",
+          "occupation": "Self_Employed",
+          "samples": 882,
+          "mean_target": 9.680098533630371,
+          "std_target": 0.5241548418998718
+        }
+      }
+    }
+  },
+  "scaffold": {
+    "strategy": "scaffold",
+    "final_metrics": {
+      "loss": 0.05984911203025695,
+      "rmse": 4339.014865150844,
+      "mae": 1796.5552978515625,
+      "r2": 0.8655815131270035,
+      "mape": 9.22573471069336,
+      "accuracy_10": 67.85355806350708,
+      "accuracy_20": 93.12939047813416
+    },
+    "history": {
+      "rounds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loss": [
+        1.4340404903996313,
+        0.16745627034033314,
+        0.11681950285866363,
+        0.05984911203025695
+      ],
+      "rmse": [
+        11782.010694274555,
+        5977.979257240694,
+        5911.941474676487,
+        4339.014865150844
+      ],
+      "mae": [
+        9149.193359375,
+        3325.29345703125,
+        2744.606201171875,
+        1796.5552978515625
+      ],
+      "r2": [
+        0.00890437044283554,
+        0.7448559024995313,
+        0.750461832160484,
+        0.8655815131270035
+      ],
+      "mape": [
+        79.91940307617188,
+        17.714292526245117,
+        13.81990909576416,
+        9.22573471069336
+      ],
+      "accuracy_10": [
+        11.735205352306366,
+        30.140420794487,
+        54.46339249610901,
+        67.85355806350708
+      ],
+      "accuracy_20": [
+        21.46439254283905,
+        70.8625853061676,
+        85.70712208747864,
+        93.12939047813416
+      ]
+    },
+    "partition_info": {
+      "type": "non-iid-hybrid",
+      "log_transform": true,
+      "clients": {
+        "0": {
+          "name": "Tier_1+Retired",
+          "tier": "Tier_1",
+          "occupation": "Retired",
+          "samples": 1355,
+          "mean_target": 9.29214859008789,
+          "std_target": 0.46649301052093506
+        },
+        "1": {
+          "name": "Tier_1+Professional",
+          "tier": "Tier_1",
+          "occupation": "Professional",
+          "samples": 1341,
+          "mean_target": 9.306047439575195,
+          "std_target": 0.5224652290344238
+        },
+        "2": {
+          "name": "Tier_1+Student",
+          "tier": "Tier_1",
+          "occupation": "Student",
+          "samples": 1321,
+          "mean_target": 9.318131446838379,
+          "std_target": 0.5058950185775757
+        },
+        "3": {
+          "name": "Tier_1+Self_Employed",
+          "tier": "Tier_1",
+          "occupation": "Self_Employed",
+          "samples": 1326,
+          "mean_target": 9.308443069458008,
+          "std_target": 0.46945080161094666
+        },
+        "4": {
+          "name": "Tier_2+Retired",
+          "tier": "Tier_2",
+          "occupation": "Retired",
+          "samples": 2262,
+          "mean_target": 9.579275131225586,
+          "std_target": 0.50754714012146
+        },
+        "5": {
+          "name": "Tier_2+Professional",
+          "tier": "Tier_2",
+          "occupation": "Professional",
+          "samples": 2250,
+          "mean_target": 9.578229904174805,
+          "std_target": 0.5139051675796509
+        },
+        "6": {
+          "name": "Tier_2+Student",
+          "tier": "Tier_2",
+          "occupation": "Student",
+          "samples": 2287,
+          "mean_target": 9.576735496520996,
+          "std_target": 0.5213019847869873
+        },
+        "7": {
+          "name": "Tier_2+Self_Employed",
+          "tier": "Tier_2",
+          "occupation": "Self_Employed",
+          "samples": 2264,
+          "mean_target": 9.587143898010254,
+          "std_target": 0.5218434929847717
+        },
+        "8": {
+          "name": "Tier_3+Retired",
+          "tier": "Tier_3",
+          "occupation": "Retired",
+          "samples": 901,
+          "mean_target": 9.677876472473145,
+          "std_target": 0.535555362701416
+        },
+        "9": {
+          "name": "Tier_3+Professional",
+          "tier": "Tier_3",
+          "occupation": "Professional",
+          "samples": 921,
+          "mean_target": 9.71316146850586,
+          "std_target": 0.5619828701019287
+        },
+        "10": {
+          "name": "Tier_3+Student",
+          "tier": "Tier_3",
+          "occupation": "Student",
+          "samples": 896,
+          "mean_target": 9.694448471069336,
+          "std_target": 0.5366557240486145
+        },
+        "11": {
+          "name": "Tier_3+Self_Employed",
+          "tier": "Tier_3",
+          "occupation": "Self_Employed",
+          "samples": 882,
+          "mean_target": 9.680098533630371,
+          "std_target": 0.5241548418998718
+        }
+      }
+    }
+  },
+  "hybrid": {
+    "strategy": "hybrid",
+    "final_metrics": {
+      "loss": 0.06670472736927188,
+      "rmse": 4502.573930542396,
+      "mae": 1928.0333251953125,
+      "r2": 0.8552567118042951,
+      "mape": 9.859230995178223,
+      "accuracy_10": 65.24573564529419,
+      "accuracy_20": 91.27382040023804
+    },
+    "history": {
+      "rounds": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loss": [
+        1.4340404903996313,
+        0.15743508142836712,
+        0.09910093147004978,
+        0.06670472736927188
+      ],
+      "rmse": [
+        11782.010694274555,
+        6004.911323242001,
+        4950.2092885048805,
+        4502.573930542396
+      ],
+      "mae": [
+        9149.193359375,
+        3178.80029296875,
+        2376.2978515625,
+        1928.0333251953125
+      ],
+      "r2": [
+        0.00890437044283554,
+        0.7425517574671616,
+        0.8250460101573156,
+        0.8552567118042951
+      ],
+      "mape": [
+        79.91940307617188,
+        16.67471694946289,
+        12.488367080688477,
+        9.859230995178223
+      ],
+      "accuracy_10": [
+        11.735205352306366,
+        39.96990919113159,
+        49.448344111442566,
+        65.24573564529419
+      ],
+      "accuracy_20": [
+        21.46439254283905,
+        74.974924325943,
+        83.45035314559937,
+        91.27382040023804
+      ]
+    },
+    "partition_info": {
+      "type": "non-iid-hybrid",
+      "log_transform": true,
+      "clients": {
+        "0": {
+          "name": "Tier_1+Retired",
+          "tier": "Tier_1",
+          "occupation": "Retired",
+          "samples": 1355,
+          "mean_target": 9.29214859008789,
+          "std_target": 0.46649301052093506
+        },
+        "1": {
+          "name": "Tier_1+Professional",
+          "tier": "Tier_1",
+          "occupation": "Professional",
+          "samples": 1341,
+          "mean_target": 9.306047439575195,
+          "std_target": 0.5224652290344238
+        },
+        "2": {
+          "name": "Tier_1+Student",
+          "tier": "Tier_1",
+          "occupation": "Student",
+          "samples": 1321,
+          "mean_target": 9.318131446838379,
+          "std_target": 0.5058950185775757
+        },
+        "3": {
+          "name": "Tier_1+Self_Employed",
+          "tier": "Tier_1",
+          "occupation": "Self_Employed",
+          "samples": 1326,
+          "mean_target": 9.308443069458008,
+          "std_target": 0.46945080161094666
+        },
+        "4": {
+          "name": "Tier_2+Retired",
+          "tier": "Tier_2",
+          "occupation": "Retired",
+          "samples": 2262,
+          "mean_target": 9.579275131225586,
+          "std_target": 0.50754714012146
+        },
+        "5": {
+          "name": "Tier_2+Professional",
+          "tier": "Tier_2",
+          "occupation": "Professional",
+          "samples": 2250,
+          "mean_target": 9.578229904174805,
+          "std_target": 0.5139051675796509
+        },
+        "6": {
+          "name": "Tier_2+Student",
+          "tier": "Tier_2",
+          "occupation": "Student",
+          "samples": 2287,
+          "mean_target": 9.576735496520996,
+          "std_target": 0.5213019847869873
+        },
+        "7": {
+          "name": "Tier_2+Self_Employed",
+          "tier": "Tier_2",
+          "occupation": "Self_Employed",
+          "samples": 2264,
+          "mean_target": 9.587143898010254,
+          "std_target": 0.5218434929847717
+        },
+        "8": {
+          "name": "Tier_3+Retired",
+          "tier": "Tier_3",
+          "occupation": "Retired",
+          "samples": 901,
+          "mean_target": 9.677876472473145,
+          "std_target": 0.535555362701416
+        },
+        "9": {
+          "name": "Tier_3+Professional",
+          "tier": "Tier_3",
+          "occupation": "Professional",
+          "samples": 921,
+          "mean_target": 9.71316146850586,
+          "std_target": 0.5619828701019287
+        },
+        "10": {
+          "name": "Tier_3+Student",
+          "tier": "Tier_3",
+          "occupation": "Student",
+          "samples": 896,
+          "mean_target": 9.694448471069336,
+          "std_target": 0.5366557240486145
+        },
+        "11": {
+          "name": "Tier_3+Self_Employed",
+          "tier": "Tier_3",
+          "occupation": "Self_Employed",
+          "samples": 882,
+          "mean_target": 9.680098533630371,
+          "std_target": 0.5241548418998718
+        }
+      }
+    }
+  }
+}

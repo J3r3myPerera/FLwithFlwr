@@ -1,0 +1,61 @@
+num_rounds: 30
+num_clients: 12
+local_epochs: 3
+batch_size: 32
+learning_rate: 0.001
+client_sampling:
+  fraction_fit: 0.7
+  min_fit_clients: 5
+  fraction_evaluate: 0.5
+  min_evaluate_clients: 2
+  min_available_clients: 5
+fedprox:
+  mu: 0.1
+scaffold:
+  learning_rate_correction: 1.0
+hybrid:
+  mu: 0.08
+  fedprox_weight: 0.7
+  scaffold_weight: 0.9
+  warmup_rounds: 2
+  warmup_type: linear
+  warmup_start_factor: 0.1
+  use_warm_start: true
+  baseline_divergence: 1.0
+  gradient_clip: true
+  gradient_clip_norm: 1.0
+  use_smart_selection: true
+  selection_strategy: loss_based
+strategy_configs:
+  fedavg:
+    lr: 0.001
+    local_epochs: 3
+    max_grad_norm: 1.0
+  fedprox:
+    lr: 0.001
+    local_epochs: 3
+    max_grad_norm: 1.0
+  scaffold:
+    lr: 0.001
+    local_epochs: 3
+    max_grad_norm: 1.0
+  hybrid:
+    lr: 0.001
+    local_epochs: 3
+    max_grad_norm: 1.0
+iid: false
+partition_strategy: hybrid
+plotting:
+  enabled: true
+  update_interval: 1
+  show_plot: true
+  save_plot: true
+  format: png
+  figsize:
+  - 14
+  - 10
+seed: 2023
+compare_all: true
+strategies:
+- hybrid
+verbose: true

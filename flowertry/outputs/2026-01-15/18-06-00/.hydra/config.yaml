@@ -1,0 +1,27 @@
+strategy: fedavg, hybrid
+num_rounds: 10
+num_clients: 3
+local_epochs: 5
+batch_size: 32
+learning_rate: 0.01
+fedprox:
+  mu: 0.1
+scaffold:
+  learning_rate_correction: 1.0
+hybrid:
+  fedprox_weight: 0.5
+  scaffold_weight: 0.7
+  mu: 0.05
+iid: false
+plotting:
+  enabled: true
+  update_interval: 1
+  show_plot: true
+  save_plot: true
+  format: png
+  figsize:
+  - 14
+  - 10
+seed: 2023
+compare_all: false
+verbose: true

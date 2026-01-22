@@ -1,0 +1,83 @@
+strategy: fedavg
+num_rounds: 35
+num_clients: 12
+local_epochs: 3
+batch_size: 32
+learning_rate: 0.001
+client_sampling:
+  fraction_fit: 0.6
+  min_fit_clients: 4
+  fraction_evaluate: 0.5
+  min_evaluate_clients: 2
+  min_available_clients: 4
+fedprox:
+  mu: 0.05
+scaffold:
+  learning_rate_correction: 0.5
+hybrid:
+  fedprox_weight: 0.8
+  scaffold_weight: 0.1
+  mu: 0.045
+  dynamic_weights: false
+  weight_increase_rate: 1.015
+  weight_max: 0.85
+  adaptive_mu: false
+  mu_decay: 0.99
+  mu_min: 0.01
+  mu_adaptation_rate: 1.03
+  warmup_rounds: 3
+  warmup_type: cosine
+  warmup_start_factor: 0.2
+  gradient_clip: true
+  gradient_clip_norm: 1.0
+  use_momentum: false
+  momentum: 0.9
+  use_lr_scheduler: false
+  lr_warmup_rounds: 3
+  lr_decay_start: 10
+  lr_decay: 0.99
+  lr_min: 0.0005
+  per_client_adaptation: false
+  client_mu_range:
+  - 0.02
+  - 0.08
+strategy_configs:
+  fedavg:
+    lr: 0.001
+    local_epochs: 3
+    max_grad_norm: 1.0
+    momentum: 0.0
+  fedprox:
+    lr: 0.0005
+    local_epochs: 3
+    max_grad_norm: 1.0
+    momentum: 0.0
+  scaffold:
+    lr: 0.01
+    local_epochs: 4
+    max_grad_norm: 1.5
+    momentum: 0.0
+  hybrid:
+    lr: 0.0005
+    local_epochs: 3
+    max_grad_norm: 1.0
+    momentum: 0.0
+iid: false
+partition_strategy: hybrid
+plotting:
+  enabled: true
+  update_interval: 1
+  show_plot: true
+  save_plot: true
+  format: png
+  figsize:
+  - 14
+  - 10
+seed: 2023
+compare_all: true
+strategies:
+- fedavg
+- fedprox
+- scaffold
+- hybrid
+verbose: true

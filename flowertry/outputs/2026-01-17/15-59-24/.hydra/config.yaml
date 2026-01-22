@@ -1,0 +1,64 @@
+strategy: fedavg
+num_rounds: 25
+num_clients: 12
+local_epochs: 3
+batch_size: 32
+learning_rate: 0.0012
+client_sampling:
+  fraction_fit: 0.6
+  min_fit_clients: 4
+  fraction_evaluate: 0.5
+  min_evaluate_clients: 2
+  min_available_clients: 4
+fedprox:
+  mu: 0.05
+scaffold:
+  learning_rate_correction: 0.5
+hybrid:
+  fedprox_weight: 0.8
+  scaffold_weight: 0.1
+  mu: 0.055
+  control_momentum: 0.9
+  gradient_clip: true
+  gradient_clip_norm: 1.0
+strategy_configs:
+  fedavg:
+    lr: 0.001
+    local_epochs: 3
+    max_grad_norm: 1.0
+    momentum: 0.0
+  fedprox:
+    lr: 0.005
+    local_epochs: 3
+    max_grad_norm: 1.0
+    momentum: 0.0
+  scaffold:
+    lr: 0.01
+    local_epochs: 4
+    max_grad_norm: 1.5
+    momentum: 0.0
+  hybrid:
+    lr: 0.0008
+    local_epochs: 3
+    max_grad_norm: 1.0
+    momentum: 0.0
+iid: false
+partition_strategy: hybrid
+dirichlet_alpha: 0.5
+plotting:
+  enabled: true
+  update_interval: 1
+  show_plot: true
+  save_plot: true
+  format: png
+  figsize:
+  - 14
+  - 10
+seed: 2023
+compare_all: true
+strategies:
+- fedavg
+- fedprox
+- scaffold
+- hybrid
+verbose: true

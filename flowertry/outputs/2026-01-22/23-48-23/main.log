@@ -1,0 +1,1082 @@
+[2026-01-22 23:48:24,209][flwr][INFO] - Starting Flower simulation, config: ServerConfig(num_rounds=20, round_timeout=None)
+[2026-01-22 23:48:29,403][flwr][INFO] - Flower VCE: Ray initialized with resources: {'CPU': 10.0, 'memory': 11860972749.0, 'node:127.0.0.1': 1.0, 'object_store_memory': 2147483648.0}
+[2026-01-22 23:48:29,404][flwr][INFO] - Initializing global parameters
+[2026-01-22 23:48:29,404][flwr][INFO] - Requesting initial parameters from one random client
+[2026-01-22 23:48:32,926][flwr][INFO] - Received initial parameters from one random client
+[2026-01-22 23:48:32,926][flwr][INFO] - Evaluating initial parameters
+[2026-01-22 23:48:35,096][flwr][INFO] - initial parameters (loss, other metrics): 717964224.0, {'rmse': 26794.854431401563, 'mae': 21111.8515625, 'r2': -4.715139389038086}
+[2026-01-22 23:48:35,097][flwr][INFO] - FL starting
+[2026-01-22 23:48:35,098][flwr][DEBUG] - fit_round 1: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:48:55,395][flwr][DEBUG] - fit_round 1 received 6 results and 0 failures
+[2026-01-22 23:48:55,405][flwr][WARNING] - No fit_metrics_aggregation_fn provided
+[2026-01-22 23:48:55,887][flwr][INFO] - fit progress: (1, 197326576.0, {'rmse': 14047.297818441808, 'mae': 8656.076171875, 'r2': -0.5707590579986572}, 20.789782124978956)
+[2026-01-22 23:48:55,887][flwr][DEBUG] - evaluate_round 1: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:48:56,293][flwr][DEBUG] - evaluate_round 1 received 6 results and 0 failures
+[2026-01-22 23:48:56,294][flwr][WARNING] - No evaluate_metrics_aggregation_fn provided
+[2026-01-22 23:48:56,295][flwr][DEBUG] - fit_round 2: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:48:56,381][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23804, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:56,381][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23806, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:56,381][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23809, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:56,382][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23807, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:56,382][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23808, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:56,383][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23812, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:56,385][flwr][DEBUG] - fit_round 2 received 0 results and 6 failures
+[2026-01-22 23:48:56,796][flwr][INFO] - fit progress: (2, 197326576.0, {'rmse': 14047.297818441808, 'mae': 8656.076171875, 'r2': -0.5707590579986572}, 21.698998000007123)
+[2026-01-22 23:48:56,796][flwr][DEBUG] - evaluate_round 2: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:48:57,026][flwr][DEBUG] - evaluate_round 2 received 6 results and 0 failures
+[2026-01-22 23:48:57,026][flwr][DEBUG] - fit_round 3: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:48:57,070][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23804, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:57,071][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23806, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:57,081][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23808, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:57,082][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23807, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:57,083][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23809, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:57,087][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23812, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:57,088][flwr][DEBUG] - fit_round 3 received 0 results and 6 failures
+[2026-01-22 23:48:57,543][flwr][INFO] - fit progress: (3, 197326576.0, {'rmse': 14047.297818441808, 'mae': 8656.076171875, 'r2': -0.5707590579986572}, 22.445417707960587)
+[2026-01-22 23:48:57,543][flwr][DEBUG] - evaluate_round 3: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:48:57,778][flwr][DEBUG] - evaluate_round 3 received 6 results and 0 failures
+[2026-01-22 23:48:57,779][flwr][DEBUG] - fit_round 4: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:48:57,829][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23808, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:57,830][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23804, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:57,831][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23812, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:57,834][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23809, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:57,837][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23807, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:57,840][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23806, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:57,841][flwr][DEBUG] - fit_round 4 received 0 results and 6 failures
+[2026-01-22 23:48:58,270][flwr][INFO] - fit progress: (4, 197326576.0, {'rmse': 14047.297818441808, 'mae': 8656.076171875, 'r2': -0.5707590579986572}, 23.172595207986888)
+[2026-01-22 23:48:58,270][flwr][DEBUG] - evaluate_round 4: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:48:58,515][flwr][DEBUG] - evaluate_round 4 received 6 results and 0 failures
+[2026-01-22 23:48:58,516][flwr][DEBUG] - fit_round 5: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:48:58,570][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23806, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:58,572][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23809, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:58,572][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23807, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:58,573][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23804, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:58,573][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23812, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:58,575][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23808, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:58,576][flwr][DEBUG] - fit_round 5 received 0 results and 6 failures
+[2026-01-22 23:48:59,011][flwr][INFO] - fit progress: (5, 197326576.0, {'rmse': 14047.297818441808, 'mae': 8656.076171875, 'r2': -0.5707590579986572}, 23.91382179199718)
+[2026-01-22 23:48:59,011][flwr][DEBUG] - evaluate_round 5: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:48:59,249][flwr][DEBUG] - evaluate_round 5 received 6 results and 0 failures
+[2026-01-22 23:48:59,249][flwr][DEBUG] - fit_round 6: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:48:59,291][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23807, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:59,300][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23809, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:59,301][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23808, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:59,303][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23804, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:59,304][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23812, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:59,306][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23806, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:48:59,306][flwr][DEBUG] - fit_round 6 received 0 results and 6 failures
+[2026-01-22 23:48:59,748][flwr][INFO] - fit progress: (6, 197326576.0, {'rmse': 14047.297818441808, 'mae': 8656.076171875, 'r2': -0.5707590579986572}, 24.650593083002605)
+[2026-01-22 23:48:59,748][flwr][DEBUG] - evaluate_round 6: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:48:59,961][flwr][DEBUG] - evaluate_round 6 received 6 results and 0 failures
+[2026-01-22 23:48:59,962][flwr][DEBUG] - fit_round 7: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:49:00,002][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23804, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:00,004][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23806, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:00,009][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23807, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:00,010][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23808, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:00,011][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23809, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:00,013][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23812, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:00,013][flwr][DEBUG] - fit_round 7 received 0 results and 6 failures
+[2026-01-22 23:49:00,406][flwr][INFO] - fit progress: (7, 197326576.0, {'rmse': 14047.297818441808, 'mae': 8656.076171875, 'r2': -0.5707590579986572}, 25.308971166959964)
+[2026-01-22 23:49:00,407][flwr][DEBUG] - evaluate_round 7: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:49:00,630][flwr][DEBUG] - evaluate_round 7 received 6 results and 0 failures
+[2026-01-22 23:49:00,631][flwr][DEBUG] - fit_round 8: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:49:00,691][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23808, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:00,706][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23807, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:00,729][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23809, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:00,734][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23812, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:00,735][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23806, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:00,736][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23804, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:00,737][flwr][DEBUG] - fit_round 8 received 0 results and 6 failures
+[2026-01-22 23:49:01,153][flwr][INFO] - fit progress: (8, 197326576.0, {'rmse': 14047.297818441808, 'mae': 8656.076171875, 'r2': -0.5707590579986572}, 26.05552166700363)
+[2026-01-22 23:49:01,153][flwr][DEBUG] - evaluate_round 8: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:49:01,250][flwr][DEBUG] - evaluate_round 8 received 6 results and 0 failures
+[2026-01-22 23:49:01,250][flwr][DEBUG] - fit_round 9: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:49:01,291][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23809, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:01,291][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23808, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:01,292][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23807, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:01,300][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23812, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:01,300][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23804, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:01,301][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23806, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:01,302][flwr][DEBUG] - fit_round 9 received 0 results and 6 failures
+[2026-01-22 23:49:01,718][flwr][INFO] - fit progress: (9, 197326576.0, {'rmse': 14047.297818441808, 'mae': 8656.076171875, 'r2': -0.5707590579986572}, 26.62097749998793)
+[2026-01-22 23:49:01,718][flwr][DEBUG] - evaluate_round 9: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:49:01,817][flwr][DEBUG] - evaluate_round 9 received 6 results and 0 failures
+[2026-01-22 23:49:01,818][flwr][DEBUG] - fit_round 10: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:49:01,863][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23812, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:01,868][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23808, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:01,869][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23809, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:01,870][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23807, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:01,871][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23806, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:01,875][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23804, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:01,875][flwr][DEBUG] - fit_round 10 received 0 results and 6 failures
+[2026-01-22 23:49:02,356][flwr][INFO] - fit progress: (10, 197326576.0, {'rmse': 14047.297818441808, 'mae': 8656.076171875, 'r2': -0.5707590579986572}, 27.258912582998164)
+[2026-01-22 23:49:02,356][flwr][DEBUG] - evaluate_round 10: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:49:02,582][flwr][DEBUG] - evaluate_round 10 received 6 results and 0 failures
+[2026-01-22 23:49:02,583][flwr][DEBUG] - fit_round 11: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:49:02,668][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23808, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:02,674][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23809, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:02,676][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23807, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:02,685][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23812, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:02,690][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23804, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:02,690][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23806, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:02,691][flwr][DEBUG] - fit_round 11 received 0 results and 6 failures
+[2026-01-22 23:49:03,310][flwr][INFO] - fit progress: (11, 197326576.0, {'rmse': 14047.297818441808, 'mae': 8656.076171875, 'r2': -0.5707590579986572}, 28.21289208298549)
+[2026-01-22 23:49:03,310][flwr][DEBUG] - evaluate_round 11: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:49:03,619][flwr][DEBUG] - evaluate_round 11 received 6 results and 0 failures
+[2026-01-22 23:49:03,620][flwr][DEBUG] - fit_round 12: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:49:03,675][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23812, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:03,676][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23807, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:03,677][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23806, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:03,678][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23804, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:03,678][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23808, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:03,680][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23809, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:03,680][flwr][DEBUG] - fit_round 12 received 0 results and 6 failures
+[2026-01-22 23:49:04,156][flwr][INFO] - fit progress: (12, 197326576.0, {'rmse': 14047.297818441808, 'mae': 8656.076171875, 'r2': -0.5707590579986572}, 29.059342207969166)
+[2026-01-22 23:49:04,157][flwr][DEBUG] - evaluate_round 12: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:49:04,265][flwr][DEBUG] - evaluate_round 12 received 6 results and 0 failures
+[2026-01-22 23:49:04,266][flwr][DEBUG] - fit_round 13: strategy sampled 6 clients (out of 12)
+[2026-01-22 23:49:04,316][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23804, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:04,317][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23806, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:04,319][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23807, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:04,319][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23809, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:04,320][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23812, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:04,321][flwr][ERROR] - [36mray::launch_and_fit()[39m (pid=23808, ip=127.0.0.1)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/simulation/ray_transport/ray_client_proxy.py", line 148, in launch_and_fit
+    return maybe_call_fit(
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/client.py", line 184, in maybe_call_fit
+    return client.fit(fit_ins)
+  File "/Users/dinukaperera/opt/anaconda3/envs/flower_tutorial/lib/python3.10/site-packages/flwr/client/app.py", line 297, in _fit
+    results = self.numpy_client.fit(parameters, ins.config)  # type: ignore
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/client.py", line 114, in fit
+    train(
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in train
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+  File "/Users/dinukaperera/FLwithFlwr/flowertry/model.py", line 83, in <listcomp>
+    global_params_tensor = [torch.tensor(p, device=device) for p in global_params]
+TypeError: Cannot convert a MPS Tensor to float64 dtype as the MPS framework doesn't support float64. Please use float32 instead.
+[2026-01-22 23:49:04,321][flwr][DEBUG] - fit_round 13 received 0 results and 6 failures
+[2026-01-22 23:49:04,875][flwr][INFO] - fit progress: (13, 197326576.0, {'rmse': 14047.297818441808, 'mae': 8656.076171875, 'r2': -0.5707590579986572}, 29.77787258295575)
+[2026-01-22 23:49:04,875][flwr][DEBUG] - evaluate_round 13: strategy sampled 6 clients (out of 12)

@@ -1,0 +1,48 @@
+{
+  "fedavg": {
+    "strategy": "fedavg",
+    "final_metrics": {
+      "loss": 0.09354266026490801,
+      "rmse": 5840.462310468239,
+      "mae": 2219.624267578125,
+      "r2": 0.7277473698719505,
+      "mape": 10.650457382202148,
+      "accuracy_10": 73.87387156486511,
+      "accuracy_20": 89.58958983421326
+    },
+    "history": {
+      "rounds": [],
+      "loss": [],
+      "rmse": [],
+      "mae": [],
+      "r2": [],
+      "mape": [],
+      "accuracy_10": [],
+      "accuracy_20": []
+    },
+    "partition_info": {
+      "type": "non-iid",
+      "log_transform": true,
+      "clients": {
+        "0": {
+          "name": "Tier_1",
+          "samples": 5341,
+          "mean_target": 9.306103706359863,
+          "std_target": 0.4916820824146271
+        },
+        "1": {
+          "name": "Tier_2",
+          "samples": 9062,
+          "mean_target": 9.580341339111328,
+          "std_target": 0.5162171721458435
+        },
+        "2": {
+          "name": "Tier_3",
+          "samples": 3599,
+          "mean_target": 9.691574096679688,
+          "std_target": 0.5401639938354492
+        }
+      }
+    }
+  }
+}

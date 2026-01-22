@@ -1,0 +1,94 @@
+{
+  "fedprox": {
+    "strategy": "fedprox",
+    "final_metrics": {
+      "loss": 0.08277451754869283,
+      "rmse": 5590.595674881166,
+      "mae": 2022.269287109375,
+      "r2": 0.7505440764065746,
+      "mape": 9.547876358032227,
+      "accuracy_10": 78.77877950668335,
+      "accuracy_20": 91.24124050140381
+    },
+    "history": {
+      "rounds": [],
+      "loss": [],
+      "rmse": [],
+      "mae": [],
+      "r2": [],
+      "mape": [],
+      "accuracy_10": [],
+      "accuracy_20": []
+    },
+    "partition_info": {
+      "type": "non-iid",
+      "log_transform": true,
+      "clients": {
+        "0": {
+          "name": "Tier_1",
+          "samples": 5341,
+          "mean_target": 9.306103706359863,
+          "std_target": 0.4916820824146271
+        },
+        "1": {
+          "name": "Tier_2",
+          "samples": 9062,
+          "mean_target": 9.580341339111328,
+          "std_target": 0.5162171721458435
+        },
+        "2": {
+          "name": "Tier_3",
+          "samples": 3599,
+          "mean_target": 9.691574096679688,
+          "std_target": 0.5401639938354492
+        }
+      }
+    }
+  },
+  "hybrid": {
+    "strategy": "hybrid",
+    "final_metrics": {
+      "loss": 0.09576035047078633,
+      "rmse": 6376.700400677454,
+      "mae": 2215.475341796875,
+      "r2": 0.6754589143447155,
+      "mape": 10.388795852661133,
+      "accuracy_10": 76.52652859687805,
+      "accuracy_20": 90.89089035987854
+    },
+    "history": {
+      "rounds": [],
+      "loss": [],
+      "rmse": [],
+      "mae": [],
+      "r2": [],
+      "mape": [],
+      "accuracy_10": [],
+      "accuracy_20": []
+    },
+    "partition_info": {
+      "type": "non-iid",
+      "log_transform": true,
+      "clients": {
+        "0": {
+          "name": "Tier_1",
+          "samples": 5341,
+          "mean_target": 9.306103706359863,
+          "std_target": 0.4916820824146271
+        },
+        "1": {
+          "name": "Tier_2",
+          "samples": 9062,
+          "mean_target": 9.580341339111328,
+          "std_target": 0.5162171721458435
+        },
+        "2": {
+          "name": "Tier_3",
+          "samples": 3599,
+          "mean_target": 9.691574096679688,
+          "std_target": 0.5401639938354492
+        }
+      }
+    }
+  }
+}

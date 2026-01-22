@@ -1,0 +1,31 @@
+strategy: compare
+num_rounds: 50
+num_clients: 3
+batch_size: 32
+input_dim: 19
+num_clients_per_round_fit: 3
+num_clients_per_round_eval: 3
+non_iid: true
+config_fit:
+  lr: 0.001
+  momentum: 0.0
+  local_epochs: 5
+fedprox_base:
+  mu: 0.1
+  name: Base FedProx (μ=0.1)
+fedprox_multilayer:
+  mu: 0.01
+  layer_mus:
+    input: 0.005
+    hidden1: 0.01
+    hidden2: 0.015
+    output: 0.02
+  name: Multi-Layer FedProx
+plotting:
+  save_plots: true
+  plot_format: png
+  figsize:
+  - 12
+  - 8
+  dpi: 300
+data_path: ./data/IndianPersonalFinance/indianPersonalFinanceAndSpendingHabits.csv

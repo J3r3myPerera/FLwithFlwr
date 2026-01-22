@@ -1,0 +1,52 @@
+strategy: fedavg
+num_rounds: 50
+num_clients: 3
+local_epochs: 5
+batch_size: 32
+learning_rate: 0.01
+fedprox:
+  mu: 0.1
+scaffold:
+  learning_rate_correction: 1.0
+hybrid:
+  fedprox_weight: 0.2
+  scaffold_weight: 0.3
+  mu: 0.02
+  dynamic_weights: false
+  weight_increase_rate: 1.05
+  weight_max: 0.6
+  adaptive_mu: true
+  mu_decay: 0.96
+  mu_min: 0.0001
+  mu_adaptation_rate: 1.1
+  warmup_rounds: 8
+  warmup_type: exponential
+  warmup_start_factor: 0.05
+  gradient_clip: true
+  gradient_clip_norm: 1.0
+  use_momentum: true
+  momentum: 0.9
+  use_lr_scheduler: true
+  lr_warmup_rounds: 3
+  lr_decay_start: 10
+  lr_decay: 0.99
+  lr_min: 0.0005
+  per_client_adaptation: true
+  client_mu_range:
+  - 0.01
+  - 0.1
+iid: false
+plotting:
+  enabled: true
+  update_interval: 1
+  show_plot: true
+  save_plot: true
+  format: png
+  figsize:
+  - 14
+  - 10
+seed: 2023
+compare_all: true
+strategies:
+- fedavg
+verbose: true

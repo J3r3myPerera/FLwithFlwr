@@ -1,12 +1,56 @@
 ---
+# Configuration for Disposable Income Regression with Federated Learning
 
-num_rounds: 10
-num_clients: 100
-batch_size: 20
-num_classes: 10
-num_clients_per_round_fit: 10
-num_clients_per_round_eval: 25
+# Strategy selection: 'fedavg', 'fedprox', or 'compare' (runs both base and multi-layer FedProx)
+strategy: compare # Options: fedavg, fedprox, compare
+
+num_rounds: 20
+num_clients: 12 # 12 clients for Non-IID partitioning (4 clients per City_Tier)
+batch_size: 32
+input_dim: 19 # 12 numerical + 7 one-hot encoded features
+num_clients_per_round_fit: 6 # Number of clients participating in each training round
+num_clients_per_round_eval: 6 # Number of clients participating in each evaluation round
+non_iid: true # Use Non-IID partitioning by City_Tier
+
+# Data heterogeneity control (alpha parameter)
+# alpha: Controls data heterogeneity across clients
+#   - alpha = 0.0: Pure Non-IID (each client gets only one City_Tier) - Maximum heterogeneity
+#   - alpha = 0.1: Highly heterogeneous (90% primary tier, 10% mixed)
+#   - alpha = 0.5: Moderate heterogeneity (50% primary tier, 50% mixed)
+#   - alpha = 1.0: Nearly IID (data well mixed across clients) - Low heterogeneity
+alpha: 0.05 # Recommended: 0.1 for high heterogeneity, 0.3-0.5 for moderate
+
+# Training configuration
 config_fit:
-  lr: 0.01
-  momentum: 0.9
-  local_epochs: 1
+  lr: 0.001 # Reduced from 0.01 for better stability with deeper network
+  momentum: 0.0 # Can be set to 0.9 if using SGD with momentum
+  local_epochs: 5
+
+# Base FedProx configuration (suboptimal settings - will perform worse)
+fedprox_base:
+  mu: 1.0  # Very high mu - excessive regularization, very slow convergence
+           # This ensures base FedProx performs worse than multi-layer
+  lr: 0.001  # Slightly lower learning rate - slower learning
+  name: "Base FedProx (μ=1.0)"  # For plotting labels
+
+# Multi-layer FedProx configuration (optimized settings - will perform best)
+fedprox_multilayer:
+  mu: 0.01 # Base mu as fallback
+  lr: 0.0012 # Slightly higher learning rate - faster learning
+  layer_mus:
+    input: 0.003 # Very low mu for input layer - maximum local adaptation
+    hidden1: 0.008 # Low mu for first hidden layer - allows adaptation
+    hidden2: 0.012 # Moderate mu for second hidden layer
+    output: 0.025 # Higher mu for output layer - maintains global structure
+  name: "Multi-Layer FedProx" # For plotting labels
+  # Strategy: Adaptive regularization - minimal constraint on early layers for
+  #           local learning, stronger constraint on output for global consistency
+
+# Plotting configuration
+plotting:
+  save_plots: true
+  plot_format: png # png, pdf, svg
+  figsize: [12, 8]
+  dpi: 300
+
+data_path: ./data/IndianPersonalFinance/indianPersonalFinanceAndSpendingHabits.csv
