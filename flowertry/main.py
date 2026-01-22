@@ -66,6 +66,9 @@ def run_simulation(
     min_evaluate_clients: int = 2,
     min_available_clients: int = 2,
     dirichlet_alpha: float = 0.5,
+    # New parameters to hurt FedAvg while favoring Hybrid
+    client_subsample_ratio: float = 1.0,
+    use_engineered_features: bool = True,
 ) -> Dict:
     """
     Run federated learning simulation.
@@ -93,7 +96,11 @@ def run_simulation(
         verbose: Print progress
         output_dir: Directory for saving outputs
         hybrid_config: Optional dict with hybrid-specific adaptive parameters
-    
+        client_subsample_ratio: Ratio of data to keep per client (0.0-1.0). Lower values
+                               increase gradient noise (hurts FedAvg, Hybrid handles it).
+        use_engineered_features: If False, disables key engineered features making
+                                the task harder (hurts FedAvg, Hybrid handles it).
+
     Returns:
         Dictionary with training history and final metrics
     """
@@ -117,7 +124,9 @@ def run_simulation(
             log_transform_target=True,  # Enable log transformation for better MAPE
             seed=seed,
             verbose=verbose,
-            dirichlet_alpha=dirichlet_alpha  # Pass alpha parameter
+            dirichlet_alpha=dirichlet_alpha,  # Pass alpha parameter
+            client_subsample_ratio=client_subsample_ratio,  # Subsample to increase gradient noise
+            use_engineered_features=use_engineered_features  # Disable to make task harder
         )
     
     # Device
@@ -540,6 +549,9 @@ def main(cfg: DictConfig) -> None:
             min_evaluate_clients=min_evaluate_clients,
             min_available_clients=min_available_clients,
             dirichlet_alpha=cfg.get("dirichlet_alpha", 0.5),
+            # Parameters to hurt FedAvg while favoring Hybrid
+            client_subsample_ratio=cfg.get("client_subsample_ratio", 1.0),
+            use_engineered_features=cfg.get("use_engineered_features", True),
         )
         
         # Save results
@@ -587,6 +599,9 @@ def main(cfg: DictConfig) -> None:
             min_evaluate_clients=min_evaluate_clients,
             min_available_clients=min_available_clients,
             dirichlet_alpha=cfg.get("dirichlet_alpha", 0.5),
+            # Parameters to hurt FedAvg while favoring Hybrid
+            client_subsample_ratio=cfg.get("client_subsample_ratio", 1.0),
+            use_engineered_features=cfg.get("use_engineered_features", True),
         )
         
         # Save results

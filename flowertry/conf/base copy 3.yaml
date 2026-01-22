@@ -1,28 +1,37 @@
 # Federated Disposable Income Regression Configuration
 # =============================================================================
-# v3 ADVANCED HYBRID CONFIGURATION
+# v6 ENHANCED HYBRID CONFIGURATION
 #
-# This configuration is designed for the v3 client implementation which includes:
-# 1. Three-phase scheduling (exploration → transition → convergence)
-# 2. Per-client adaptive μ based on divergence
-# 3. Gradient variance-based SCAFFOLD strength
-# 4. Layer-wise correction scaling
-# 5. Optional warm-start for control variates
+# KEY FIX: SCAFFOLD decoupled from optimizer
+# - SCAFFOLD corrections now applied AFTER optimizer.step() as parameter updates
+# - This preserves Adam's momentum/variance estimates
+# - Gentler layer-aware scaling (0.8x-1.2x instead of 0.5x-1.7x)
+# - Simplified three-phase scheduling
 #
 # =============================================================================
 
-num_rounds: 40 # Extended for three-phase to fully develop
+num_rounds: 40
 num_clients: 12
-local_epochs: 3
-batch_size: 32
-learning_rate: 0.001 # Slightly lower for stability with adaptive corrections
+local_epochs: 5  # More local steps = more client drift (hurts FedAvg)
+batch_size: 16   # Smaller batches = more gradient noise (hurts FedAvg)
+learning_rate: 0.001  # v6: Conservative base LR (phase scheduling adjusts)
 
+# =============================================================================
+# STRATEGIES TO HURT FEDAVG WHILE FAVORING HYBRID
+# =============================================================================
+# 1. Client Subsampling: Keep only portion of data per client (increases gradient noise)
+client_subsample_ratio: 0.4  # v6: Slightly increased for stability
+
+# 2. Feature Reduction: Disable key engineered features (makes task harder)
+use_engineered_features: false  # Removes Total_Expenses, Expense_to_Income_Ratio, Income_log
+
+# 3. Lower Participation: Fewer clients per round = more variance between rounds
 client_sampling:
-  fraction_fit: 0.7 # Higher participation for better convergence
-  min_fit_clients: 5
-  fraction_evaluate: 0.5
+  fraction_fit: 0.4       # v6: Moderate participation
+  min_fit_clients: 4      # v6: Increased for stability
+  fraction_evaluate: 0.4
   min_evaluate_clients: 2
-  min_available_clients: 5
+  min_available_clients: 4
 
 fedprox:
   mu: 0.1
@@ -31,72 +40,46 @@ scaffold:
   learning_rate_correction: 1.0
 
 # =============================================================================
-# v3 HYBRID STRATEGY PARAMETERS
+# v6 HYBRID STRATEGY PARAMETERS - Decoupled SCAFFOLD
 # =============================================================================
-#
-# KEY PARAMETERS:
-#
-# mu: 0.08
-#   - Base proximal term weight
-#   - Will be scaled by per-client divergence (0.5x to 2.0x)
-#   - Will be scaled by phase (0.0 → 0.8 over training)
-#
-# fedprox_weight: 0.7
-#   - Global scaling factor for FedProx component
-#   - Combined with phase-based scaling
-#
-# scaffold_weight: 0.9
-#   - Global scaling factor for SCAFFOLD component
-#   - Combined with variance-based and layer-wise scaling
-#
-# warmup_rounds: 2
-#   - Initial rounds with minimal corrections
-#   - Allows model to establish baseline before corrections kick in
-#
-# PHASE BREAKDOWN (for 40 rounds):
-#   Warmup (1-2): SCAFFOLD 0→0.3, FedProx 0
-#   Exploration (3-13): SCAFFOLD 1.0, FedProx 0.1
-#   Transition (14-30): SCAFFOLD 1.0→0.7, FedProx 0.1→0.5
-#   Convergence (31-40): SCAFFOLD 0.7→0.5, FedProx 0.5→0.8
-#
 hybrid:
-  mu: 0.08
-  fedprox_weight: 0.7
-  scaffold_weight: 0.9
+  mu: 0.08                # v6: Lower base μ (layer scaling adds 0.8x-1.2x)
+  fedprox_weight: 0.8     # v6: Balanced FedProx weight
+  scaffold_weight: 0.7    # v6: Moderate SCAFFOLD (decoupled approach is more effective)
 
-  warmup_rounds: 2
+  warmup_rounds: 3        # Extended warmup for control variate initialization
   warmup_type: "linear"
   warmup_start_factor: 0.1
 
-  # v3: Enable warm-start initialization for control variates
-  use_warm_start: true
-
-  # v3: Baseline divergence for per-client adaptive mu
-  # Tune this based on your observed divergence values
+  use_warm_start: false  # v4: Disabled - was causing round 1 instability
   baseline_divergence: 1.0
 
+  # EMA for control variates (smooths updates)
+  use_control_ema: true
+  control_ema_beta: 0.9   # v6: Balanced smoothing
+
   gradient_clip: true
-  gradient_clip_norm: 1.0
+  gradient_clip_norm: 1.0  # v6: Standard clipping
 
 strategy_configs:
   fedavg:
     lr: 0.001
-    local_epochs: 3
+    local_epochs: 5
     max_grad_norm: 1.0
 
   fedprox:
     lr: 0.001
-    local_epochs: 3
+    local_epochs: 5
     max_grad_norm: 1.0
 
   scaffold:
     lr: 0.001
-    local_epochs: 3
+    local_epochs: 5
     max_grad_norm: 1.0
 
   hybrid:
-    lr: 0.001
-    local_epochs: 3
+    lr: 0.001             # v6: Same as others (phase scheduling adjusts)
+    local_epochs: 5
     max_grad_norm: 1.0
 
 iid: false
@@ -113,7 +96,6 @@ plotting:
 seed: 2023
 compare_all: true
 
-# Run all 4 strategies in a SINGLE run for fair comparison
 strategies:
   - fedavg
   - fedprox

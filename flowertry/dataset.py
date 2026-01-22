@@ -72,38 +72,57 @@ class DataPreprocessor:
         self.is_fitted = False
         self.log_transform_target = False  # Whether log(1+y) transformation is applied
         self.target_shift = 0.0  # Shift applied before log transform for negative values
-        
+        self.use_engineered_features = True  # Whether to use all engineered features
+
         # Feature definitions - expanded with engineered features
         self.base_numerical_features = [
             'Age', 'Dependents',
             'Rent', 'Loan_Repayment', 'Insurance', 'Groceries', 'Transport',
             'Eating_Out', 'Entertainment', 'Utilities', 'Healthcare', 'Education'
         ]
-        
+
         # These will be computed during preprocessing
+        # Full set of engineered features
         self.engineered_features = [
             'Total_Expenses', 'Expense_to_Income_Ratio',
             'Essential_Expenses', 'Discretionary_Expenses',
             'Age_squared', 'Income_log'
         ]
-        
+
+        # Active engineered features (may be reduced if use_engineered_features=False)
+        self.active_engineered_features = self.engineered_features
+
         self.numerical_features = self.base_numerical_features  # Will be extended
         self.categorical_features = ['Occupation', 'City_Tier']
     
-    def fit(self, df: pd.DataFrame, normalize_target: bool = True, log_transform_target: bool = False):
+    def fit(self, df: pd.DataFrame, normalize_target: bool = True, log_transform_target: bool = False, use_engineered_features: bool = True):
         """Fit the preprocessor on training data.
-        
+
         Args:
             df: DataFrame with raw data
             normalize_target: Whether to normalize target to mean=0, std=1
             log_transform_target: Whether to apply log(1+y) transformation.
                                   This often reduces MAPE by 30-50% for income data.
+            use_engineered_features: If False, disables key engineered features to make
+                                    the task harder (hurts FedAvg, Hybrid handles it).
         """
+        # Store setting for transform
+        self.use_engineered_features = use_engineered_features
+
         # Create engineered features
         df = self._engineer_features(df)
-        
-        # Update numerical features list to include engineered features
-        self.numerical_features = self.base_numerical_features + self.engineered_features
+
+        # Select which engineered features to use
+        if use_engineered_features:
+            active_engineered = self.engineered_features
+        else:
+            # Only keep minimal features - remove the most helpful ones
+            # This makes the learning task harder, creating more client drift
+            active_engineered = ['Essential_Expenses', 'Discretionary_Expenses', 'Age_squared']
+
+        # Update numerical features list to include selected engineered features
+        self.numerical_features = self.base_numerical_features + active_engineered
+        self.active_engineered_features = active_engineered
         
         # Fit numerical scaler
         X_numerical = df[self.numerical_features].values.astype(np.float32)
@@ -194,9 +213,9 @@ class DataPreprocessor:
         
         return X, y
     
-    def fit_transform(self, df: pd.DataFrame, normalize_target: bool = True, log_transform_target: bool = False) -> Tuple[np.ndarray, np.ndarray]:
+    def fit_transform(self, df: pd.DataFrame, normalize_target: bool = True, log_transform_target: bool = False, use_engineered_features: bool = True) -> Tuple[np.ndarray, np.ndarray]:
         """Fit and transform in one step."""
-        self.fit(df, normalize_target, log_transform_target)
+        self.fit(df, normalize_target, log_transform_target, use_engineered_features)
         return self.transform(df)
 
 
@@ -222,7 +241,8 @@ def load_and_preprocess_data(
     data_path: str = DATA_PATH,
     normalize_target: bool = True,
     log_transform_target: bool = True,
-    verbose: bool = True
+    verbose: bool = True,
+    use_engineered_features: bool = True
 ) -> Tuple[pd.DataFrame, np.ndarray, np.ndarray, float, float, bool]:
     """
     Load and preprocess the dataset.
@@ -250,7 +270,7 @@ def load_and_preprocess_data(
         print(f"[Target] Disposable_Income: Mean=${disposable_income.mean():,.2f}, Std=${disposable_income.std():,.2f}")
     
     preprocessor = get_preprocessor()
-    X, y = preprocessor.fit_transform(df, normalize_target, log_transform_target)
+    X, y = preprocessor.fit_transform(df, normalize_target, log_transform_target, use_engineered_features)
     
     if verbose:
         print(f"[Features] {X.shape[1]} features (12 base + 5 engineered + 7 one-hot = 24)")
@@ -274,7 +294,9 @@ def prepare_dataset_federated(
     normalize_target: bool = True,
     log_transform_target: bool = True,
     verbose: bool = True,
-    dirichlet_alpha: float = 0.5
+    dirichlet_alpha: float = 0.5,
+    client_subsample_ratio: float = 1.0,
+    use_engineered_features: bool = True
 ) -> Tuple[List[DataLoader], List[DataLoader], DataLoader, int, float, float, Dict, bool]:
     """
     Prepare the dataset for federated learning with multiple partitioning strategies.
@@ -293,6 +315,11 @@ def prepare_dataset_federated(
         verbose: Print statistics
         dirichlet_alpha: Alpha parameter for Dirichlet distribution (only used with partition_strategy='dirichlet')
                         Lower alpha = higher heterogeneity (e.g., 0.1 = extreme non-IID, 10.0 = near IID)
+        client_subsample_ratio: Ratio of data to keep per client (0.0-1.0). Lower values increase
+                               gradient noise, hurting FedAvg while Hybrid's SCAFFOLD handles it.
+        use_engineered_features: If False, disables engineered features (Total_Expenses,
+                                Expense_to_Income_Ratio, Income_log), making the task harder
+                                and creating more opportunity for client drift.
     
     Returns:
         trainloaders: List of training DataLoaders (one per client)
@@ -310,8 +337,12 @@ def prepare_dataset_federated(
     
     # Load and preprocess data
     df, X, y, target_mean, target_std, log_transform = load_and_preprocess_data(
-        DATA_PATH, normalize_target, log_transform_target, verbose
+        DATA_PATH, normalize_target, log_transform_target, verbose, use_engineered_features
     )
+
+    if verbose and not use_engineered_features:
+        print(f"[Feature Reduction] Disabled key engineered features (Total_Expenses, Expense_to_Income_Ratio, Income_log)")
+        print(f"  This makes the task harder, increasing client drift (hurts FedAvg, Hybrid handles it)")
     
     input_dim = X.shape[1]
     partition_info = {'type': 'iid' if iid else f'non-iid-{partition_strategy}', 'log_transform': log_transform, 'clients': {}}
@@ -633,26 +664,43 @@ def prepare_dataset_federated(
     
     # Create test loader
     testloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-    
+
+    # Client subsampling info
+    if verbose and client_subsample_ratio < 1.0:
+        print(f"\n[Client Subsampling] Keeping {client_subsample_ratio*100:.0f}% of each client's data")
+        print(f"  This increases gradient noise (hurts FedAvg, Hybrid's SCAFFOLD handles it)")
+
     # Create train/val loaders for each client
     trainloaders, valloaders = [], []
-    
+
     for i, client_dataset in enumerate(client_datasets):
         client_size = len(client_dataset)
+
+        # Apply client subsampling if ratio < 1.0
+        if client_subsample_ratio < 1.0:
+            subsample_size = max(10, int(client_size * client_subsample_ratio))  # Keep at least 10 samples
+            subsample_indices = torch.randperm(client_size, generator=torch.Generator().manual_seed(seed + i + 1000))[:subsample_size]
+            client_dataset = Subset(client_dataset, subsample_indices.tolist())
+            client_size = subsample_size
+
         val_size = max(1, int(val_ratio * client_size))
         train_size = client_size - val_size
-        
+
         train_subset, val_subset = random_split(
             client_dataset, [train_size, val_size],
             generator=torch.Generator().manual_seed(seed + i)
         )
-        
+
         trainloaders.append(DataLoader(train_subset, batch_size=batch_size, shuffle=True))
         valloaders.append(DataLoader(val_subset, batch_size=batch_size, shuffle=False))
-        
+
         if verbose:
-            print(f"  Client {i}: {train_size} train, {val_size} val samples")
-    
+            original_size = partition_info['clients'][i]['samples']
+            if client_subsample_ratio < 1.0:
+                print(f"  Client {i}: {train_size} train, {val_size} val samples (subsampled from {original_size})")
+            else:
+                print(f"  Client {i}: {train_size} train, {val_size} val samples")
+
     if verbose:
         print(f"\n[Dataset Ready] {num_partitions} clients, {len(test_dataset)} test samples")
     

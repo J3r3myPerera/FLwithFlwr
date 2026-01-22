@@ -1,29 +1,36 @@
 """
-Federated Learning Client - v3 Advanced Hybrid Implementation
-=============================================================
+Federated Learning Client - v6 Decoupled SCAFFOLD Hybrid Implementation
+========================================================================
 
-This version combines the top improvements for maximum hybrid performance:
+CRITICAL FIX (v6): SCAFFOLD corrections are now DECOUPLED from the optimizer.
+- SCAFFOLD corrections applied AFTER optimizer.step() as parameter updates
+- This preserves Adam's momentum/variance estimates
+- Results in more stable training and better convergence
 
-1. THREE-PHASE SCHEDULING
-   - Exploration (0-30%): SCAFFOLD dominant, minimal FedProx
-   - Transition (30-70%): Balanced, gradual shift
-   - Convergence (70-100%): FedProx increases, SCAFFOLD stabilizes
+Key Features:
 
-2. PER-CLIENT ADAPTIVE μ
+1. DECOUPLED SCAFFOLD (v6 - Critical Fix)
+   - SCAFFOLD corrections no longer modify gradients before optimizer.step()
+   - Instead, corrections are applied as direct parameter updates AFTER optimizer.step()
+   - This preserves Adam's internal state (momentum, variance estimates)
+
+2. THREE-PHASE SCHEDULING
+   - Warmup (rounds 1-3): Gentle start, minimal corrections
+   - Exploration (3-30%): SCAFFOLD dominant (0.8), minimal FedProx (0.15)
+   - Transition (30-70%): Gradual shift to balanced
+   - Convergence (70-100%): FedProx increases for stability
+
+3. PER-CLIENT ADAPTIVE μ
    - Clients with high drift get more FedProx regularization
-   - Stable clients get more freedom to learn locally
+   - Conservative scaling range (0.7x-1.5x)
 
-3. GRADIENT VARIANCE-BASED SCAFFOLD
+4. GRADIENT VARIANCE-BASED SCAFFOLD
    - High gradient variance → stronger SCAFFOLD correction
-   - Responds to actual training dynamics, not just round number
+   - Tighter cap (1.2x) for stability
 
-4. LAYER-WISE CORRECTIONS
-   - Early layers (features): Less SCAFFOLD, more stable
-   - Later layers (task-specific): More SCAFFOLD, handles drift
-
-5. IMPROVED CONTROL VARIATE UPDATE
-   - Better normalization for AdamW compatibility
-   - Optional warm-start initialization
+5. LAYER-WISE CORRECTIONS
+   - Early layers (features): Less correction (0.85x)
+   - Later layers (task-specific): More correction (1.15x)
 """
 
 import torch
@@ -288,187 +295,208 @@ class RegressionClient(fl.client.NumPyClient):
     
     def _train_hybrid(self, config: Dict[str, Scalar] = None) -> Tuple[float, List[np.ndarray]]:
         """
-        v3 ADVANCED HYBRID: Combines all improvements
-        
+        v6 DECOUPLED SCAFFOLD HYBRID: Critical fix for Adam compatibility
+
+        KEY FIX (v6): SCAFFOLD corrections applied AFTER optimizer.step()
+        - This preserves Adam's momentum/variance estimates
+        - SCAFFOLD corrections are now parameter updates, not gradient modifications
+        - Results in more stable training and better convergence
+
+        Features:
         1. Three-phase scheduling (exploration → transition → convergence)
         2. Per-client adaptive μ based on divergence
-        3. Gradient variance-based SCAFFOLD strength
-        4. Layer-wise correction scaling
-        5. Optional warm-start for control variates
+        3. Gradient variance-based SCAFFOLD strength (capped)
+        4. Layer-wise correction scaling (gentler: 0.85x-1.15x)
+        5. DECOUPLED SCAFFOLD (v6 critical fix)
         """
         if self.client_control is None or self.server_control is None:
             self._init_control_variates()
-        
+
         self.model.train()
-        
+
         if config is None:
             config = {}
         server_round = int(config.get("server_round", 1))
-        num_rounds = int(config.get("num_rounds", 30))
-        warmup_rounds = int(config.get("warmup_rounds", 2))
-        
-        # v3: Optional warm-start on first round
-        use_warm_start = config.get("use_warm_start", True)
+        num_rounds = int(config.get("num_rounds", 40))
+        warmup_rounds = int(config.get("warmup_rounds", 3))
+
+        # Disable warm-start by default - it was causing instability
+        use_warm_start = config.get("use_warm_start", False)
         if server_round == 1 and use_warm_start:
             self._warm_start_control_variates()
-        
+
         # Track staleness for clients that skip rounds
         self.control_staleness = server_round - self.last_participated_round - 1
         staleness_factor = 1.0 / (1.0 + 0.1 * max(0, self.control_staleness))
-        
+
         # ================================================================
         # IMPROVEMENT 1: Three-Phase Scheduling
         # ================================================================
         exploration_end = warmup_rounds + int((num_rounds - warmup_rounds) * 0.3)
         transition_end = warmup_rounds + int((num_rounds - warmup_rounds) * 0.7)
-        
+
         if server_round <= warmup_rounds:
-            # WARMUP: Gentle start
+            # WARMUP: Very gentle start - minimal SCAFFOLD
             warmup_progress = server_round / max(warmup_rounds, 1)
-            base_scaffold = 0.3 * warmup_progress
-            base_fedprox = 0.0
+            base_scaffold = 0.2 * warmup_progress
+            base_fedprox = 0.05 * warmup_progress
             phase = "warmup"
-            
+
         elif server_round <= exploration_end:
-            # EXPLORATION: SCAFFOLD dominant
-            base_scaffold = 1.0
-            base_fedprox = 0.1
+            # EXPLORATION: SCAFFOLD dominant but not too aggressive
+            base_scaffold = 0.8
+            base_fedprox = 0.15
             phase = "exploration"
-            
+
         elif server_round <= transition_end:
             # TRANSITION: Gradual shift
             progress = (server_round - exploration_end) / max(transition_end - exploration_end, 1)
-            base_scaffold = 1.0 - 0.3 * progress  # 1.0 → 0.7
-            base_fedprox = 0.1 + 0.4 * progress   # 0.1 → 0.5
+            base_scaffold = 0.8 - 0.2 * progress  # 0.8 → 0.6
+            base_fedprox = 0.15 + 0.35 * progress  # 0.15 → 0.5
             phase = "transition"
-            
+
         else:
-            # CONVERGENCE: FedProx increases
+            # CONVERGENCE: FedProx increases for stability
             progress = (server_round - transition_end) / max(num_rounds - transition_end, 1)
-            base_scaffold = 0.7 - 0.2 * progress  # 0.7 → 0.5
+            base_scaffold = 0.6 - 0.1 * progress  # 0.6 → 0.5
             base_fedprox = 0.5 + 0.3 * progress   # 0.5 → 0.8
             phase = "convergence"
-        
+
         # ================================================================
         # IMPROVEMENT 2: Per-Client Adaptive μ
         # ================================================================
         client_divergence = self._compute_client_divergence()
-        
-        # Normalize divergence (tune baseline based on your data)
+
         baseline_divergence = config.get("baseline_divergence", 1.0)
         divergence_ratio = client_divergence / baseline_divergence
-        
-        # Scale μ: high divergence → higher μ (more regularization)
-        divergence_scale = np.clip(divergence_ratio, 0.5, 2.0)
-        
+
+        # Conservative scaling range (0.7-1.5)
+        divergence_scale = np.clip(divergence_ratio, 0.7, 1.5)
+
         adaptive_mu = base_fedprox * self.mu * self.fedprox_weight * divergence_scale
-        
+
         # ================================================================
         # Setup optimizer and scheduler
         # ================================================================
         optimizer = torch.optim.AdamW(
-            self.model.parameters(), 
+            self.model.parameters(),
             lr=self.learning_rate,
             weight_decay=1e-4
         )
-        
+
         scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(
-            optimizer, 
-            T_max=len(self.trainloader) * self.local_epochs, 
+            optimizer,
+            T_max=len(self.trainloader) * self.local_epochs,
             eta_min=self.learning_rate * 0.1
         )
-        
+
         initial_params = [p.clone().detach() for p in self.model.parameters()]
         num_params = len(initial_params)
-        
+
+        # v6: Precompute SCAFFOLD corrections for efficiency
+        scaffold_correction = []
+        for c_i, c in zip(self.client_control, self.server_control):
+            correction = c.to(self.device) - c_i.to(self.device)
+            scaffold_correction.append(correction)
+
         total_loss = 0.0
         n_batches = 0
         total_steps = 0
         batch_gradient_norms = []
-        
+
         for epoch in range(self.local_epochs):
             for X_batch, y_batch in self.trainloader:
                 X_batch = X_batch.to(self.device)
                 y_batch = y_batch.to(self.device)
-                
+
                 y_pred = self.model(X_batch)
                 mse_loss = self.criterion(y_pred, y_batch)
-                
-                # FedProx proximal term in loss
+
+                # FedProx proximal term in loss (this stays in the loss)
                 proximal_term = 0.0
                 if self.global_params is not None and adaptive_mu > 0:
                     for local_p, global_p in zip(self.model.parameters(), self.global_params):
                         proximal_term += torch.sum((local_p - global_p.to(self.device)) ** 2)
                     proximal_term = (adaptive_mu / 2.0) * proximal_term
-                
+
                 loss = mse_loss + proximal_term
-                
+
                 optimizer.zero_grad()
                 loss.backward()
-                
+
                 # ================================================================
                 # IMPROVEMENT 3: Gradient Variance-Based SCAFFOLD Strength
                 # ================================================================
                 grad_norm = sum(
-                    p.grad.norm().item() ** 2 for p in self.model.parameters() 
+                    p.grad.norm().item() ** 2 for p in self.model.parameters()
                     if p.grad is not None
                 ) ** 0.5
                 batch_gradient_norms.append(grad_norm)
-                
+
                 # Compute variance factor from recent gradients
                 if len(batch_gradient_norms) >= 5:
                     recent_norms = batch_gradient_norms[-10:]
                     grad_mean = np.mean(recent_norms)
                     grad_variance = np.var(recent_norms)
-                    
-                    # Higher variance → stronger correction (capped at 1.5x)
-                    variance_factor = min(1.5, 1.0 + grad_variance / (grad_mean + 1e-8))
+
+                    # Tighter cap (1.2x) and smaller scaling
+                    variance_factor = min(1.2, 1.0 + 0.5 * grad_variance / (grad_mean + 1e-8))
                 else:
                     variance_factor = 1.0
-                
-                # Apply staleness factor and variance factor
-                scaffold_strength = (
-                    base_scaffold * self.scaffold_weight * 
-                    variance_factor * staleness_factor
-                )
-                
-                # ================================================================
-                # IMPROVEMENT 4: Layer-Wise Corrections
-                # ================================================================
-                with torch.no_grad():
-                    for param_idx, (param, c_i, c) in enumerate(zip(
-                        self.model.parameters(),
-                        self.client_control,
-                        self.server_control
-                    )):
-                        if param.grad is not None:
-                            # Layer scaling: early layers less correction, later layers more
-                            layer_progress = param_idx / max(num_params - 1, 1)
-                            
-                            # SCAFFOLD: 0.7x for first layer → 1.3x for last layer
-                            layer_scaffold_scale = 0.7 + 0.6 * layer_progress
-                            
-                            layer_scaffold = scaffold_strength * layer_scaffold_scale
-                            correction = layer_scaffold * (c.to(self.device) - c_i.to(self.device))
-                            param.grad.add_(correction)
-                
+
+                # Clip gradients BEFORE optimizer step
                 torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=self.max_grad_norm)
+
+                # ================================================================
+                # v6 KEY FIX: Optimizer step with UNMODIFIED gradients
+                # This preserves Adam's momentum/variance estimates
+                # ================================================================
                 optimizer.step()
                 scheduler.step()
-                
+
+                # Get current learning rate for proper scaling
+                effective_lr = scheduler.get_last_lr()[0]
+
+                # ================================================================
+                # v6 KEY FIX: Apply SCAFFOLD as POST-OPTIMIZER parameter correction
+                # This is the critical decoupling - SCAFFOLD doesn't interfere with Adam
+                # ================================================================
+                scaffold_strength = (
+                    base_scaffold * self.scaffold_weight *
+                    variance_factor * staleness_factor
+                )
+
+                # Apply SCAFFOLD correction to parameters (not gradients!)
+                with torch.no_grad():
+                    for param_idx, (param, correction) in enumerate(zip(
+                        self.model.parameters(),
+                        scaffold_correction
+                    )):
+                        # Layer scaling: early layers less correction, later layers more
+                        layer_progress = param_idx / max(num_params - 1, 1)
+
+                        # Gentler scaling (0.85x-1.15x)
+                        layer_scaffold_scale = 0.85 + 0.3 * layer_progress
+
+                        layer_scaffold = scaffold_strength * layer_scaffold_scale
+
+                        # v6: Scale by learning rate for proper magnitude
+                        # Apply as parameter update, not gradient modification
+                        param.add_(layer_scaffold * effective_lr * correction)
+
                 total_loss += mse_loss.item()
                 n_batches += 1
                 total_steps += 1
-        
+
         # Update gradient norm history (keep last 100)
         self.gradient_norm_history.extend(batch_gradient_norms)
         self.gradient_norm_history = self.gradient_norm_history[-100:]
-        
+
         # ================================================================
         # Control Variate Update
         # ================================================================
         old_client_control = [c.clone() for c in self.client_control]
-        
+
         with torch.no_grad():
             for i, (c_i, c, x_0, x_K) in enumerate(zip(
                 self.client_control, self.server_control,
@@ -476,15 +504,15 @@ class RegressionClient(fl.client.NumPyClient):
             )):
                 param_diff = (x_0.to(self.device) - x_K.to(self.device)) / total_steps
                 self.client_control[i] = c_i.to(self.device) - c.to(self.device) + param_diff
-        
+
         delta_control = [
             (new_c - old_c).cpu().numpy()
             for new_c, old_c in zip(self.client_control, old_client_control)
         ]
-        
+
         # Update participation tracking
         self.last_participated_round = server_round
-        
+
         return total_loss / n_batches if n_batches > 0 else 0.0, delta_control
     
     def fit(
