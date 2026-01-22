@@ -6,6 +6,7 @@ import flwr as fl
 from flwr.common.typing import Scalar, NDArrays
 
 from model import DisposableIncomeModel, train, test
+from adaptive_mu import compute_layer_divergences
 
 class FlowerClient(fl.client.NumPyClient):
     def __init__(self, trainloader, valloader, input_dim: int = 19) -> None:
@@ -94,10 +95,10 @@ class FlowerClient(fl.client.NumPyClient):
         lr = config['lr']
         momentum = config.get('momentum', 0.0)
         epochs = config['local_epochs']
-        
+
         # Get FedProx mu parameter (default 0.0 for FedAvg)
         mu = config.get('mu', 0.0)
-        
+
         # Get layer-specific mu values if provided (for multi-layer FedProx)
         layer_mus = config.get('layer_mus', None)
         if layer_mus is not None:
@@ -107,23 +108,50 @@ class FlowerClient(fl.client.NumPyClient):
             else:
                 layer_mus = None  # Invalid format, use base mu
 
+        # Check if server requests divergence computation (for adaptive mu)
+        compute_divergence = config.get('compute_divergence', False)
+
+        # Store pre-training parameters for divergence computation
+        if compute_divergence and self.global_parameters is not None:
+            pre_training_params = [p.clone().detach().cpu() for p in self.model.parameters()]
+
         # Use SGD optimizer (can be changed to Adam if needed)
         optim = torch.optim.SGD(self.model.parameters(), lr=lr, momentum=momentum)
 
         # Do local training with FedProx support (base or multi-layer)
         train(
-            self.model, 
-            self.trainloader, 
-            optim, 
-            epochs, 
+            self.model,
+            self.trainloader,
+            optim,
+            epochs,
             self.device,
             mu=mu,
             global_params=self.global_parameters,
             layer_mus=layer_mus
         )
 
+        # Compute layer divergences after training (for adaptive mu feedback)
+        fit_metrics = {}
+        if compute_divergence and self.global_parameters is not None:
+            try:
+                post_training_params = [p.detach().cpu() for p in self.model.parameters()]
+                param_names = [name for name, _ in self.model.named_parameters()]
+
+                divergences = compute_layer_divergences(
+                    post_training_params,
+                    pre_training_params,
+                    param_names
+                )
+
+                # Pack divergences into metrics (prefix with 'div_' for easy extraction)
+                for layer_name, div_value in divergences.items():
+                    fit_metrics[f'div_{layer_name}'] = float(div_value)
+            except Exception as e:
+                # If divergence computation fails, continue without it
+                pass
+
         # Return updated parameters, number of samples, and metrics
-        return self.get_parameters({}), len(self.trainloader.dataset), {}
+        return self.get_parameters({}), len(self.trainloader.dataset), fit_metrics
 
     def evaluate(self, parameters: NDArrays, config: Dict[str, Scalar]):
         # Copy the parameters sent by the server to the local model

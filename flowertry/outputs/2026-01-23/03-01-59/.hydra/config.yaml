@@ -1,0 +1,43 @@
+strategy: compare_base_adaptive
+num_rounds: 50
+num_clients: 12
+batch_size: 32
+input_dim: 19
+num_clients_per_round_fit: 6
+num_clients_per_round_eval: 6
+non_iid: true
+alpha: 0.05
+config_fit:
+  lr: 0.001
+  momentum: 0.0
+  local_epochs: 5
+fedprox_base:
+  mu: 0.1
+  lr: 0.01
+  name: Base FedProx (μ=0.1)
+fedprox_multilayer:
+  mu: 0.01
+  lr: 0.01
+  layer_mus:
+    input: 0.02
+    hidden1: 0.05
+    hidden2: 0.08
+    output: 0.15
+  name: Static Multi-Layer FedProx
+fedprox_adaptive:
+  schedule_type: cosine
+  min_schedule_factor: 0.2
+  warmup_rounds: 3
+  use_divergence: true
+  divergence_weight: 0.6
+  min_mu: 0.005
+  max_mu: 0.3
+  name: Adaptive Multi-Layer FedProx
+plotting:
+  save_plots: true
+  plot_format: png
+  figsize:
+  - 12
+  - 8
+  dpi: 300
+data_path: ./data/IndianPersonalFinance/indianPersonalFinanceAndSpendingHabits.csv

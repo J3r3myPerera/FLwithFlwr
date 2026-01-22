@@ -1,10 +1,14 @@
 ---
 # Configuration for Disposable Income Regression with Federated Learning
 
-# Strategy selection: 'fedavg', 'fedprox', or 'compare' (runs both base and multi-layer FedProx)
-strategy: compare # Options: fedavg, fedprox, compare
+# Strategy selection: 'fedavg', 'fedprox', 'compare', or 'compare_adaptive'
+# - fedavg: Standard FedAvg
+# - fedprox: Standard FedProx with single mu
+# - compare: Base FedProx vs Static Multi-Layer FedProx
+# - compare_adaptive: 3-way comparison (Base vs Static vs Adaptive Multi-Layer)
+strategy: compare_adaptive # Options: fedavg, fedprox, compare, compare_adaptive
 
-num_rounds: 20
+num_rounds: 15
 num_clients: 12 # 12 clients for Non-IID partitioning (4 clients per City_Tier)
 batch_size: 32
 input_dim: 19 # 12 numerical + 7 one-hot encoded features
@@ -18,7 +22,7 @@ non_iid: true # Use Non-IID partitioning by City_Tier
 #   - alpha = 0.1: Highly heterogeneous (90% primary tier, 10% mixed)
 #   - alpha = 0.5: Moderate heterogeneity (50% primary tier, 50% mixed)
 #   - alpha = 1.0: Nearly IID (data well mixed across clients) - Low heterogeneity
-alpha: 0.05 # Recommended: 0.1 for high heterogeneity, 0.3-0.5 for moderate
+alpha: 0.3 # Recommended: 0.1 for high heterogeneity, 0.3-0.5 for moderate
 
 # Training configuration
 config_fit:
@@ -26,25 +30,45 @@ config_fit:
   momentum: 0.0 # Can be set to 0.9 if using SGD with momentum
   local_epochs: 5
 
-# Base FedProx configuration (suboptimal settings - will perform worse)
+# Base FedProx configuration (uniform mu - baseline for comparison)
+# Using moderate mu to show the benefit of layer-specific adaptation
 fedprox_base:
-  mu: 1.0  # Very high mu - excessive regularization, very slow convergence
-           # This ensures base FedProx performs worse than multi-layer
-  lr: 0.001  # Slightly lower learning rate - slower learning
-  name: "Base FedProx (μ=1.0)"  # For plotting labels
+  mu: 0.1 # Uniform mu across all layers - moderate regularization
+  lr: 0.01 # Same learning rate as other strategies for fair comparison
+  name: "Base FedProx (μ=0.1)" # For plotting labels
 
-# Multi-layer FedProx configuration (optimized settings - will perform best)
+# Multi-layer FedProx configuration (static per-layer mu)
 fedprox_multilayer:
   mu: 0.01 # Base mu as fallback
-  lr: 0.0012 # Slightly higher learning rate - faster learning
+  lr: 0.01 # Same learning rate as other strategies for fair comparison
   layer_mus:
-    input: 0.003 # Very low mu for input layer - maximum local adaptation
-    hidden1: 0.008 # Low mu for first hidden layer - allows adaptation
-    hidden2: 0.012 # Moderate mu for second hidden layer
-    output: 0.025 # Higher mu for output layer - maintains global structure
-  name: "Multi-Layer FedProx" # For plotting labels
-  # Strategy: Adaptive regularization - minimal constraint on early layers for
-  #           local learning, stronger constraint on output for global consistency
+    input: 0.12 # Low mu for input layer - allows local feature learning
+    hidden1: 0.15 # Moderate mu for first hidden layer
+    hidden2: 0.18 # Higher mu for second hidden layer
+    output: 0.20 # Highest mu for output layer - maintains global consistency
+  name: "Static Multi-Layer FedProx"
+  # Strategy: Lower mu on early layers (local adaptation),
+  #           higher mu on later layers (global consistency)
+
+# Adaptive Multi-layer FedProx configuration
+# Uses dynamic mu values that change based on round number and layer divergence
+# Key insight: Start with higher mu for global convergence, decay to allow local adaptation
+fedprox_adaptive:
+  # Schedule configuration - controls how mu changes over rounds
+  schedule_type: cosine # Options: cosine, linear, warmup_decay, constant
+  min_schedule_factor: 0.2 # Decay to 20% of initial mu by end of training
+  warmup_rounds: 3 # Only used if schedule_type is warmup_decay
+
+  # Divergence adaptation - adjusts mu based on how much layers drift from global model
+  use_divergence: true # Enable divergence-based mu adjustment
+  divergence_weight: 0.6 # Increased sensitivity to divergence
+
+  # Mu bounds - prevents extreme values
+  min_mu: 0.005 # Slightly higher floor to maintain some regularization
+  max_mu: 0.3 # Allow higher mu early on
+
+  # Name for plotting
+  name: "Adaptive Multi-Layer FedProx"
 
 # Plotting configuration
 plotting:

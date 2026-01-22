@@ -93,7 +93,12 @@ def plot_comparison(all_results: Dict[str, Any], save_path: str, plot_config: Di
     
     # Create figure with subplots
     fig, axes = plt.subplots(2, 2, figsize=figsize)
-    fig.suptitle('FedProx Strategy Comparison: Base vs Multi-Layer', fontsize=16, fontweight='bold')
+    # Determine title based on number of strategies
+    if len(strategies_data) == 3:
+        title = 'FedProx Strategy Comparison: Base vs Static vs Adaptive Multi-Layer'
+    else:
+        title = 'FedProx Strategy Comparison: Base vs Multi-Layer'
+    fig.suptitle(title, fontsize=16, fontweight='bold')
     
     # Define colors and styles
     colors = ['#e74c3c', '#3498db', '#2ecc71', '#f39c12']
@@ -227,3 +232,97 @@ def plot_comparison(all_results: Dict[str, Any], save_path: str, plot_config: Di
             print(f"  → Summary plot saved to: {summary_path}")
     
     plt.close('all')
+
+
+def plot_adaptive_mu_evolution(mu_summary: Dict, save_path: str, plot_config: Dict = None):
+    """
+    Plot how adaptive mu values change over rounds.
+
+    Args:
+        mu_summary: Dictionary from AdaptiveMuController.get_mu_history_summary()
+        save_path: Path to save plot
+        plot_config: Configuration for plotting
+    """
+    if plot_config is None:
+        plot_config = {}
+
+    save_plots = plot_config.get('save_plots', True)
+    plot_format = plot_config.get('plot_format', 'png')
+    dpi = plot_config.get('dpi', 300)
+
+    save_path = Path(save_path)
+
+    history = mu_summary.get('history', [])
+    if not history:
+        print("Warning: No mu history to plot!")
+        return
+
+    # Extract data
+    rounds = [h['round'] for h in history]
+    schedule_factors = [h['schedule_factor'] for h in history]
+
+    layer_names = ['input', 'hidden1', 'hidden2', 'output']
+    layer_mus = {layer: [h.get(layer, 0) for h in history] for layer in layer_names}
+
+    # Create figure with 2 subplots
+    fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+
+    # Plot 1: Adaptive Mu Values per Layer
+    ax1 = axes[0]
+    colors = ['#3498db', '#2ecc71', '#f39c12', '#e74c3c']
+    for idx, layer in enumerate(layer_names):
+        ax1.plot(rounds, layer_mus[layer], label=layer.capitalize(),
+                 color=colors[idx], linewidth=2, marker='o', markersize=4)
+
+    ax1.set_xlabel('Round', fontsize=11)
+    ax1.set_ylabel('Adaptive Mu Value', fontsize=11)
+    ax1.set_title('Adaptive Per-Layer Mu Evolution', fontsize=12, fontweight='bold')
+    ax1.legend(loc='best', fontsize=10)
+    ax1.grid(True, alpha=0.3)
+
+    # Plot 2: Schedule Factor
+    ax2 = axes[1]
+    ax2.plot(rounds, schedule_factors, color='#9b59b6', linewidth=2, marker='s', markersize=4)
+    ax2.fill_between(rounds, schedule_factors, alpha=0.3, color='#9b59b6')
+
+    ax2.set_xlabel('Round', fontsize=11)
+    ax2.set_ylabel('Schedule Factor', fontsize=11)
+    ax2.set_title('Round-Based Schedule Factor', fontsize=12, fontweight='bold')
+    ax2.set_ylim(0, 1.1)
+    ax2.grid(True, alpha=0.3)
+
+    plt.tight_layout()
+
+    if save_plots:
+        plot_path = save_path / f"adaptive_mu_evolution.{plot_format}"
+        plt.savefig(plot_path, dpi=dpi, bbox_inches='tight')
+        print(f"  -> Adaptive mu plot saved to: {plot_path}")
+
+    plt.close()
+
+    # Also plot divergence history if available
+    div_history = mu_summary.get('divergence_history', [])
+    if div_history:
+        fig2, ax = plt.subplots(figsize=(10, 6))
+
+        div_rounds = list(range(1, len(div_history) + 1))
+        for idx, layer in enumerate(layer_names):
+            layer_divs = [d.get(layer, 1.0) for d in div_history]
+            ax.plot(div_rounds, layer_divs, label=layer.capitalize(),
+                    color=colors[idx], linewidth=2, marker='^', markersize=4)
+
+        ax.axhline(y=1.0, color='black', linestyle='--', linewidth=1, alpha=0.5, label='Baseline (1.0)')
+        ax.set_xlabel('Round', fontsize=11)
+        ax.set_ylabel('Divergence Factor', fontsize=11)
+        ax.set_title('Layer Divergence Factors Over Rounds', fontsize=12, fontweight='bold')
+        ax.legend(loc='best', fontsize=10)
+        ax.grid(True, alpha=0.3)
+
+        plt.tight_layout()
+
+        if save_plots:
+            div_path = save_path / f"divergence_evolution.{plot_format}"
+            plt.savefig(div_path, dpi=dpi, bbox_inches='tight')
+            print(f"  -> Divergence plot saved to: {div_path}")
+
+        plt.close()
