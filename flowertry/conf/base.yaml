@@ -18,7 +18,7 @@ non_iid: true # Use Non-IID partitioning by City_Tier
 #   - alpha = 0.1: Highly heterogeneous (90% primary tier, 10% mixed)
 #   - alpha = 0.5: Moderate heterogeneity (50% primary tier, 50% mixed)
 #   - alpha = 1.0: Nearly IID (data well mixed across clients) - Low heterogeneity
-alpha: 0.05 # Recommended: 0.1 for high heterogeneity, 0.3-0.5 for moderate
+alpha: 0.5 # Recommended: 0.1 for high heterogeneity, 0.3-0.5 for moderate
 
 # Training configuration
 config_fit:
@@ -26,25 +26,25 @@ config_fit:
   momentum: 0.0 # Can be set to 0.9 if using SGD with momentum
   local_epochs: 5
 
-# Base FedProx configuration (suboptimal settings - will perform worse)
+# Base FedProx configuration (uniform mu baseline)
 fedprox_base:
-  mu: 1.0  # Very high mu - excessive regularization, very slow convergence
-           # This ensures base FedProx performs worse than multi-layer
-  lr: 0.001  # Slightly lower learning rate - slower learning
-  name: "Base FedProx (μ=1.0)"  # For plotting labels
+  mu: 0.01 # Weak uniform regularization
+  lr: 0.01
+  name: "Base FedProx (μ=0.01)"
 
-# Multi-layer FedProx configuration (optimized settings - will perform best)
+# Multi-layer FedProx configuration (aggressive per-layer mu)
+# Goal: Much stronger regularization than baseline to prevent client drift
 fedprox_multilayer:
   mu: 0.01 # Base mu as fallback
-  lr: 0.0012 # Slightly higher learning rate - faster learning
+  lr: 0.01
   layer_mus:
-    input: 0.003 # Very low mu for input layer - maximum local adaptation
-    hidden1: 0.008 # Low mu for first hidden layer - allows adaptation
-    hidden2: 0.012 # Moderate mu for second hidden layer
-    output: 0.025 # Higher mu for output layer - maintains global structure
-  name: "Multi-Layer FedProx" # For plotting labels
-  # Strategy: Adaptive regularization - minimal constraint on early layers for
-  #           local learning, stronger constraint on output for global consistency
+    input: 0.25 # Very strong - keep input features consistent
+    hidden1: 0.30 # Even stronger in hidden layers
+    hidden2: 0.35 # Aggressive regularization
+    output: 0.40 # Maximum regularization on output
+  name: "Multi-Layer FedProx (Aggressive)"
+  # Strategy: Much stronger regularization than baseline (0.01)
+  #           to prevent client drift with alpha=0.5 heterogeneity
 
 # Plotting configuration
 plotting:
